@@ -1,23 +1,18 @@
-export { createApiClient } from './create-api-client'
-export type { EndpointConfiguration } from './endpoints'
+export { createApiClient } from './api-client/api-client'
+export * from './http-endpoint/define-http-endpoint'
+export type { HttpEndpoint } from './http-endpoint/http-endpoint'
 export {
-  buildEndpointPath,
-  defineEndpoint,
-  defineEndpoints,
-  Endpoint,
-  isEndpoint,
-  isEndpoints,
-} from './endpoints'
+  defineBinaryStream,
+  defineJSONStream,
+  defineSSE,
+} from './http-endpoint/stream-response'
 export {
+  ApiError,
   isApiError,
   isMockError,
   isNetworkError,
   isValidationError,
-} from './error-guards'
-export {
-  ApiError,
   MockError,
   NetworkError,
   ValidationError,
-} from './errors'
-export { generateMockApi } from './generate-mock-api'
+} from './utils/errors'
