@@ -47,8 +47,8 @@ export type Args<
 > = K extends HttpMethodPath
   ? T[K] extends IEndpoint<K, T[K]['response']>
     ? EmptyObjectIsNever<InputsWithParams<K, T[K]['input']>> extends never
-      ? []
-      : [data: InputsWithParams<K, T[K]['input']>]
+      ? [options?: FetchOptions]
+      : [data: InputsWithParams<K, T[K]['input']> & FetchOptions]
     : never
   : never
 

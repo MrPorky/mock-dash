@@ -133,7 +133,7 @@ export function createApiClient<T extends Record<string, unknown>>(
     headers: customHeaders,
     transformRequest,
     transformResponse,
-    ...requestOptions
+    ...clientOptions
   } = args
 
   const properties: ClientProperties<ApiSchemaEndpoints<T>> = {
@@ -167,8 +167,11 @@ export function createApiClient<T extends Record<string, unknown>>(
 
   const requestApi = async (
     endpointKey: keyof ApiSchemaEndpoints<T> & string,
-    data: Partial<ValidationTargets> | undefined = undefined,
+    args: Partial<ValidationTargets> & FetchOptions = {},
   ): Promise<unknown> => {
+    const { form, json, param, query, ...requestOptions } = args
+    const data = { form, json, param, query }
+
     if (!endpointKey.startsWith('@')) {
       throw new ApiError(
         `Invalid endpoint key: ${endpointKey}. It should start with '@' followed by the HTTP method.`,
@@ -196,6 +199,7 @@ export function createApiClient<T extends Record<string, unknown>>(
     }
 
     let options: RequestInit = {
+      ...clientOptions,
       ...requestOptions,
       method,
       headers,
@@ -245,7 +249,7 @@ export function createApiClient<T extends Record<string, unknown>>(
     // Validate request data against input schemas
     if (endpoint.input && data) {
       for (const [inputType, schema] of Object.entries(endpoint.input)) {
-        const inputData = data[inputType as keyof ValidationTargets]
+        const inputData = data[inputType as keyof typeof data]
         if (inputData !== undefined) {
           const validationResult = (
             schema instanceof z.ZodType ? schema : z.object(schema)
