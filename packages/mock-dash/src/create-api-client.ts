@@ -130,7 +130,7 @@ export function createApiClient<T extends Record<string, unknown>>(
   const {
     apiSchema,
     baseURL,
-    headers: customHeaders,
+    headers: clientHeaders,
     transformRequest,
     transformResponse,
     ...clientOptions
@@ -169,7 +169,14 @@ export function createApiClient<T extends Record<string, unknown>>(
     endpointKey: keyof ApiSchemaEndpoints<T> & string,
     args: Partial<ValidationTargets> & FetchOptions = {},
   ): Promise<unknown> => {
-    const { form, json, param, query, ...requestOptions } = args
+    const {
+      form,
+      json,
+      param,
+      query,
+      headers: requestHeaders,
+      ...requestOptions
+    } = args
     const data = { form, json, param, query }
 
     if (!endpointKey.startsWith('@')) {
@@ -195,7 +202,8 @@ export function createApiClient<T extends Record<string, unknown>>(
 
     const headers: HeadersInit = {
       'Content-Type': 'application/json',
-      ...(customHeaders || {}),
+      ...(clientHeaders || {}),
+      ...(requestHeaders || {}),
     }
 
     let options: RequestInit = {
