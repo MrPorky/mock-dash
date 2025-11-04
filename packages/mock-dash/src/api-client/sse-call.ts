@@ -1,6 +1,6 @@
 import z from 'zod'
-import type { HttpEndpoint } from '../http-endpoint/http-endpoint'
-import type { HttpInput } from '../http-endpoint/http-input'
+import type { HttpEndpoint } from '..'
+import type { EndpointInputType } from '../endpoint/input'
 import {
   type BinaryStreamResponse,
   isBinaryStreamResponse,
@@ -9,7 +9,7 @@ import {
   type JSONStreamResponse,
   type SSEResponse,
   type StreamResponse,
-} from '../http-endpoint/stream-response'
+} from '../endpoint/stream-response'
 import { ApiError, type Errors } from '../utils/errors'
 import { _prepareFetch } from './_prepare-fetch'
 import type {
@@ -89,7 +89,7 @@ export type StreamErrorResult = {
 // The main call signature for a streaming endpoint
 export type StreamEndpointCallSignature<
   R extends StreamResponse,
-  I extends HttpInput,
+  I extends EndpointInputType,
 > = (
   ...args: EndpointArgs<I>
 ) => Promise<StreamSuccessResult<R> | StreamErrorResult>

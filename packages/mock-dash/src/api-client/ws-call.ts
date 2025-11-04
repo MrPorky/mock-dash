@@ -1,10 +1,10 @@
 import type z from 'zod'
-import type { HttpEndpoint } from '../http-endpoint/http-endpoint'
-import type { HttpInput } from '../http-endpoint/http-input'
+import type { HttpEndpoint } from '..'
+import type { EndpointInputType } from '../endpoint/input'
 import {
   isWebSocketResponse,
   type WebSocketResponse,
-} from '../http-endpoint/stream-response'
+} from '../endpoint/ws-response'
 import { buildEndpointPath } from '../utils/build-endpoint-path'
 import { ApiError, NetworkError } from '../utils/errors'
 import type {
@@ -85,7 +85,7 @@ export type WSErrorResult = {
 // The main call signature for a WebSocket endpoint
 export type WebSocketEndpointCallSignature<
   R extends WebSocketResponse<any>,
-  I extends HttpInput,
+  I extends EndpointInputType,
 > = (...args: EndpointArgs<I>) => Promise<WSSuccessResult<R> | WSErrorResult>
 
 /**

@@ -1,7 +1,7 @@
 // --- Add this helper function to your client ---
 
 import type { StreamChunk, StreamParseError } from '../api-client/sse-call'
-import type { StreamResponse } from '../http-endpoint/stream-response'
+import type { StreamResponse } from '../endpoint/stream-response'
 
 /**
  * Callbacks for subscribing to a stream.

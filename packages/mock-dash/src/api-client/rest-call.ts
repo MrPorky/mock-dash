@@ -1,7 +1,6 @@
 import type z from 'zod'
-import type { HttpEndpoint } from '../http-endpoint/http-endpoint'
-import type { HttpInput } from '../http-endpoint/http-input'
-import type { WebSocketResponse } from '../http-endpoint/stream-response'
+import type { EndpointInputType } from '../endpoint/input'
+import type { WebSocketResponse } from '../endpoint/ws-response'
 import type { Errors } from '../utils/errors'
 import { ApiError, ValidationError } from '../utils/errors'
 import { _prepareFetch } from './_prepare-fetch'
@@ -14,7 +13,10 @@ import type { InterceptorManager } from './interceptor'
 import type { StreamEndpointCallSignature } from './sse-call'
 import type { WebSocketEndpointCallSignature } from './ws-call'
 
-type HttpEndpointCallSignature<R extends z.ZodType, I extends HttpInput> = (
+type HttpEndpointCallSignature<
+  R extends z.ZodType,
+  I extends EndpointInputType,
+> = (
   ...args: EndpointArgs<I>
 ) => Promise<
   | { data: z.infer<R>; response: Response; error?: never }

@@ -1,6 +1,6 @@
 import type z from 'zod'
 import type { RemoveNever } from '../utils/types'
-import type { HttpMethod } from './http-endpoint'
+import type { HttpMethod } from './endpoint'
 
 type ZodStringValues =
   | z.ZodCoercedBigInt
@@ -40,7 +40,7 @@ type EndpointInputSlim = {
   query?: Query
 }
 
-export type HttpEndpointInput<METHOD extends HttpMethod = HttpMethod> =
+export type EndpointInput<METHOD extends HttpMethod = HttpMethod> =
   METHOD extends 'get' | 'delete'
     ? EndpointInputSlim
     : EndpointInputSlim & {
@@ -48,14 +48,15 @@ export type HttpEndpointInput<METHOD extends HttpMethod = HttpMethod> =
         form?: Form
       }
 
-export type HttpInput = {
+export type EndpointInputType = {
   query?: Query
   json?: Json
   form?: Form
 }
 
-export type InferInput<I extends HttpInput = HttpInput> = RemoveNever<{
-  query: I['query'] extends object ? z.infer<z.ZodObject<I['query']>> : never
-  json: I['json'] extends z.ZodType ? z.infer<I['json']> : never
-  form: I['form'] extends object ? z.infer<z.ZodObject<I['form']>> : never
-}>
+export type InferInput<I extends EndpointInputType = EndpointInputType> =
+  RemoveNever<{
+    query: I['query'] extends object ? z.infer<z.ZodObject<I['query']>> : never
+    json: I['json'] extends z.ZodType ? z.infer<I['json']> : never
+    form: I['form'] extends object ? z.infer<z.ZodObject<I['form']>> : never
+  }>

@@ -2,8 +2,8 @@ import { Hono } from 'hono'
 import { stream } from 'hono/streaming'
 import { describe, expect, it } from 'vitest'
 import z from 'zod'
+import { defineJSONStream } from '../../endpoint/stream-response'
 import { defineGet } from '../../http-endpoint/define-http-endpoint'
-import { defineJSONStream } from '../../http-endpoint/stream-response'
 import { createApiClient } from '../api-client'
 
 describe('JSON Stream (NDJSON)', () => {

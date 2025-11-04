@@ -1,9 +1,9 @@
-import type { HttpEndpointInput, InferInput } from '../http-endpoint/http-input'
+import type { EndpointInput, InferInput } from '../endpoint/input'
 import type { EmptyObjectIsNever } from '../utils/types'
 import type { InterceptorCallback } from './interceptor'
 
 export type EndpointArgs<
-  I extends HttpEndpointInput,
+  I extends EndpointInput,
   AdditionalArgs extends Record<string, unknown> = Record<string, unknown>,
 > = EmptyObjectIsNever<InferInput<I>> extends never
   ? [

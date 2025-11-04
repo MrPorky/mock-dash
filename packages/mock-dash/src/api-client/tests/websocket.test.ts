@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import z from 'zod'
+import { defineWebSocket } from '../../endpoint/stream-response'
 import { defineGet } from '../../http-endpoint/define-http-endpoint'
-import { defineWebSocket } from '../../http-endpoint/stream-response'
 import { NetworkError } from '../../utils/errors'
 import { createApiClient } from '../api-client'
 

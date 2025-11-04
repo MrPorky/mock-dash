@@ -1,10 +1,10 @@
-import type { HttpEndpoint } from '../http-endpoint/http-endpoint'
 import {
   isBinaryStreamResponse,
   isJSONStreamResponse,
   isSSEResponse,
   isStreamResponse,
-} from '../http-endpoint/stream-response'
+} from '../endpoint/stream-response'
+import type { HttpEndpoint } from '../http-endpoint/http-endpoint'
 import { buildEndpointPath } from '../utils/build-endpoint-path'
 import { ApiError, type Errors, NetworkError } from '../utils/errors'
 import { buildFormData, serializeQueryParams } from '../utils/request-utils'

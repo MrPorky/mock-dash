@@ -1,11 +1,11 @@
 import {
+  isHttpEndpointWithStreamResponse,
+  isWebSocketResponse,
+} from '../endpoint/stream-response'
+import {
   HttpEndpoint,
   isHttpEndpointWithZodResponse,
 } from '../http-endpoint/http-endpoint'
-import {
-  isHttpEndpointWithStreamResponse,
-  isWebSocketResponse,
-} from '../http-endpoint/stream-response'
 import { deepMerge } from '../utils/deep-merge'
 import type { Combine } from '../utils/types'
 import type { CreateApiClientArgs, FetchOptions } from './client-base'

@@ -1,8 +1,8 @@
 import { Hono } from 'hono'
 import { stream } from 'hono/streaming'
 import { describe, expect, it } from 'vitest'
+import { defineBinaryStream } from '../../endpoint/stream-response'
 import { defineGet } from '../../http-endpoint/define-http-endpoint'
-import { defineBinaryStream } from '../../http-endpoint/stream-response'
 import { createApiClient } from '../api-client'
 
 describe('Binary Stream', () => {
