@@ -1,6 +1,7 @@
 import type z from 'zod'
 import type { HttpEndpoint } from '../http-endpoint/http-endpoint'
 import type { HttpInput } from '../http-endpoint/http-input'
+import type { WebSocketResponse } from '../http-endpoint/stream-response'
 import type { Errors } from '../utils/errors'
 import { ApiError, ValidationError } from '../utils/errors'
 import { _prepareFetch } from './_prepare-fetch'
@@ -11,6 +12,7 @@ import type {
 } from './client-base'
 import type { InterceptorManager } from './interceptor'
 import type { StreamEndpointCallSignature } from './sse-call'
+import type { WebSocketEndpointCallSignature } from './ws-call'
 
 type HttpEndpointCallSignature<R extends z.ZodType, I extends HttpInput> = (
   ...args: EndpointArgs<I>
@@ -28,7 +30,9 @@ export type HttpEndpointCall<T extends HttpEndpoint> = T extends HttpEndpoint<
   ? {
       [K in M]: R extends z.ZodType
         ? HttpEndpointCallSignature<R, I>
-        : { $stream: StreamEndpointCallSignature<R, I> }
+        : R extends WebSocketResponse<Record<string, z.ZodType>>
+          ? { $ws: WebSocketEndpointCallSignature<R, I> }
+          : { $stream: StreamEndpointCallSignature<R, I> }
     }
   : never
 

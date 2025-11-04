@@ -2,13 +2,17 @@ import {
   HttpEndpoint,
   isHttpEndpointWithZodResponse,
 } from '../http-endpoint/http-endpoint'
-import { isHttpEndpointWithStreamResponse } from '../http-endpoint/stream-response'
+import {
+  isHttpEndpointWithStreamResponse,
+  isWebSocketResponse,
+} from '../http-endpoint/stream-response'
 import { deepMerge } from '../utils/deep-merge'
 import type { Combine } from '../utils/types'
 import type { CreateApiClientArgs, FetchOptions } from './client-base'
 import { InterceptorManager } from './interceptor'
 import { callHttpEndpoint, type HttpEndpointCall } from './rest-call'
 import { callStreamEndpoint } from './sse-call'
+import { callWebSocketEndpoint } from './ws-call'
 
 /**
  * Maps path parameters to functions that build the client path object.
@@ -119,6 +123,21 @@ function buildNode(
 ) {
   if (segments.length === 0) {
     if (isHttpEndpointWithStreamResponse(endpoint)) {
+      // Check if it's a WebSocket endpoint
+      if (isWebSocketResponse(endpoint.response)) {
+        const apiCall = callWebSocketEndpoint(
+          pathParams,
+          endpoint as any,
+          requestOptions,
+          interceptors,
+        )
+
+        return {
+          [endpoint.method]: { $ws: apiCall },
+        }
+      }
+
+      // Otherwise, it's an SSE/JSON/Binary stream endpoint
       const apiCall = callStreamEndpoint(
         pathParams, // You need logic to extract these
         endpoint,

@@ -24,6 +24,14 @@ export class BinaryStreamResponse extends StreamResponse {
   }
 }
 
+export class WebSocketResponse<
+  M extends Record<string, z.ZodType>,
+> extends StreamResponse {
+  constructor(public readonly messages: M) {
+    super()
+  }
+}
+
 export function defineSSE<E extends Record<string, z.ZodType>>(
   events: E,
 ): SSEResponse<E> {
@@ -40,6 +48,12 @@ export function defineBinaryStream(
   contentType: string = 'application/octet-stream',
 ): BinaryStreamResponse {
   return new BinaryStreamResponse(contentType)
+}
+
+export function defineWebSocket<M extends Record<string, z.ZodType>>(
+  messages: M,
+): WebSocketResponse<M> {
+  return new WebSocketResponse(messages)
 }
 
 export function isHttpEndpointWithStreamResponse<T extends HttpEndpoint>(
@@ -72,4 +86,10 @@ export function isBinaryStreamResponse(
   value: unknown,
 ): value is BinaryStreamResponse {
   return value instanceof BinaryStreamResponse
+}
+
+export function isWebSocketResponse(
+  value: unknown,
+): value is WebSocketResponse<any> {
+  return value instanceof WebSocketResponse
 }
