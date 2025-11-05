@@ -1,4 +1,5 @@
 import type z from 'zod'
+import type { HttpEndpoint } from '@/endpoint/http-endpoint'
 import type { EndpointInputType } from '../endpoint/input'
 import type { WebSocketResponse } from '../endpoint/ws-response'
 import type { Errors } from '../utils/errors'
@@ -10,10 +11,8 @@ import type {
   FetchOptions,
 } from './client-base'
 import type { InterceptorManager } from './interceptor'
-import type { StreamEndpointCallSignature } from './sse-call'
-import type { WebSocketEndpointCallSignature } from './ws-call'
 
-type HttpEndpointCallSignature<
+export type HttpEndpointCallSignature<
   R extends z.ZodType,
   I extends EndpointInputType,
 > = (
@@ -23,27 +22,9 @@ type HttpEndpointCallSignature<
   | { data?: never; error: Errors; response?: Response }
 >
 
-export type HttpEndpointCall<T extends HttpEndpoint> = T extends HttpEndpoint<
-  infer _P,
-  infer R,
-  infer M,
-  infer I
->
-  ? {
-      [K in M]: R extends z.ZodType
-        ? HttpEndpointCallSignature<R, I>
-        : R extends WebSocketResponse<Record<string, z.ZodType>>
-          ? { $ws: WebSocketEndpointCallSignature<R, I> }
-          : { $stream: StreamEndpointCallSignature<R, I> }
-    }
-  : never
-
-export function callHttpEndpoint<
-  R extends z.ZodType,
-  T extends HttpEndpoint<string, R>,
->(
+export function callHttpEndpoint(
   pathParams: Record<string, string>,
-  endpoint: T,
+  endpoint: HttpEndpoint,
   requestOptions: Omit<
     CreateApiClientArgs,
     'apiSchema' | 'transformRequest' | 'transformResponse'
@@ -52,7 +33,7 @@ export function callHttpEndpoint<
     request: InterceptorManager<FetchOptions>
     response: InterceptorManager<Response>
   },
-): HttpEndpointCallSignature<R, any> {
+): HttpEndpointCallSignature<z.ZodType, any> {
   return async (inputData) => {
     const { fullUrl, response, error } = await _prepareFetch(
       pathParams,

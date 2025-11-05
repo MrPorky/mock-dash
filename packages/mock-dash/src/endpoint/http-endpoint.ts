@@ -6,5 +6,5 @@ export class HttpEndpoint<
   P extends string = string,
   R extends z.ZodType = z.ZodType,
   M extends HttpMethod = HttpMethod,
-  I extends EndpointInput = EndpointInputType,
+  I extends EndpointInput<M> = EndpointInputType,
 > extends Endpoint<R, P, M, I> {}

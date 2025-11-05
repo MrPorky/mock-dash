@@ -1,10 +1,9 @@
+import type { Endpoint } from '@/endpoint/endpoint'
 import {
   isBinaryStreamResponse,
   isJSONStreamResponse,
   isSSEResponse,
-  isStreamResponse,
-} from '../endpoint/stream-response'
-import type { HttpEndpoint } from '../http-endpoint/http-endpoint'
+} from '@/endpoint/stream-response'
 import { buildEndpointPath } from '../utils/build-endpoint-path'
 import { ApiError, type Errors, NetworkError } from '../utils/errors'
 import { buildFormData, serializeQueryParams } from '../utils/request-utils'
@@ -20,10 +19,10 @@ import type { InterceptorContext, InterceptorManager } from './interceptor'
  * Prepares the URL, options, and context for a fetch call.
  * This refactors the common logic from `callRestEndpoint`.
  */
-export async function _prepareFetch<T extends HttpEndpoint>(
+export async function _prepareFetch<T extends Endpoint<any>>(
   pathParams: Record<string, string>,
   endpoint: T,
-  inputData: EndpointArgs<any>[0], // The 'args' object
+  inputData: EndpointArgs<any>[0],
   requestOptions: Omit<
     CreateApiClientArgs,
     'apiSchema' | 'transformRequest' | 'transformResponse'
@@ -82,14 +81,12 @@ export async function _prepareFetch<T extends HttpEndpoint>(
   } satisfies HeadersInit
 
   // For stream requests, we explicitly ask for stream-friendly formats
-  if (isStreamResponse(endpoint.response)) {
-    if (isSSEResponse(endpoint.response)) {
-      headers.Accept = 'text/event-stream'
-    } else if (isJSONStreamResponse(endpoint.response)) {
-      headers.Accept = 'application/x-ndjson'
-    } else if (isBinaryStreamResponse(endpoint.response)) {
-      headers.Accept = endpoint.response.contentType
-    }
+  if (isSSEResponse(endpoint.response)) {
+    headers.Accept = 'text/event-stream'
+  } else if (isJSONStreamResponse(endpoint.response)) {
+    headers.Accept = 'application/x-ndjson'
+  } else if (isBinaryStreamResponse(endpoint.response)) {
+    headers.Accept = endpoint.response.contentType
   }
 
   let options: RequestInit = {

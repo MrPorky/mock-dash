@@ -1,18 +1,20 @@
-import {
-  isHttpEndpointWithStreamResponse,
-  isWebSocketResponse,
-} from '../endpoint/stream-response'
-import {
-  HttpEndpoint,
-  isHttpEndpointWithZodResponse,
-} from '../http-endpoint/http-endpoint'
+import { Endpoint } from '@/endpoint/endpoint'
+import { HttpEndpoint } from '@/endpoint/http-endpoint'
+import { StreamEndpoint } from '@/endpoint/stream-endpoint'
+import { WebSocketEndpoint } from '@/endpoint/ws-endpoint'
 import { deepMerge } from '../utils/deep-merge'
 import type { Combine } from '../utils/types'
 import type { CreateApiClientArgs, FetchOptions } from './client-base'
+import { callHttpEndpoint, type HttpEndpointCallSignature } from './http-call'
 import { InterceptorManager } from './interceptor'
-import { callHttpEndpoint, type HttpEndpointCall } from './rest-call'
-import { callStreamEndpoint } from './sse-call'
-import { callWebSocketEndpoint } from './ws-call'
+import {
+  callStreamEndpoint,
+  type StreamEndpointCallSignature,
+} from './sse-call'
+import {
+  callWebSocketEndpoint,
+  type WebSocketEndpointCallSignature,
+} from './ws-call'
 
 /**
  * Maps path parameters to functions that build the client path object.
@@ -20,7 +22,7 @@ import { callWebSocketEndpoint } from './ws-call'
 type PathParameterMapper<
   K extends string,
   P extends string,
-  E extends HttpEndpoint,
+  E extends Endpoint,
 > = K extends `:${infer PARAM}`
   ? {
       [KEY in PARAM]: (value: string) => ClientPathObject<P, E>
@@ -34,7 +36,7 @@ type PathParameterMapper<
  */
 type ClientPathObject<
   P extends string,
-  E extends HttpEndpoint,
+  E extends Endpoint,
 > = P extends `/${infer PATH}`
   ? PATH extends `${infer SEGMENT}/${infer REST}`
     ? PathParameterMapper<SEGMENT, `/${REST}`, E>
@@ -44,16 +46,29 @@ type ClientPathObject<
 /**
  * Maps an HttpEndpoint to its corresponding call type.
  */
-type EndpointCall<T extends HttpEndpoint> = T extends HttpEndpoint
-  ? HttpEndpointCall<T>
-  : never
+type EndpointCall<T extends Endpoint> = T extends Endpoint<
+  infer _R,
+  infer _P,
+  infer M,
+  infer _I
+>
+  ? {
+      [K in M]: T extends HttpEndpoint<infer _P, infer R>
+        ? HttpEndpointCallSignature<R, _I>
+        : T extends StreamEndpoint<infer _P, infer R>
+          ? { $stream: StreamEndpointCallSignature<R, _I> }
+          : T extends WebSocketEndpoint<infer _P, infer R>
+            ? { $ws: WebSocketEndpointCallSignature<R, _I> }
+            : 'not yet implemented or unknown endpoint type'
+    }
+  : 'error dose not inherit from Endpoint'
 
 /**
  * The API client type built from the API schema.
  */
 type Client<T = Record<string, unknown>> = Combine<
   {
-    [K in keyof T]: T[K] extends HttpEndpoint<infer P>
+    [K in keyof T]: T[K] extends Endpoint<infer _R, infer P>
       ? ClientPathObject<P, T[K]>
       : never
   }[keyof T]
@@ -122,48 +137,50 @@ function buildNode(
   pathParams: Record<string, string> = {}, // Accumulated parameters
 ) {
   if (segments.length === 0) {
-    if (isHttpEndpointWithStreamResponse(endpoint)) {
-      // Check if it's a WebSocket endpoint
-      if (isWebSocketResponse(endpoint.response)) {
-        const apiCall = callWebSocketEndpoint(
+    if (endpoint instanceof HttpEndpoint) {
+      return {
+        [endpoint.method]: callHttpEndpoint(
           pathParams,
-          endpoint as any,
+          endpoint,
           requestOptions,
           interceptors,
-        )
-
-        return {
-          [endpoint.method]: { $ws: apiCall },
-        }
-      }
-
-      // Otherwise, it's an SSE/JSON/Binary stream endpoint
-      const apiCall = callStreamEndpoint(
-        pathParams, // You need logic to extract these
-        endpoint,
-        requestOptions,
-        interceptors,
-      )
-
-      return {
-        [endpoint.method]: { $stream: apiCall },
+        ),
       }
     }
 
-    if (isHttpEndpointWithZodResponse(endpoint)) {
-      const apiCall = callHttpEndpoint(
-        pathParams,
-        endpoint,
-        requestOptions,
-        interceptors,
-      )
-
+    if (endpoint instanceof StreamEndpoint) {
       return {
-        [endpoint.method]: apiCall,
+        [endpoint.method]: {
+          $stream: callStreamEndpoint(
+            pathParams,
+            endpoint,
+            requestOptions,
+            interceptors,
+          ),
+        },
       }
     }
 
-    return 'not yet implemented or unknown endpoint type'
+    if (endpoint instanceof WebSocketEndpoint) {
+      return {
+        [endpoint.method]: {
+          $ws: callWebSocketEndpoint(
+            pathParams,
+            endpoint,
+            requestOptions,
+            interceptors,
+          ),
+        },
+      }
+    }
+
+    if (endpoint instanceof Endpoint) {
+      return {
+        [endpoint.method]: 'not yet implemented or unknown endpoint type',
+      }
+    }
+
+    return 'error dose not inherit from Endpoint'
   }
 
   const [currentSegment, ...restSegments] = segments

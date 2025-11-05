@@ -6,5 +6,5 @@ export class WebSocketEndpoint<
   P extends string = string,
   R extends WebSocketResponse = WebSocketResponse,
   M extends HttpMethod = HttpMethod,
-  I extends EndpointInput = EndpointInputType,
+  I extends EndpointInput<M> = EndpointInputType,
 > extends Endpoint<R, P, M, I> {}

@@ -1,6 +1,6 @@
 import z from 'zod'
-import type { HttpEndpoint } from '..'
-import type { EndpointInputType } from '../endpoint/input'
+import type { EndpointInputType } from '@/endpoint/input'
+import type { StreamEndpoint } from '@/endpoint/stream-endpoint'
 import {
   type BinaryStreamResponse,
   isBinaryStreamResponse,
@@ -9,17 +9,15 @@ import {
   type JSONStreamResponse,
   type SSEResponse,
   type StreamResponse,
-} from '../endpoint/stream-response'
-import { ApiError, type Errors } from '../utils/errors'
+} from '@/endpoint/stream-response'
+import { ApiError, type Errors } from '@/utils/errors'
 import { _prepareFetch } from './_prepare-fetch'
 import type {
   CreateApiClientArgs,
   EndpointArgs,
-  FetchOptions, // Assuming Errors is your union of ApiError, ValidationError, etc.
+  FetchOptions,
 } from './client-base'
 import type { InterceptorManager } from './interceptor'
-
-// --- Types for Stream Return Values ---
 
 // Represents a successfully parsed SSE event
 type SSEEvent<T> = {
@@ -98,12 +96,9 @@ export type StreamEndpointCallSignature<
  * Main function to call a streaming endpoint.
  * It handles the request and returns an AsyncGenerator for the response body.
  */
-export function callStreamEndpoint<
-  R extends StreamResponse,
-  T extends HttpEndpoint<string, R>,
->(
+export function callStreamEndpoint(
   pathParams: Record<string, string>,
-  endpoint: T,
+  endpoint: StreamEndpoint,
   requestOptions: Omit<
     CreateApiClientArgs,
     'apiSchema' | 'transformRequest' | 'transformResponse'
@@ -112,7 +107,7 @@ export function callStreamEndpoint<
     request: InterceptorManager<FetchOptions>
     response: InterceptorManager<Response>
   },
-): StreamEndpointCallSignature<R, any> {
+): StreamEndpointCallSignature<StreamResponse, any> {
   return async (inputData) => {
     const { fullUrl, response, error } = await _prepareFetch(
       pathParams,

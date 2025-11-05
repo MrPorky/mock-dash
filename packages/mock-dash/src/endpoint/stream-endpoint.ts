@@ -6,5 +6,5 @@ export class StreamEndpoint<
   P extends string = string,
   R extends StreamResponse = StreamResponse,
   M extends HttpMethod = HttpMethod,
-  I extends EndpointInput = EndpointInputType,
+  I extends EndpointInput<M> = EndpointInputType,
 > extends Endpoint<R, P, M, I> {}

@@ -1,20 +1,18 @@
 import type z from 'zod'
-import type { HttpEndpoint } from '..'
-import type { EndpointInputType } from '../endpoint/input'
+import type { EndpointInputType } from '@/endpoint/input'
+import type { WebSocketEndpoint } from '@/endpoint/ws-endpoint'
 import {
   isWebSocketResponse,
   type WebSocketResponse,
-} from '../endpoint/ws-response'
-import { buildEndpointPath } from '../utils/build-endpoint-path'
-import { ApiError, NetworkError } from '../utils/errors'
+} from '@/endpoint/ws-response'
+import { buildEndpointPath } from '@/utils/build-endpoint-path'
+import { ApiError, NetworkError } from '@/utils/errors'
 import type {
   CreateApiClientArgs,
   EndpointArgs,
   FetchOptions,
 } from './client-base'
 import type { InterceptorManager } from './interceptor'
-
-// --- Types for WebSocket Messages ---
 
 // Represents a successfully parsed message
 type WebSocketMessage<T> = {
@@ -92,12 +90,9 @@ export type WebSocketEndpointCallSignature<
  * Main function to call a WebSocket endpoint.
  * It handles the connection and returns an AsyncGenerator for incoming messages.
  */
-export function callWebSocketEndpoint<
-  R extends WebSocketResponse<any>,
-  T extends HttpEndpoint<string, R>,
->(
+export function callWebSocketEndpoint(
   pathParams: Record<string, string>,
-  endpoint: T,
+  endpoint: WebSocketEndpoint,
   requestOptions: Omit<
     CreateApiClientArgs,
     'apiSchema' | 'transformRequest' | 'transformResponse'
@@ -106,7 +101,7 @@ export function callWebSocketEndpoint<
     request: InterceptorManager<FetchOptions>
     response: InterceptorManager<Response>
   },
-): WebSocketEndpointCallSignature<R, any> {
+): WebSocketEndpointCallSignature<WebSocketResponse<any>, any> {
   return async (inputData) => {
     const schema = endpoint.response
 
@@ -177,13 +172,10 @@ export function callWebSocketEndpoint<
     }
 
     // Create the async generator for messages
-    const messageGenerator = wsMessageParser(
-      ws,
-      schema.messages,
-    ) as AsyncGenerator<WSChunk<R>, void, void>
+    const messageGenerator = wsMessageParser(ws, schema.messages)
 
     // Create the controller for sending messages and closing the connection
-    const controller: WebSocketController<R> = {
+    const controller: WebSocketController<WebSocketResponse<any>> = {
       send: (messageType, data) => {
         if (ws.readyState === WebSocket.OPEN) {
           const message = JSON.stringify({ type: messageType, data })

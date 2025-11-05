@@ -21,7 +21,7 @@ export type EndpointOptions = {
 }
 
 export abstract class Endpoint<
-  R,
+  R = unknown,
   P extends string = string,
   M extends HttpMethod = HttpMethod,
   I extends EndpointInput = EndpointInputType,
