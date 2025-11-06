@@ -1,7 +1,6 @@
 import type z from 'zod'
-import type { HttpEndpoint } from '@/endpoint/http-endpoint'
+import type { HttpEndpoint } from '../endpoint/http-endpoint'
 import type { EndpointInputType } from '../endpoint/input'
-import type { WebSocketResponse } from '../endpoint/ws-response'
 import type { Errors } from '../utils/errors'
 import { ApiError, ValidationError } from '../utils/errors'
 import { _prepareFetch } from './_prepare-fetch'

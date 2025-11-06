@@ -1,12 +1,12 @@
 import type z from 'zod'
-import type { EndpointInputType } from '@/endpoint/input'
-import type { WebSocketEndpoint } from '@/endpoint/ws-endpoint'
+import type { EndpointInputType } from '../endpoint/input'
+import type { WebSocketEndpoint } from '../endpoint/ws-endpoint'
 import {
   isWebSocketResponse,
   type WebSocketResponse,
-} from '@/endpoint/ws-response'
-import { buildEndpointPath } from '@/utils/build-endpoint-path'
-import { ApiError, NetworkError } from '@/utils/errors'
+} from '../endpoint/ws-response'
+import { buildEndpointPath } from '../utils/build-endpoint-path'
+import { ApiError, NetworkError } from '../utils/errors'
 import type {
   CreateApiClientArgs,
   EndpointArgs,

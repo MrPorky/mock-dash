@@ -1,6 +1,6 @@
 import z from 'zod'
-import type { EndpointInputType } from '@/endpoint/input'
-import type { StreamEndpoint } from '@/endpoint/stream-endpoint'
+import type { EndpointInputType } from '../endpoint/input'
+import type { StreamEndpoint } from '../endpoint/stream-endpoint'
 import {
   type BinaryStreamResponse,
   isBinaryStreamResponse,
@@ -9,8 +9,8 @@ import {
   type JSONStreamResponse,
   type SSEResponse,
   type StreamResponse,
-} from '@/endpoint/stream-response'
-import { ApiError, type Errors } from '@/utils/errors'
+} from '../endpoint/stream-response'
+import { ApiError, type Errors } from '../utils/errors'
 import { _prepareFetch } from './_prepare-fetch'
 import type {
   CreateApiClientArgs,

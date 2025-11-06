@@ -1,7 +1,7 @@
 import { Hono } from 'hono'
 import { describe, expect, it } from 'vitest'
 import z from 'zod'
-import { defineDelete } from '../../http-endpoint/define-http-endpoint'
+import { defineDelete } from '../../endpoint/define-endpoint'
 import { createApiClient } from '../api-client'
 
 describe('DELETE endpoints', () => {

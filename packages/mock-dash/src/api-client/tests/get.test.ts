@@ -2,7 +2,7 @@ import { zValidator } from '@hono/zod-validator'
 import { Hono } from 'hono'
 import { describe, expect, it, vi } from 'vitest'
 import z from 'zod'
-import { defineGet } from '../../http-endpoint/define-http-endpoint'
+import { defineGet } from '../../endpoint/define-endpoint'
 import { ApiError, NetworkError } from '../../utils/errors'
 import { createApiClient } from '../api-client'
 

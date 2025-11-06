@@ -1,9 +1,9 @@
-import type { Endpoint } from '@/endpoint/endpoint'
+import type { Endpoint } from '../endpoint/endpoint'
 import {
   isBinaryStreamResponse,
   isJSONStreamResponse,
   isSSEResponse,
-} from '@/endpoint/stream-response'
+} from '../endpoint/stream-response'
 import { buildEndpointPath } from '../utils/build-endpoint-path'
 import { ApiError, type Errors, NetworkError } from '../utils/errors'
 import { buildFormData, serializeQueryParams } from '../utils/request-utils'

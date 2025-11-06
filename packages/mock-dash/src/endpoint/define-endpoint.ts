@@ -7,15 +7,33 @@ import { StreamResponse } from './stream-response'
 import { WebSocketEndpoint } from './ws-endpoint'
 import { WebSocketResponse } from './ws-response'
 
-export const defineGet = <
+export function defineGet<
+  I extends EndpointInput<'get'>,
+  P extends string,
+  T extends ParamFromPath<P>,
+  R extends WebSocketResponse,
+>(
+  path: P,
+  config: EndpointConfig<R, I, P, T>,
+): WebSocketEndpoint<P, R, 'get', I>
+export function defineGet<
+  I extends EndpointInput<'get'>,
+  P extends string,
+  T extends ParamFromPath<P>,
+  R extends StreamResponse,
+>(path: P, config: EndpointConfig<R, I, P, T>): StreamEndpoint<P, R, 'get', I>
+export function defineGet<
+  I extends EndpointInput<'get'>,
+  P extends string,
+  T extends ParamFromPath<P>,
+  R extends z.ZodType,
+>(path: P, config: EndpointConfig<R, I, P, T>): HttpEndpoint<P, R, 'get', I>
+export function defineGet<
   I extends EndpointInput<'get'>,
   R extends z.ZodType | StreamResponse | WebSocketResponse,
   P extends string,
   T extends ParamFromPath<P>,
->(
-  path: P,
-  { input, response, options = {} }: EndpointConfig<R, I, P, T>,
-) => {
+>(path: P, { input, response, options = {} }: EndpointConfig<R, I, P, T>) {
   if (response instanceof WebSocketResponse) {
     return new WebSocketEndpoint('get', path, response, input, options)
   } else if (response instanceof StreamResponse) {
@@ -27,15 +45,27 @@ export const defineGet = <
   throw new Error('Invalid response type')
 }
 
-export const defineDelete = <
+export function defineDelete<
+  I extends EndpointInput<'delete'>,
+  P extends string,
+  T extends ParamFromPath<P>,
+  R extends StreamResponse,
+>(
+  path: P,
+  config: EndpointConfig<R, I, P, T>,
+): StreamEndpoint<P, R, 'delete', I>
+export function defineDelete<
+  I extends EndpointInput<'delete'>,
+  P extends string,
+  T extends ParamFromPath<P>,
+  R extends z.ZodType,
+>(path: P, config: EndpointConfig<R, I, P, T>): HttpEndpoint<P, R, 'delete', I>
+export function defineDelete<
   I extends EndpointInput<'delete'>,
   R extends z.ZodType | StreamResponse,
   P extends string,
   T extends ParamFromPath<P>,
->(
-  path: P,
-  { input, response, options = {} }: EndpointConfig<R, I, P, T>,
-) => {
+>(path: P, { input, response, options = {} }: EndpointConfig<R, I, P, T>) {
   if (response instanceof StreamResponse) {
     return new StreamEndpoint('delete', path, response, input, options)
   } else if (response instanceof z.ZodType) {
@@ -45,15 +75,24 @@ export const defineDelete = <
   throw new Error('Invalid response type')
 }
 
-export const definePost = <
+export function definePost<
+  I extends EndpointInput<'post'>,
+  P extends string,
+  T extends ParamFromPath<P>,
+  R extends StreamResponse,
+>(path: P, config: EndpointConfig<R, I, P, T>): StreamEndpoint<P, R, 'post', I>
+export function definePost<
+  I extends EndpointInput<'post'>,
+  P extends string,
+  T extends ParamFromPath<P>,
+  R extends z.ZodType,
+>(path: P, config: EndpointConfig<R, I, P, T>): HttpEndpoint<P, R, 'post', I>
+export function definePost<
   I extends EndpointInput<'post'>,
   R extends z.ZodType | StreamResponse,
   P extends string,
   T extends ParamFromPath<P>,
->(
-  path: P,
-  { input, response, options = {} }: EndpointConfig<R, I, P, T>,
-) => {
+>(path: P, { input, response, options = {} }: EndpointConfig<R, I, P, T>) {
   if (response instanceof StreamResponse) {
     return new StreamEndpoint('post', path, response, input, options)
   } else if (response instanceof z.ZodType) {
@@ -63,15 +102,24 @@ export const definePost = <
   throw new Error('Invalid response type')
 }
 
-export const definePut = <
+export function definePut<
+  I extends EndpointInput<'put'>,
+  P extends string,
+  T extends ParamFromPath<P>,
+  R extends StreamResponse,
+>(path: P, config: EndpointConfig<R, I, P, T>): StreamEndpoint<P, R, 'put', I>
+export function definePut<
+  I extends EndpointInput<'put'>,
+  P extends string,
+  T extends ParamFromPath<P>,
+  R extends z.ZodType,
+>(path: P, config: EndpointConfig<R, I, P, T>): HttpEndpoint<P, R, 'put', I>
+export function definePut<
   I extends EndpointInput<'put'>,
   R extends z.ZodType | StreamResponse,
   P extends string,
   T extends ParamFromPath<P>,
->(
-  path: P,
-  { input, response, options = {} }: EndpointConfig<R, I, P, T>,
-) => {
+>(path: P, { input, response, options = {} }: EndpointConfig<R, I, P, T>) {
   if (response instanceof StreamResponse) {
     return new StreamEndpoint('put', path, response, input, options)
   } else if (response instanceof z.ZodType) {
@@ -81,15 +129,24 @@ export const definePut = <
   throw new Error('Invalid response type')
 }
 
-export const definePatch = <
+export function definePatch<
+  I extends EndpointInput<'patch'>,
+  P extends string,
+  T extends ParamFromPath<P>,
+  R extends StreamResponse,
+>(path: P, config: EndpointConfig<R, I, P, T>): StreamEndpoint<P, R, 'patch', I>
+export function definePatch<
+  I extends EndpointInput<'patch'>,
+  P extends string,
+  T extends ParamFromPath<P>,
+  R extends z.ZodType,
+>(path: P, config: EndpointConfig<R, I, P, T>): HttpEndpoint<P, R, 'patch', I>
+export function definePatch<
   I extends EndpointInput<'patch'>,
   R extends z.ZodType | StreamResponse,
   P extends string,
   T extends ParamFromPath<P>,
->(
-  path: P,
-  { input, response, options = {} }: EndpointConfig<R, I, P, T>,
-) => {
+>(path: P, { input, response, options = {} }: EndpointConfig<R, I, P, T>) {
   if (response instanceof StreamResponse) {
     return new StreamEndpoint('patch', path, response, input, options)
   } else if (response instanceof z.ZodType) {

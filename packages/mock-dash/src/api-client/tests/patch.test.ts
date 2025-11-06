@@ -2,7 +2,7 @@ import { zValidator } from '@hono/zod-validator'
 import { Hono } from 'hono'
 import { describe, expect, it } from 'vitest'
 import z from 'zod'
-import { definePatch } from '../../http-endpoint/define-http-endpoint'
+import { definePatch } from '../../endpoint/define-endpoint'
 import { createApiClient } from '../api-client'
 
 describe('PATCH endpoints', () => {

@@ -1,7 +1,7 @@
-import { Endpoint } from '@/endpoint/endpoint'
-import { HttpEndpoint } from '@/endpoint/http-endpoint'
-import { StreamEndpoint } from '@/endpoint/stream-endpoint'
-import { WebSocketEndpoint } from '@/endpoint/ws-endpoint'
+import { Endpoint } from '../endpoint/endpoint'
+import { HttpEndpoint } from '../endpoint/http-endpoint'
+import { StreamEndpoint } from '../endpoint/stream-endpoint'
+import { WebSocketEndpoint } from '../endpoint/ws-endpoint'
 import { deepMerge } from '../utils/deep-merge'
 import type { Combine } from '../utils/types'
 import type { CreateApiClientArgs, FetchOptions } from './client-base'
@@ -55,10 +55,10 @@ type EndpointCall<T extends Endpoint> = T extends Endpoint<
   ? {
       [K in M]: T extends HttpEndpoint<infer _P, infer R>
         ? HttpEndpointCallSignature<R, _I>
-        : T extends StreamEndpoint<infer _P, infer R>
-          ? { $stream: StreamEndpointCallSignature<R, _I> }
-          : T extends WebSocketEndpoint<infer _P, infer R>
-            ? { $ws: WebSocketEndpointCallSignature<R, _I> }
+        : T extends WebSocketEndpoint<infer _P, infer R>
+          ? { $ws: WebSocketEndpointCallSignature<R, _I> }
+          : T extends StreamEndpoint<infer _P, infer R>
+            ? { $stream: StreamEndpointCallSignature<R, _I> }
             : 'not yet implemented or unknown endpoint type'
     }
   : 'error dose not inherit from Endpoint'
@@ -91,7 +91,7 @@ export function createApiClient<ApiSchema extends Record<string, unknown>>(
 
   const apiRoot = {} as Client<ApiSchema>
   Object.entries(apiSchema).forEach(([_endpointKey, endpoint]) => {
-    if (endpoint instanceof HttpEndpoint) {
+    if (endpoint instanceof Endpoint) {
       const segments = parsePath(endpoint.path)
       // Merge the new structure into the existing apiRoot
       deepMerge(
