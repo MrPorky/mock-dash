@@ -2,13 +2,8 @@ import * as fs from 'node:fs'
 import * as http from 'node:http'
 import * as https from 'node:https'
 import * as path from 'node:path'
-import {
-  IJsonSchema,
-  type OpenAPIV2,
-  type OpenAPIV3,
-  type OpenAPIV3_1,
-} from 'openapi-types'
-import type { HttpMethod } from '../http-endpoint/http-endpoint'
+import type { OpenAPIV3, OpenAPIV3_1 } from 'openapi-types'
+import type { HttpMethod } from '../endpoint/endpoint'
 import { normalizePrefix } from '../utils/normalize-prefix'
 import type { GenerateCliOptions } from './parse-args'
 
@@ -64,6 +59,28 @@ function getSchemaFromRef(ref: string, ctx: GenContext) {
   ensureComponent(name, target, ctx)
   const camelCaseName = apiPathToCamelCase(name)
   return `${camelCaseName}Model`
+}
+
+function resolveRef(ref: string, ctx: GenContext): any {
+  // e.g. #/components/schemas/Activity or #/components/parameters/UserId
+  const parts = ref.split('/')
+  let target: any = ctx.spec
+  for (let i = 1; i < parts.length; i++) {
+    target = target?.[parts[i]]
+  }
+  return target
+}
+
+function getParameterFromRef(ref: string, ctx: GenContext): any {
+  return resolveRef(ref, ctx)
+}
+
+function getRequestBodyFromRef(ref: string, ctx: GenContext): any {
+  return resolveRef(ref, ctx)
+}
+
+function getResponseFromRef(ref: string, ctx: GenContext): any {
+  return resolveRef(ref, ctx)
 }
 
 function primitiveStringExpr(schema: any): string {
@@ -173,7 +190,9 @@ function buildMockDashSchema(
     const pathItem = spec.paths[rawPath]!
 
     for (const method of ['get', 'post', 'put', 'delete', 'patch'] as const) {
-      const endpoint = pathItem[method]!
+      const endpoint = pathItem[method]
+
+      if (!endpoint) continue
 
       // Check if the path starts with any of the provided prefixes
       let detectedPrefix: string | undefined
@@ -201,22 +220,26 @@ function buildMockDashSchema(
         const paramEntries: string[] = []
 
         for (const param of endpoint.parameters) {
+          let actualParam: any = param
           if ('$ref' in param) {
-            // TODO: support parameter $ref
-            console.log(
-              'Warning: Parameter $ref not supported in this generator.',
-            )
-            continue
+            const resolved = getParameterFromRef(param.$ref, ctx)
+            if (!resolved) {
+              console.log(
+                `Warning: Could not resolve parameter $ref: ${param.$ref}`,
+              )
+              continue
+            }
+            actualParam = resolved
           }
 
           // Use param schema converting to expression
-          const expr = toZodExpr(param.schema, ctx)
-          if (param.in === 'query') {
+          const expr = toZodExpr(actualParam.schema, ctx)
+          if (actualParam.in === 'query') {
             queryEntries.push(
-              `${JSON.stringify(param.name)}: ${param.required ? expr : `${expr}.optional()`}`,
+              `${JSON.stringify(actualParam.name)}: ${actualParam.required ? expr : `${expr}.optional()`}`,
             )
-          } else if (param.in === 'path') {
-            paramEntries.push(`${JSON.stringify(param.name)}: ${expr}`)
+          } else if (actualParam.in === 'path') {
+            paramEntries.push(`${JSON.stringify(actualParam.name)}: ${expr}`)
           }
         }
 
@@ -226,13 +249,20 @@ function buildMockDashSchema(
       }
 
       if (endpoint.requestBody) {
+        let actualRequestBody: any = endpoint.requestBody
         if ('$ref' in endpoint.requestBody) {
-          // TODO: support requestBody $ref
-          console.log(
-            'Warning: requestBody $ref not supported in this generator.',
-          )
-        } else {
-          const content = endpoint.requestBody.content
+          const resolved = getRequestBodyFromRef(endpoint.requestBody.$ref, ctx)
+          if (!resolved) {
+            console.log(
+              `Warning: Could not resolve requestBody $ref: ${endpoint.requestBody.$ref}`,
+            )
+          } else {
+            actualRequestBody = resolved
+          }
+        }
+
+        if (actualRequestBody && !('$ref' in actualRequestBody)) {
+          const content = actualRequestBody.content
           const jsonLikeKey = Object.keys(content).find((k) =>
             k.includes('application/json'),
           )
@@ -240,12 +270,7 @@ function buildMockDashSchema(
             ? content[jsonLikeKey]?.schema
             : undefined
           if (jsonSchema) {
-            if ('$ref' in jsonSchema) {
-              // TODO: support jsonSchema $ref
-              console.log(
-                'Warning: jsonSchema $ref not supported in this generator.',
-              )
-            } else input.json = toZodExpr(jsonSchema, ctx)
+            input.json = toZodExpr(jsonSchema, ctx)
           }
 
           const formLikeKey = Object.keys(content).find(
@@ -257,12 +282,7 @@ function buildMockDashSchema(
             ? content[formLikeKey]?.schema
             : undefined
           if (formSchema) {
-            if ('$ref' in formSchema) {
-              // TODO: support formSchema $ref
-              console.log(
-                'Warning: formSchema $ref not supported in this generator.',
-              )
-            } else input.form = toZodExpr(formSchema, ctx)
+            input.form = toZodExpr(formSchema, ctx)
           }
         }
       }
@@ -282,16 +302,29 @@ function buildMockDashSchema(
         chosen = endpoint.responses[firstKey]
       }
 
+      let actualResponse: any = chosen
       if ('$ref' in chosen) {
-        // TODO: support response $ref
-        console.log('Warning: response $ref not supported in this generator.')
-      } else if (chosen?.content) {
-        const jsonLikeKey = Object.keys(chosen.content).find((k) =>
+        const resolved = getResponseFromRef(chosen.$ref, ctx)
+        if (!resolved) {
+          console.log(
+            `Warning: Could not resolve response $ref: ${chosen.$ref}`,
+          )
+        } else {
+          actualResponse = resolved
+        }
+      }
+
+      if (
+        actualResponse &&
+        !('$ref' in actualResponse) &&
+        actualResponse.content
+      ) {
+        const jsonLikeKey = Object.keys(actualResponse.content).find((k) =>
           k.includes('application/json'),
         )
 
         const respSchema = jsonLikeKey
-          ? chosen.content[jsonLikeKey]?.schema
+          ? actualResponse.content[jsonLikeKey]?.schema
           : undefined
 
         if (respSchema) {
@@ -375,20 +408,20 @@ function emitTs(data: {
         : ''
       const responseBlock = `response: ${e.response}`
 
-      const name = apiPathToCamelCase(e.path)
+      const name = apiPathToCamelCase(`${e.method}${e.path}`)
 
       // Add prefix option if detected
       const optionsBlock = e.prefix
-        ? `, { prefix: ${JSON.stringify(e.prefix)} }`
+        ? `{ prefix: ${JSON.stringify(e.prefix)} }`
         : ''
 
-      return `export const ${name} = define${e.method[0].toUpperCase() + e.method.slice(1)}(${e.path}, { ${inputBlock}${responseBlock} }${optionsBlock})`
+      return `export const ${name} = define${e.method[0].toUpperCase() + e.method.slice(1)}("${e.path}", { ${inputBlock}${responseBlock}${optionsBlock ? `, options: ${optionsBlock}` : ''} })`
     })
     .join('\n\n')
 
   return `// Generated by mock-dash CLI
 import { z } from 'zod'
-import { defineEndpoint } from 'mock-dash'
+import { defineGet, defineDelete, definePost, definePut, definePatch } from 'mock-dash'
 
 ${compDecls}
 
