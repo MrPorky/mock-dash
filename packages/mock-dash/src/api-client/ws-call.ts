@@ -27,6 +27,13 @@ export type WSMessage<R extends WebSocketResponse> =
     ? WebSocketMessage<z.infer<z.ZodUnion<S>>>
     : never
 
+// Binary data message type
+export type WSBinaryMessage = {
+  type: 'binary'
+  /** The binary data received */
+  data: ArrayBuffer | Blob | SharedArrayBuffer
+}
+
 // Error type for WebSocket message parsing
 export type WSParseError = {
   type: 'error'
@@ -44,6 +51,7 @@ export type WSStatusUpdate = {
 // Union of all yielded items from the WebSocket generator
 export type WSChunk<R extends WebSocketResponse<any>> =
   | WSMessage<R>
+  | WSBinaryMessage
   | WSParseError
   | WSStatusUpdate
 
@@ -230,11 +238,23 @@ async function* wsMessageParser<S extends Array<z.ZodType>>(
   ws.addEventListener('message', (event) => {
     const rawData = event.data
 
-    // Handle binary data
-    if (rawData instanceof ArrayBuffer || rawData instanceof Blob) {
+    // Handle binary data (ArrayBuffer, Blob, or TypedArray/DataView)
+    if (
+      rawData instanceof ArrayBuffer ||
+      rawData instanceof Blob ||
+      ArrayBuffer.isView(rawData)
+    ) {
+      // Convert TypedArray or DataView to ArrayBuffer
+      const binaryData = ArrayBuffer.isView(rawData)
+        ? rawData.buffer.slice(
+            rawData.byteOffset,
+            rawData.byteOffset + rawData.byteLength,
+          )
+        : rawData
+
       messageQueue.push({
-        type: 'error',
-        error: new Error('Binary WebSocket messages are not yet supported'),
+        type: 'binary',
+        data: binaryData,
       })
 
       if (resolver) {

@@ -545,4 +545,219 @@ describe('WebSocket endpoints', () => {
       expect(errors[0].message).toContain('missing "type" field')
     }
   }, 10000)
+
+  it('should handle binary ArrayBuffer messages', async () => {
+    const apiSchema = {
+      updates: defineGet('/updates', {
+        response: defineWebSocket([], []),
+      }),
+    }
+
+    const client = createApiClient({
+      apiSchema,
+      baseURL: 'http://localhost',
+    })
+
+    const result = await client.updates.get.$ws()
+
+    if (result.data) {
+      const binaryMessages: any[] = []
+
+      setTimeout(() => {
+        const ws = MockWebSocket.lastInstance
+        if (ws) {
+          // Send binary ArrayBuffer
+          const buffer = new ArrayBuffer(8)
+          const view = new Uint8Array(buffer)
+          view.set([1, 2, 3, 4, 5, 6, 7, 8])
+          ws.dispatchEvent(new MessageEvent('message', { data: buffer }))
+          ws.close()
+        }
+      }, 50)
+
+      for await (const chunk of result.data) {
+        if (chunk.type === 'binary') binaryMessages.push(chunk.data)
+      }
+
+      expect(binaryMessages).toHaveLength(1)
+      expect(binaryMessages[0]).toBeInstanceOf(ArrayBuffer)
+      expect(binaryMessages[0].byteLength).toBe(8)
+    }
+  }, 10000)
+
+  it('should handle binary Blob messages', async () => {
+    const apiSchema = {
+      updates: defineGet('/updates', {
+        response: defineWebSocket([], []),
+      }),
+    }
+
+    const client = createApiClient({
+      apiSchema,
+      baseURL: 'http://localhost',
+    })
+
+    const result = await client.updates.get.$ws()
+
+    if (result.data) {
+      const binaryMessages: any[] = []
+
+      setTimeout(() => {
+        const ws = MockWebSocket.lastInstance
+        if (ws) {
+          // Send binary Blob
+          const blob = new Blob(['test data'], {
+            type: 'application/octet-stream',
+          })
+          ws.dispatchEvent(new MessageEvent('message', { data: blob }))
+          ws.close()
+        }
+      }, 50)
+
+      for await (const chunk of result.data) {
+        if (chunk.type === 'binary') binaryMessages.push(chunk.data)
+      }
+
+      expect(binaryMessages).toHaveLength(1)
+      expect(binaryMessages[0]).toBeInstanceOf(Blob)
+    }
+  }, 10000)
+
+  it('should handle TypedArray messages (Uint8Array)', async () => {
+    const apiSchema = {
+      updates: defineGet('/updates', {
+        response: defineWebSocket([], []),
+      }),
+    }
+
+    const client = createApiClient({
+      apiSchema,
+      baseURL: 'http://localhost',
+    })
+
+    const result = await client.updates.get.$ws()
+
+    if (result.data) {
+      const binaryMessages: any[] = []
+
+      setTimeout(() => {
+        const ws = MockWebSocket.lastInstance
+        if (ws) {
+          // Send TypedArray (Uint8Array)
+          const typedArray = new Uint8Array([10, 20, 30, 40, 50])
+          ws.dispatchEvent(new MessageEvent('message', { data: typedArray }))
+          ws.close()
+        }
+      }, 50)
+
+      for await (const chunk of result.data) {
+        if (chunk.type === 'binary') binaryMessages.push(chunk.data)
+      }
+
+      expect(binaryMessages).toHaveLength(1)
+      expect(binaryMessages[0]).toBeInstanceOf(ArrayBuffer)
+      expect(binaryMessages[0].byteLength).toBe(5)
+
+      // Verify the data is correct
+      const view = new Uint8Array(binaryMessages[0])
+      expect(Array.from(view)).toEqual([10, 20, 30, 40, 50])
+    }
+  }, 10000)
+
+  it('should handle DataView messages', async () => {
+    const apiSchema = {
+      updates: defineGet('/updates', {
+        response: defineWebSocket([], []),
+      }),
+    }
+
+    const client = createApiClient({
+      apiSchema,
+      baseURL: 'http://localhost',
+    })
+
+    const result = await client.updates.get.$ws()
+
+    if (result.data) {
+      const binaryMessages: any[] = []
+
+      setTimeout(() => {
+        const ws = MockWebSocket.lastInstance
+        if (ws) {
+          // Send DataView
+          const buffer = new ArrayBuffer(16)
+          const dataView = new DataView(buffer)
+          dataView.setInt32(0, 42)
+          dataView.setFloat32(4, 3.14)
+          ws.dispatchEvent(new MessageEvent('message', { data: dataView }))
+          ws.close()
+        }
+      }, 50)
+
+      for await (const chunk of result.data) {
+        if (chunk.type === 'binary') binaryMessages.push(chunk.data)
+      }
+
+      expect(binaryMessages).toHaveLength(1)
+      expect(binaryMessages[0]).toBeInstanceOf(ArrayBuffer)
+      expect(binaryMessages[0].byteLength).toBe(16)
+
+      // Verify the data is correct
+      const view = new DataView(binaryMessages[0])
+      expect(view.getInt32(0)).toBe(42)
+      expect(view.getFloat32(4)).toBeCloseTo(3.14, 2)
+    }
+  }, 10000)
+
+  it('should handle mixed JSON and binary messages', async () => {
+    const apiSchema = {
+      updates: defineGet('/updates', {
+        response: defineWebSocket([z.object({ text: z.string() })], []),
+      }),
+    }
+
+    const client = createApiClient({
+      apiSchema,
+      baseURL: 'http://localhost',
+    })
+
+    const result = await client.updates.get.$ws()
+
+    if (result.data) {
+      const jsonMessages: any[] = []
+      const binaryMessages: any[] = []
+
+      setTimeout(() => {
+        const ws = MockWebSocket.lastInstance
+        if (ws) {
+          // Send JSON message
+          ws.simulateMessage(
+            JSON.stringify({ type: 'update', data: { text: 'hello' } }),
+          )
+
+          // Send binary message
+          const buffer = new ArrayBuffer(4)
+          ws.dispatchEvent(new MessageEvent('message', { data: buffer }))
+
+          // Send another JSON message
+          ws.simulateMessage(
+            JSON.stringify({ type: 'update', data: { text: 'world' } }),
+          )
+
+          ws.close()
+        }
+      }, 50)
+
+      for await (const chunk of result.data) {
+        if (chunk.type === 'message') jsonMessages.push(chunk.data)
+        if (chunk.type === 'binary') binaryMessages.push(chunk.data)
+      }
+
+      expect(jsonMessages).toHaveLength(2)
+      expect(jsonMessages[0]).toEqual({ text: 'hello' })
+      expect(jsonMessages[1]).toEqual({ text: 'world' })
+      expect(binaryMessages).toHaveLength(1)
+      expect(binaryMessages[0]).toBeInstanceOf(ArrayBuffer)
+    }
+  }, 10000)
 })
