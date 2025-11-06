@@ -1,4 +1,4 @@
-import type z from 'zod'
+import z from 'zod'
 import type { EndpointInputType } from '../endpoint/input'
 import type { WebSocketEndpoint } from '../endpoint/ws-endpoint'
 import {
@@ -17,20 +17,14 @@ import type { InterceptorManager } from './interceptor'
 // Represents a successfully parsed message
 type WebSocketMessage<T> = {
   type: 'message'
-  /** The message type name */
-  messageType: string
   /** The parsed and validated data */
   data: T
-  /** The raw data string */
-  raw: string
 }
 
 // Union of all possible received messages from the WebSocket
-export type WSMessage<R extends WebSocketResponse<any>> =
-  R extends WebSocketResponse<infer M>
-    ? {
-        [K in keyof M]: WebSocketMessage<z.infer<M[K]>>
-      }[keyof M]
+export type WSMessage<R extends WebSocketResponse> =
+  R extends WebSocketResponse<infer S>
+    ? WebSocketMessage<z.infer<z.ZodUnion<S>>>
     : never
 
 // Error type for WebSocket message parsing
@@ -55,11 +49,10 @@ export type WSChunk<R extends WebSocketResponse<any>> =
 
 // WebSocket controller for sending messages and closing connection
 export type WebSocketController<R extends WebSocketResponse<any>> = {
-  send: <K extends keyof (R extends WebSocketResponse<infer M> ? M : never)>(
-    messageType: K,
-    data: z.infer<
-      (R extends WebSocketResponse<infer M> ? M : never)[K & string]
-    >,
+  send: (
+    data: R extends WebSocketResponse<infer _S, infer C>
+      ? z.infer<z.ZodUnion<C>>
+      : never,
   ) => void
   sendRaw: (data: string | ArrayBuffer | Blob) => void
   close: (code?: number, reason?: string) => void
@@ -172,13 +165,13 @@ export function callWebSocketEndpoint(
     }
 
     // Create the async generator for messages
-    const messageGenerator = wsMessageParser(ws, schema.messages)
+    const messageGenerator = wsMessageParser(ws, schema.serverToClient)
 
     // Create the controller for sending messages and closing the connection
     const controller: WebSocketController<WebSocketResponse<any>> = {
-      send: (messageType, data) => {
+      send: (data) => {
         if (ws.readyState === WebSocket.OPEN) {
-          const message = JSON.stringify({ type: messageType, data })
+          const message = JSON.stringify(data)
           ws.send(message)
         } else {
           throw new Error(
@@ -213,12 +206,12 @@ export function callWebSocketEndpoint(
 /**
  * Parses WebSocket messages as an async generator.
  */
-async function* wsMessageParser<M extends Record<string, z.ZodType>>(
+async function* wsMessageParser<S extends Array<z.ZodType>>(
   ws: WebSocket,
-  schemas: M,
-): AsyncGenerator<WSChunk<WebSocketResponse<M>>, void, void> {
+  schemas: S,
+): AsyncGenerator<WSChunk<WebSocketResponse<S>>, void, void> {
   // Queue for storing messages
-  const messageQueue: (WSChunk<WebSocketResponse<M>> | null)[] = []
+  const messageQueue: (WSChunk<WebSocketResponse<S>> | null)[] = []
   let resolver: (() => void) | null = null
   let connectionError: Error | null = null
 
@@ -243,6 +236,7 @@ async function* wsMessageParser<M extends Record<string, z.ZodType>>(
         type: 'error',
         error: new Error('Binary WebSocket messages are not yet supported'),
       })
+
       if (resolver) {
         resolver()
         resolver = null
@@ -263,6 +257,7 @@ async function* wsMessageParser<M extends Record<string, z.ZodType>>(
             : new Error('Failed to parse WebSocket message as JSON'),
         raw: rawData,
       })
+
       if (resolver) {
         resolver()
         resolver = null
@@ -280,6 +275,7 @@ async function* wsMessageParser<M extends Record<string, z.ZodType>>(
         ),
         raw: rawData,
       })
+
       if (resolver) {
         resolver()
         resolver = null
@@ -287,31 +283,12 @@ async function* wsMessageParser<M extends Record<string, z.ZodType>>(
       return
     }
 
-    // Validate against schema
-    const schema = schemas[messageType]
-    if (!schema) {
-      messageQueue.push({
-        type: 'error',
-        error: new Error(
-          `Unknown WebSocket message type: "${messageType}". Expected one of: ${Object.keys(schemas).join(', ')}`,
-        ),
-        raw: rawData,
-      })
-      if (resolver) {
-        resolver()
-        resolver = null
-      }
-      return
-    }
-
-    const validation = schema.safeParse(parsedMessage.data)
+    const validation = z.union(schemas).safeParse(parsedMessage.data)
     if (validation.success) {
       messageQueue.push({
         type: 'message',
-        messageType,
         data: validation.data,
-        raw: rawData,
-      } as WSChunk<WebSocketResponse<M>>)
+      })
     } else {
       messageQueue.push({
         type: 'error',

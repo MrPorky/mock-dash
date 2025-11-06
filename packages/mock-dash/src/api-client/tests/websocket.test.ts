@@ -98,14 +98,17 @@ describe('WebSocket endpoints', () => {
     const apiSchema = {
       chatStream: defineGet('/chat', {
         input: { query: { userId: z.string() } },
-        response: defineWebSocket({
-          message: z.object({
-            id: z.string(),
-            text: z.string(),
-            timestamp: z.string(),
-          }),
-          notification: z.object({ type: z.string(), content: z.string() }),
-        }),
+        response: defineWebSocket(
+          [
+            z.object({
+              id: z.string(),
+              text: z.string(),
+              timestamp: z.string(),
+            }),
+            z.object({ type: z.string(), content: z.string() }),
+          ],
+          [],
+        ),
       }),
     }
 
@@ -159,12 +162,15 @@ describe('WebSocket endpoints', () => {
   it('should handle WebSocket with path parameters', async () => {
     const apiSchema = {
       userUpdates: defineGet('/users/:userId/updates', {
-        response: defineWebSocket({
-          update: z.object({
-            field: z.string(),
-            value: z.string(),
-          }),
-        }),
+        response: defineWebSocket(
+          [
+            z.object({
+              field: z.string(),
+              value: z.string(),
+            }),
+          ],
+          [],
+        ),
       }),
     }
 
@@ -188,9 +194,7 @@ describe('WebSocket endpoints', () => {
   it('should send messages through controller', async () => {
     const apiSchema = {
       chatStream: defineGet('/chat', {
-        response: defineWebSocket({
-          message: z.object({ text: z.string() }),
-        }),
+        response: defineWebSocket([], [z.object({ text: z.string() })]),
       }),
     }
 
@@ -208,10 +212,10 @@ describe('WebSocket endpoints', () => {
       const ws = MockWebSocket.lastInstance
       const sendSpy = vi.spyOn(ws!, 'send')
 
-      result.controller.send('message', { text: 'Hello World' })
+      result.controller.send({ text: 'Hello World' })
 
       expect(sendSpy).toHaveBeenCalledWith(
-        JSON.stringify({ type: 'message', data: { text: 'Hello World' } }),
+        JSON.stringify({ text: 'Hello World' }),
       )
     }
   })
@@ -219,9 +223,7 @@ describe('WebSocket endpoints', () => {
   it('should handle malformed WebSocket messages', async () => {
     const apiSchema = {
       updates: defineGet('/updates', {
-        response: defineWebSocket({
-          validMessage: z.object({ value: z.string() }),
-        }),
+        response: defineWebSocket([z.object({ value: z.string() })], []),
       }),
     }
 
@@ -257,12 +259,10 @@ describe('WebSocket endpoints', () => {
     }
   }, 10000)
 
-  it('should handle unknown message types', async () => {
+  it('should handle validation errors for invalid message data', async () => {
     const apiSchema = {
       updates: defineGet('/updates', {
-        response: defineWebSocket({
-          knownType: z.object({ value: z.string() }),
-        }),
+        response: defineWebSocket([z.object({ value: z.string() })], []),
       }),
     }
 
@@ -279,8 +279,9 @@ describe('WebSocket endpoints', () => {
       setTimeout(() => {
         const ws = MockWebSocket.lastInstance
         if (ws) {
+          // Send data that doesn't match the schema
           ws.simulateMessage(
-            JSON.stringify({ type: 'unknownType', data: { value: 'test' } }),
+            JSON.stringify({ type: 'update', data: { invalid: 'data' } }),
           )
           ws.close()
         }
@@ -291,16 +292,13 @@ describe('WebSocket endpoints', () => {
       }
 
       expect(errors.length).toBeGreaterThan(0)
-      expect(errors[0].message).toContain('Unknown WebSocket message type')
     }
   }, 10000)
 
   it('should handle WebSocket connection errors', async () => {
     const apiSchema = {
       updates: defineGet('/updates', {
-        response: defineWebSocket({
-          message: z.object({ text: z.string() }),
-        }),
+        response: defineWebSocket([z.object({ text: z.string() })], []),
       }),
     }
 
@@ -327,9 +325,7 @@ describe('WebSocket endpoints', () => {
   it('should close WebSocket connection via controller', async () => {
     const apiSchema = {
       updates: defineGet('/updates', {
-        response: defineWebSocket({
-          message: z.object({ text: z.string() }),
-        }),
+        response: defineWebSocket([z.object({ text: z.string() })], []),
       }),
     }
 
@@ -362,9 +358,7 @@ describe('WebSocket endpoints', () => {
             room: z.string().optional(),
           },
         },
-        response: defineWebSocket({
-          message: z.object({ text: z.string() }),
-        }),
+        response: defineWebSocket([z.object({ text: z.string() })], []),
       }),
     }
 
@@ -387,9 +381,7 @@ describe('WebSocket endpoints', () => {
   it('should convert http to ws protocol', async () => {
     const apiSchema = {
       updates: defineGet('/updates', {
-        response: defineWebSocket({
-          message: z.object({ text: z.string() }),
-        }),
+        response: defineWebSocket([z.object({ text: z.string() })], []),
       }),
     }
 
@@ -409,9 +401,7 @@ describe('WebSocket endpoints', () => {
   it('should convert https to wss protocol', async () => {
     const apiSchema = {
       updates: defineGet('/updates', {
-        response: defineWebSocket({
-          message: z.object({ text: z.string() }),
-        }),
+        response: defineWebSocket([z.object({ text: z.string() })], []),
       }),
     }
 
@@ -431,12 +421,15 @@ describe('WebSocket endpoints', () => {
   it('should handle message validation errors', async () => {
     const apiSchema = {
       updates: defineGet('/updates', {
-        response: defineWebSocket({
-          message: z.object({
-            id: z.number(),
-            text: z.string(),
-          }),
-        }),
+        response: defineWebSocket(
+          [
+            z.object({
+              id: z.number(),
+              text: z.string(),
+            }),
+          ],
+          [],
+        ),
       }),
     }
 
@@ -475,9 +468,7 @@ describe('WebSocket endpoints', () => {
   it('should expose WebSocket readyState', async () => {
     const apiSchema = {
       updates: defineGet('/updates', {
-        response: defineWebSocket({
-          message: z.object({ text: z.string() }),
-        }),
+        response: defineWebSocket([z.object({ text: z.string() })], []),
       }),
     }
 
@@ -497,9 +488,7 @@ describe('WebSocket endpoints', () => {
   it('should handle sendRaw for non-JSON messages', async () => {
     const apiSchema = {
       updates: defineGet('/updates', {
-        response: defineWebSocket({
-          message: z.object({ text: z.string() }),
-        }),
+        response: defineWebSocket([z.object({ text: z.string() })], []),
       }),
     }
 
@@ -526,9 +515,7 @@ describe('WebSocket endpoints', () => {
   it('should handle messages without type field', async () => {
     const apiSchema = {
       updates: defineGet('/updates', {
-        response: defineWebSocket({
-          message: z.object({ text: z.string() }),
-        }),
+        response: defineWebSocket([z.object({ text: z.string() })], []),
       }),
     }
 
