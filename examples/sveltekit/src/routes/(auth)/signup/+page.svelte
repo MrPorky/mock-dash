@@ -29,7 +29,7 @@ async function handleSubmit(
   const data: JSON = Object.fromEntries(formData.entries())
 
   try {
-    await apiClient('@post/sign-up/email', { json: data })
+    await apiClient['sign-up'].email.post({ json: data })
 
     goto(redirect)
   } catch (error) {

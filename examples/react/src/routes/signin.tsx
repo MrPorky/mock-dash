@@ -37,7 +37,7 @@ function RouteComponent() {
       }
 
       try {
-        await apiClient('@post/sign-in/email', { json: data })
+        await apiClient['sign-in'].email.post({ json: data })
         getSession()
 
         navigate({

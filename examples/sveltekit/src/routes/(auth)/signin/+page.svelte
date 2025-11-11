@@ -33,7 +33,7 @@ async function handleSubmit(
   }
 
   try {
-    await apiClient('@post/sign-in/email', { json: data })
+    await apiClient['sign-in'].email.post({ json: data })
 
     goto(redirect)
   } catch (error) {

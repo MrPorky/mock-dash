@@ -117,7 +117,7 @@ export function callWebSocketEndpoint(
     // Build the full URL
     let fullUrl = buildEndpointPath(
       endpoint.path,
-      endpoint.options?.prefix,
+      endpoint.options?.alias,
       requestOptions.baseURL,
     )
 

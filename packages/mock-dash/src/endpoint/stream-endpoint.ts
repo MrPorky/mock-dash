@@ -1,7 +1,7 @@
 import type { StreamingApi } from 'hono/utils/stream'
 import type z from 'zod'
 import type { EndpointInputContext } from '../create-mock-server/mock'
-import { Endpoint, type HttpMethod } from './endpoint'
+import { Endpoint, type EndpointOptions, type HttpMethod } from './endpoint'
 import type { EndpointInput, EndpointInputType } from './input'
 import {
   BinaryStreamResponse,
@@ -91,10 +91,11 @@ export class StreamEndpoint<
   R extends StreamResponse = StreamResponse,
   M extends HttpMethod = HttpMethod,
   I extends EndpointInput<M> = EndpointInputType,
-  Mock extends StreamMock<Endpoint<R, P, M, I>> = StreamMock<
-    Endpoint<R, P, M, I>
+  O extends EndpointOptions = EndpointOptions,
+  Mock extends StreamMock<Endpoint<R, P, M, I, O>> = StreamMock<
+    Endpoint<R, P, M, I, O>
   >,
-> extends Endpoint<R, P, M, I> {
+> extends Endpoint<R, P, M, I, O, Mock> {
   #mock?: Mock
 
   defineMock(input: Mock): void {

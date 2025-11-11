@@ -10,7 +10,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
   const getSession = useCallback(async () => {
     try {
-      const data = await apiClient('@get/get-session')
+      const { data } = await apiClient['get-session'].get()
 
       if (data) {
         setUser(data.user)

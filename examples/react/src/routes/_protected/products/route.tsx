@@ -4,11 +4,15 @@ import styles from './products.module.css'
 
 export const Route = createFileRoute('/_protected/products')({
   component: RouteComponent,
-  loader: () => apiClient('@get/products'),
+  loader: () => apiClient.products.get(),
 })
 
 function RouteComponent() {
-  const products = Route.useLoaderData()
+  const { data: products, error } = Route.useLoaderData()
+
+  if (error) {
+    return <p>Error loading products: {String(error)}</p>
+  }
 
   return (
     <>

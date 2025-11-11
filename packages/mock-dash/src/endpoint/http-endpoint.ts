@@ -2,7 +2,7 @@ import type z from 'zod'
 import type { EndpointInputContext } from '../create-mock-server/mock'
 import type { EndpointInput, EndpointInputType } from '../endpoint/input'
 import type { MockStructure } from '../utils/create-mock'
-import { Endpoint, type HttpMethod } from './endpoint'
+import { Endpoint, type EndpointOptions, type HttpMethod } from './endpoint'
 
 export function isHttpEndpoint(endpoint: Endpoint): endpoint is HttpEndpoint {
   return endpoint instanceof HttpEndpoint
@@ -18,11 +18,12 @@ export class HttpEndpoint<
   R extends z.ZodType = z.ZodType,
   M extends HttpMethod = HttpMethod,
   I extends EndpointInput<M> = EndpointInputType,
+  O extends EndpointOptions = EndpointOptions,
   Mock extends HttpMock<Endpoint<R, P, M, I>, R> = HttpMock<
     Endpoint<R, P, M, I>,
     R
   >,
-> extends Endpoint<R, P, M, I, Mock> {
+> extends Endpoint<R, P, M, I, O, Mock> {
   #mock?: Mock
 
   defineMock(input: Mock): void {

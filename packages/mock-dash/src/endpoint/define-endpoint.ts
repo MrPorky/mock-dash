@@ -1,5 +1,5 @@
 import z from 'zod'
-import type { EndpointConfig } from './endpoint'
+import type { EndpointConfig, EndpointOptions } from './endpoint'
 import { HttpEndpoint } from './http-endpoint'
 import type { EndpointInput, ParamFromPath } from './input'
 import { StreamEndpoint } from './stream-endpoint'
@@ -12,28 +12,38 @@ export function defineGet<
   P extends string,
   T extends ParamFromPath<P>,
   R extends WebSocketResponse,
+  O extends EndpointOptions = EndpointOptions,
 >(
   path: P,
-  config: EndpointConfig<R, I, P, T>,
-): WebSocketEndpoint<P, R, 'get', I>
+  config: EndpointConfig<R, I, P, T, O>,
+): WebSocketEndpoint<P, R, 'get', I, O>
 export function defineGet<
   I extends EndpointInput<'get'>,
   P extends string,
   T extends ParamFromPath<P>,
   R extends StreamResponse,
->(path: P, config: EndpointConfig<R, I, P, T>): StreamEndpoint<P, R, 'get', I>
+  O extends EndpointOptions = EndpointOptions,
+>(
+  path: P,
+  config: EndpointConfig<R, I, P, T, O>,
+): StreamEndpoint<P, R, 'get', I, O>
 export function defineGet<
   I extends EndpointInput<'get'>,
   P extends string,
   T extends ParamFromPath<P>,
   R extends z.ZodType,
->(path: P, config: EndpointConfig<R, I, P, T>): HttpEndpoint<P, R, 'get', I>
+  O extends EndpointOptions = EndpointOptions,
+>(
+  path: P,
+  config: EndpointConfig<R, I, P, T, O>,
+): HttpEndpoint<P, R, 'get', I, O>
 export function defineGet<
   I extends EndpointInput<'get'>,
   R extends z.ZodType | StreamResponse | WebSocketResponse,
   P extends string,
   T extends ParamFromPath<P>,
->(path: P, { input, response, options = {} }: EndpointConfig<R, I, P, T>) {
+  O extends EndpointOptions = EndpointOptions,
+>(path: P, { input, response, options }: EndpointConfig<R, I, P, T, O>) {
   if (response instanceof WebSocketResponse) {
     return new WebSocketEndpoint('get', path, response, input, options)
   } else if (response instanceof StreamResponse) {
@@ -49,22 +59,28 @@ export function defineDelete<
   I extends EndpointInput<'delete'>,
   P extends string,
   T extends ParamFromPath<P>,
+  O extends EndpointOptions = EndpointOptions,
 >(
   path: P,
-  config: EndpointConfig<StreamResponse, I, P, T>,
+  config: EndpointConfig<StreamResponse, I, P, T, O>,
 ): StreamEndpoint<P, StreamResponse, 'delete', I>
 export function defineDelete<
   I extends EndpointInput<'delete'>,
   P extends string,
   T extends ParamFromPath<P>,
   R extends z.ZodType,
->(path: P, config: EndpointConfig<R, I, P, T>): HttpEndpoint<P, R, 'delete', I>
+  O extends EndpointOptions = EndpointOptions,
+>(
+  path: P,
+  config: EndpointConfig<R, I, P, T, O>,
+): HttpEndpoint<P, R, 'delete', I, O>
 export function defineDelete<
   I extends EndpointInput<'delete'>,
   P extends string,
   T extends ParamFromPath<P>,
   R extends z.ZodType | StreamResponse,
->(path: P, { input, response, options = {} }: EndpointConfig<R, I, P, T>) {
+  O extends EndpointOptions = EndpointOptions,
+>(path: P, { input, response, options }: EndpointConfig<R, I, P, T, O>) {
   if (response instanceof StreamResponse) {
     return new StreamEndpoint('delete', path, response, input, options)
   } else if (response instanceof z.ZodType) {
@@ -79,19 +95,28 @@ export function definePost<
   P extends string,
   T extends ParamFromPath<P>,
   R extends StreamResponse,
->(path: P, config: EndpointConfig<R, I, P, T>): StreamEndpoint<P, R, 'post', I>
+  O extends EndpointOptions = EndpointOptions,
+>(
+  path: P,
+  config: EndpointConfig<R, I, P, T, O>,
+): StreamEndpoint<P, R, 'post', I, O>
 export function definePost<
   I extends EndpointInput<'post'>,
   P extends string,
   T extends ParamFromPath<P>,
   R extends z.ZodType,
->(path: P, config: EndpointConfig<R, I, P, T>): HttpEndpoint<P, R, 'post', I>
+  O extends EndpointOptions = EndpointOptions,
+>(
+  path: P,
+  config: EndpointConfig<R, I, P, T, O>,
+): HttpEndpoint<P, R, 'post', I, O>
 export function definePost<
   I extends EndpointInput<'post'>,
   R extends z.ZodType | StreamResponse,
   P extends string,
   T extends ParamFromPath<P>,
->(path: P, { input, response, options = {} }: EndpointConfig<R, I, P, T>) {
+  O extends EndpointOptions = EndpointOptions,
+>(path: P, { input, response, options }: EndpointConfig<R, I, P, T, O>) {
   if (response instanceof StreamResponse) {
     return new StreamEndpoint('post', path, response, input, options)
   } else if (response instanceof z.ZodType) {
@@ -106,19 +131,28 @@ export function definePut<
   P extends string,
   T extends ParamFromPath<P>,
   R extends StreamResponse,
->(path: P, config: EndpointConfig<R, I, P, T>): StreamEndpoint<P, R, 'put', I>
+  O extends EndpointOptions = EndpointOptions,
+>(
+  path: P,
+  config: EndpointConfig<R, I, P, T, O>,
+): StreamEndpoint<P, R, 'put', I, O>
 export function definePut<
   I extends EndpointInput<'put'>,
   P extends string,
   T extends ParamFromPath<P>,
   R extends z.ZodType,
->(path: P, config: EndpointConfig<R, I, P, T>): HttpEndpoint<P, R, 'put', I>
+  O extends EndpointOptions = EndpointOptions,
+>(
+  path: P,
+  config: EndpointConfig<R, I, P, T, O>,
+): HttpEndpoint<P, R, 'put', I, O>
 export function definePut<
   I extends EndpointInput<'put'>,
   R extends z.ZodType | StreamResponse,
   P extends string,
   T extends ParamFromPath<P>,
->(path: P, { input, response, options = {} }: EndpointConfig<R, I, P, T>) {
+  O extends EndpointOptions = EndpointOptions,
+>(path: P, { input, response, options }: EndpointConfig<R, I, P, T, O>) {
   if (response instanceof StreamResponse) {
     return new StreamEndpoint('put', path, response, input, options)
   } else if (response instanceof z.ZodType) {
@@ -133,19 +167,28 @@ export function definePatch<
   P extends string,
   T extends ParamFromPath<P>,
   R extends StreamResponse,
->(path: P, config: EndpointConfig<R, I, P, T>): StreamEndpoint<P, R, 'patch', I>
+  O extends EndpointOptions = EndpointOptions,
+>(
+  path: P,
+  config: EndpointConfig<R, I, P, T, O>,
+): StreamEndpoint<P, R, 'patch', I, O>
 export function definePatch<
   I extends EndpointInput<'patch'>,
   P extends string,
   T extends ParamFromPath<P>,
   R extends z.ZodType,
->(path: P, config: EndpointConfig<R, I, P, T>): HttpEndpoint<P, R, 'patch', I>
+  O extends EndpointOptions = EndpointOptions,
+>(
+  path: P,
+  config: EndpointConfig<R, I, P, T, O>,
+): HttpEndpoint<P, R, 'patch', I, O>
 export function definePatch<
   I extends EndpointInput<'patch'>,
   R extends z.ZodType | StreamResponse,
   P extends string,
   T extends ParamFromPath<P>,
->(path: P, { input, response, options = {} }: EndpointConfig<R, I, P, T>) {
+  O extends EndpointOptions = EndpointOptions,
+>(path: P, { input, response, options }: EndpointConfig<R, I, P, T, O>) {
   if (response instanceof StreamResponse) {
     return new StreamEndpoint('patch', path, response, input, options)
   } else if (response instanceof z.ZodType) {

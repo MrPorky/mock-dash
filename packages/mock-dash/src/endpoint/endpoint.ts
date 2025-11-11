@@ -8,38 +8,34 @@ export type EndpointConfig<
   I extends EndpointInput,
   P extends string,
   T extends ParamFromPath<P>,
+  O extends EndpointOptions,
 > = {
   input?: I & {
     param?: DeepStrict<ParamFromPath<P>, T>
   }
   response: R
-  options?: EndpointOptions
+  options?: O
 }
 
 export type EndpointOptions = {
   alias?: Record<string, string>
-}
+} & Record<string, unknown>
 
 export abstract class Endpoint<
   R = unknown,
   P extends string = string,
   M extends HttpMethod = HttpMethod,
   I extends EndpointInput = EndpointInputType,
+  O extends EndpointOptions = EndpointOptions,
   Mock = unknown,
 > {
   public readonly method: M
   public readonly path: P
   public readonly response: R
   public readonly input: I | undefined
-  public readonly options: EndpointOptions | undefined
+  public readonly options: O | undefined
 
-  constructor(
-    method: M,
-    path: P,
-    response: R,
-    input?: I,
-    options?: EndpointOptions,
-  ) {
+  constructor(method: M, path: P, response: R, input?: I, options?: O) {
     this.method = method
     this.path = path
     this.response = response

@@ -1,7 +1,7 @@
 import type { SendOptions, WSContext } from 'hono/ws'
 import type z from 'zod'
 import type { EndpointInputContext } from '../create-mock-server/mock'
-import { Endpoint, type HttpMethod } from './endpoint'
+import { Endpoint, type EndpointOptions, type HttpMethod } from './endpoint'
 import type { EndpointInput, EndpointInputType } from './input'
 import type { WebSocketResponse } from './ws-response'
 
@@ -42,11 +42,12 @@ export class WebSocketEndpoint<
   R extends WebSocketResponse = WebSocketResponse,
   M extends HttpMethod = HttpMethod,
   I extends EndpointInput<M> = EndpointInputType,
-  Mock extends WebSocketMock<Endpoint<R, P, M, I>, R> = WebSocketMock<
-    Endpoint<R, P, M, I>,
+  O extends EndpointOptions = EndpointOptions,
+  Mock extends WebSocketMock<Endpoint<R, P, M, I, O>, R> = WebSocketMock<
+    Endpoint<R, P, M, I, O>,
     R
   >,
-> extends Endpoint<R, P, M, I> {
+> extends Endpoint<R, P, M, I, O> {
   #mock?: Mock
 
   defineMock(input: Mock): void {
