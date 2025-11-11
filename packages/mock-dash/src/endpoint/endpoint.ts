@@ -17,7 +17,7 @@ export type EndpointConfig<
 }
 
 export type EndpointOptions = {
-  prefix?: string
+  alias?: Record<string, string>
 }
 
 export abstract class Endpoint<

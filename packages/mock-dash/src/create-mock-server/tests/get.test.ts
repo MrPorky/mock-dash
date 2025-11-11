@@ -119,11 +119,11 @@ describe('generateMockApi - GET endpoints', () => {
     expect(res.status).toBe(400)
   })
 
-  it('should handle GET request with path prefix option', async () => {
+  it('should handle GET request with path alias option', async () => {
     const apiSchema = {
-      getUser: defineGet('/users/:id', {
+      getUser: defineGet('{api}/users/:id', {
         response: z.object({ id: z.string(), name: z.string() }),
-        options: { prefix: '/api/v1' },
+        options: { alias: { api: '/api/v1' } },
       }),
     }
 

@@ -336,36 +336,43 @@ const createUser = defineEndpoint('@post/users', {
 })
 ```
 
-### Prefix Option
+### Alias Option
 
-You can add a `prefix` to an endpoint without changing its key. This is useful if your runtime API path is versioned or nested (e.g. `/api/v1`) but you want to keep keys concise.
+You can use path aliases to make your endpoints more flexible and maintainable. Aliases allow you to define placeholders in the path that get replaced at runtime.
 
 ```ts
-const getVersionedUser = defineEndpoint(
-  '@get/users/:id',
+const getVersionedUser = defineGet(
+  '{api}/users/:id',
   { response: userSchema },
-  { prefix: '/api/v1' },
+  { alias: { api: '/api/v1' } },
 )
 
-// Calls still use the original key:
-await apiClient('@get/users/:id', { param: { id: '123' } })
+// The client call uses the path with the placeholder:
+await apiClient('{api}/users/:id', { param: { id: '123' } })
 // Fetches: GET /api/v1/users/123
 
-// Prefix normalization examples:
-defineEndpoint('@get/ping', { response: z.string() }, { prefix: '///api///v2//' })
+// Alias normalization examples:
+defineGet('{service}/ping', { response: z.string() }, { alias: { service: '///api///v2//' } })
 // Runtime path => /api/v2/ping
 ```
 
-Rules:
-* Key remains unchanged for client calls & inference.
-* Prefix is prepended to the path seen by fetch and the mock server.
-* Multiple/duplicate slashes are collapsed, trailing slash removed, leading slash enforced.
-* Use a shared constant for many endpoints:
+**Key Features:**
+* Path contains `{aliasName}` placeholders
+* The `alias` option maps each placeholder to its actual value
+* Multiple aliases are supported in a single path
+* Alias values are normalized (slashes collapsed, trailing slash removed)
+* If no alias is defined, the path works as-is
 
+**Multiple aliases example:**
 ```ts
-const API_PREFIX = '/api/v2'
-export const listProducts = defineEndpoint('@get/products', { response: z.array(productSchema) }, { prefix: API_PREFIX })
-export const createProduct = defineEndpoint('@post/products', { input: { json: createProductSchema }, response: productSchema }, { prefix: API_PREFIX })
+const API_ALIASES = { service: 'api', version: 'v2' }
+
+export const listProducts = defineGet(
+  '{service}/{version}/products', 
+  { response: z.array(productSchema) }, 
+  { alias: API_ALIASES }
+)
+// Runtime path => /api/v2/products
 ```
 
 ## CLI Tool
@@ -399,10 +406,10 @@ npx mock-dash generate ./openapi.yaml --out src/api/generated-schema.ts
 
 #### Strip Path Prefixes
 
-If your OpenAPI spec includes path prefixes (like `/api/v1`) that you want to handle with MockDash's prefix option:
+If your OpenAPI spec includes path prefixes (like `/api/v1`) that you want to handle with MockDash's alias option:
 
 ```bash
-# Strip /api/v1 from paths and add as prefix option
+# Strip /api/v1 from paths and add as alias option
 npx mock-dash generate ./openapi.json --prefix /api/v1
 
 # Multiple prefixes (comma-separated)
@@ -412,9 +419,9 @@ npx mock-dash generate ./openapi.json --prefix /api/v1 --prefix /api/v2
 
 This will generate endpoints like:
 ```ts
-export const getUser = defineEndpoint('@get/users/:id', { 
+export const getUser = defineGet('{api}/users/:id', { 
   response: userSchema 
-}, { prefix: '/api/v1' })
+}, { alias: { "api": "/api/v1" } })
 ```
 
 #### Properties Required by Default
@@ -462,7 +469,7 @@ export const createUser = defineEndpoint('@post/users', {
 | Option | Short | Description |
 |--------|--------|-------------|
 | `--out <file>` | `-o` | Output file path (default: `mock-dash-schema.ts`) |
-| `--prefix <prefix>` | `-p` | Strip prefix from paths and add as prefix option |
+| `--prefix <prefix>` | `-p` | Strip prefix from paths and add as alias option |
 | `--properties-required-by-default` | `-prbd` | Treat all properties as required by default |
 | `--help` | `-h` | Show help message |
 

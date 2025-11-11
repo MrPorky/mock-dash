@@ -120,25 +120,25 @@ describe('runSchemaGenerator CLI integration', () => {
     expect(contents).toMatch(/export const userModel = /)
     expect(contents).toMatch(/export const productModel = /)
 
-    // Assert endpoints with stripped prefixes and prefix options
+    // Assert endpoints with stripped prefixes and alias options
     expect(contents).toMatch(
-      /export const getUsers = defineGet\("\/users", .+options: \{ prefix: "\/api\/v1" \} \}\)/,
+      /export const getApiUsers = defineGet\("\{api\}\/users", .+options: \{ alias: \{ "api": "\/api\/v1" \} \} \}\)/,
     )
     expect(contents).toMatch(
-      /export const getUsersId = defineGet\("\/users\/:id", .+options: \{ prefix: "\/api\/v1" \} \}\)/,
+      /export const getApiUsersId = defineGet\("\{api\}\/users\/:id", .+options: \{ alias: \{ "api": "\/api\/v1" \} \} \}\)/,
     )
     expect(contents).toMatch(
-      /export const getProducts = defineGet\("\/products", .+options: \{ prefix: "\/api\/v2" \} \}\)/,
+      /export const getApiProducts = defineGet\("\{api\}\/products", .+options: \{ alias: \{ "api": "\/api\/v2" \} \} \}\)/,
     )
     expect(contents).toMatch(
-      /export const getProductsId = defineGet\("\/products\/:id", .+options: \{ prefix: "\/api\/v2" \} \}\)/,
+      /export const getApiProductsId = defineGet\("\{api\}\/products\/:id", .+options: \{ alias: \{ "api": "\/api\/v2" \} \} \}\)/,
     )
 
-    // Assert endpoint without prefix remains unchanged (no prefix option)
+    // Assert endpoint without alias remains unchanged (no alias option)
     expect(contents).toMatch(
       /export const getHealth = defineGet\("\/health", .+\)$/m,
     )
-    expect(contents).not.toMatch(/getHealth.*prefix/)
+    expect(contents).not.toMatch(/getHealth.*alias/)
   })
 
   it('generates schema with multiple prefix arguments', async () => {
@@ -165,25 +165,25 @@ describe('runSchemaGenerator CLI integration', () => {
     expect(contents).toMatch(/export const userModel = /)
     expect(contents).toMatch(/export const productModel = /)
 
-    // Assert endpoints with stripped prefixes and prefix options
+    // Assert endpoints with stripped prefixes and alias options
     expect(contents).toMatch(
-      /export const getUsers = defineGet\("\/users", .+options: \{ prefix: "\/api\/v1" \} \}\)/,
+      /export const getApiUsers = defineGet\("\{api\}\/users", .+options: \{ alias: \{ "api": "\/api\/v1" \} \} \}\)/,
     )
     expect(contents).toMatch(
-      /export const getUsersId = defineGet\("\/users\/:id", .+options: \{ prefix: "\/api\/v1" \} \}\)/,
+      /export const getApiUsersId = defineGet\("\{api\}\/users\/:id", .+options: \{ alias: \{ "api": "\/api\/v1" \} \} \}\)/,
     )
     expect(contents).toMatch(
-      /export const getProducts = defineGet\("\/products", .+options: \{ prefix: "\/api\/v2" \} \}\)/,
+      /export const getApiProducts = defineGet\("\{api\}\/products", .+options: \{ alias: \{ "api": "\/api\/v2" \} \} \}\)/,
     )
     expect(contents).toMatch(
-      /export const getProductsId = defineGet\("\/products\/:id", .+options: \{ prefix: "\/api\/v2" \} \}\)/,
+      /export const getApiProductsId = defineGet\("\{api\}\/products\/:id", .+options: \{ alias: \{ "api": "\/api\/v2" \} \} \}\)/,
     )
 
-    // Assert endpoint without prefix remains unchanged (no prefix option)
+    // Assert endpoint without alias remains unchanged (no alias option)
     expect(contents).toMatch(
       /export const getHealth = defineGet\("\/health", .+\)$/m,
     )
-    expect(contents).not.toMatch(/getHealth.*prefix/)
+    expect(contents).not.toMatch(/getHealth.*alias/)
   })
 
   it('generates schema with short prefix arguments (-p)', async () => {
@@ -210,15 +210,15 @@ describe('runSchemaGenerator CLI integration', () => {
     expect(contents).toMatch(/export const userModel = /)
     expect(contents).toMatch(/export const productModel = /)
 
-    // Assert endpoints with stripped prefixes and prefix options
+    // Assert endpoints with stripped prefixes and alias options
     expect(contents).toMatch(
-      /export const getUsers = defineGet\("\/users", .+options: \{ prefix: "\/api\/v1" \} \}\)/,
+      /export const getApiUsers = defineGet\("\{api\}\/users", .+options: \{ alias: \{ "api": "\/api\/v1" \} \} \}\)/,
     )
     expect(contents).toMatch(
-      /export const getProducts = defineGet\("\/products", .+options: \{ prefix: "\/api\/v2" \} \}\)/,
+      /export const getApiProducts = defineGet\("\{api\}\/products", .+options: \{ alias: \{ "api": "\/api\/v2" \} \} \}\)/,
     )
 
-    // Assert endpoint without prefix remains unchanged
+    // Assert endpoint without alias remains unchanged
     expect(contents).toMatch(
       /export const getHealth = defineGet\("\/health", .+\)$/m,
     )
@@ -244,15 +244,21 @@ describe('runSchemaGenerator CLI integration', () => {
     expect(fs.existsSync(dest)).toBe(true)
     const contents = fs.readFileSync(dest, 'utf8')
 
-    // Assert all endpoints now have prefix options since /health is also a prefix
+    // Assert all endpoints now have alias options since /health is also a prefix
     expect(contents).toMatch(
-      /export const getUsers = defineGet\("\/users", .+options: \{ prefix: "\/api\/v1" \} \}\)/,
+      /export const getApiUsers = defineGet\("\{api\}\/users", .+options: \{ alias: \{ "api": "\/api\/v1" \} \} \}\)/,
     )
     expect(contents).toMatch(
-      /export const getProducts = defineGet\("\/products", .+options: \{ prefix: "\/api\/v2" \} \}\)/,
+      /export const getApiUsersId = defineGet\("\{api\}\/users\/:id", .+options: \{ alias: \{ "api": "\/api\/v1" \} \} \}\)/,
     )
     expect(contents).toMatch(
-      /export const get = defineGet\("\/", .+options: \{ prefix: "\/health" \} \}\)/,
+      /export const getApiProducts = defineGet\("\{api\}\/products", .+options: \{ alias: \{ "api": "\/api\/v2" \} \} \}\)/,
+    )
+    expect(contents).toMatch(
+      /export const getApiProductsId = defineGet\("\{api\}\/products\/:id", .+options: \{ alias: \{ "api": "\/api\/v2" \} \} \}\)/,
+    )
+    expect(contents).toMatch(
+      /export const getHealth = defineGet\("\{health\}\/", .+options: \{ alias: \{ "health": "\/health" \} \} \}\)/,
     )
   })
 

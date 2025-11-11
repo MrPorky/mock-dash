@@ -1,25 +1,36 @@
 import { normalizePrefix } from './normalize-prefix'
 
 /**
- * Builds the runtime path for an endpoint key applying an optional prefix.
- * @param path The path to build
- * @param prefix An optional prefix to apply
+ * Builds the runtime path for an endpoint applying optional alias replacements.
+ * @param path The path to build (may contain {aliasKey} placeholders)
+ * @param alias An optional record of alias replacements
  * @param basePath An optional base path (can be full URL or path segment)
- * @returns A path that always begins with '/' and a Prefix
+ * @returns A path that always begins with '/' with aliases replaced
  */
 export function buildEndpointPath(
   path: string,
-  prefix?: string,
+  alias?: Record<string, string>,
   basePath?: string,
 ) {
   let working = path.trim()
   working = working.replace(/^\/+/g, '')
-  const rawPath = `/${working}`
+  let rawPath = `/${working}`
 
-  const p = prefix ? normalizePrefix(prefix) : ''
-  const combined = p && p !== '/' ? p + rawPath : rawPath
+  // Replace aliases in the path
+  if (alias) {
+    for (const [key, value] of Object.entries(alias)) {
+      const placeholder = `{${key}}`
+      if (rawPath.includes(placeholder)) {
+        const normalized = normalizePrefix(value)
+        rawPath = rawPath.replace(placeholder, normalized)
+      }
+    }
+  }
 
-  if (!basePath) return combined
+  // Clean up any double slashes that might have been introduced
+  rawPath = rawPath.replace(/\/+/g, '/')
+
+  if (!basePath) return rawPath
 
   // Normalize and concatenate basePath (can be full URL or path segment)
   const trimmedBase = basePath.trim()
@@ -35,7 +46,7 @@ export function buildEndpointPath(
   if (baseRemainder && !baseRemainder.startsWith('/')) {
     baseRemainder = `/${baseRemainder}`
   }
-  const pathPart = combined.replace(/^\/+/, '')
+  const pathPart = rawPath.replace(/^\/+/, '')
   const finalPath = `${baseRemainder || ''}/${pathPart}`.replace(/\/+/g, '/')
   const trimmed = finalPath !== '/' ? finalPath.replace(/\/$/, '') : finalPath
   return (origin ? origin : '') + trimmed

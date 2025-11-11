@@ -157,7 +157,8 @@ interface EndpointDef {
   method: HttpMethod
   input: { query?: string; param?: string; json?: string; form?: string }
   response: string
-  prefix?: string
+  aliasKey?: string
+  aliasValue?: string
 }
 
 function buildMockDashSchema(
@@ -195,13 +196,17 @@ function buildMockDashSchema(
       if (!endpoint) continue
 
       // Check if the path starts with any of the provided prefixes
-      let detectedPrefix: string | undefined
+      let aliasKey: string | undefined
+      let aliasValue: string | undefined
       let strippedPath = rawPath
 
       for (const prefix of prefixes) {
         const normalizedPrefix = normalizePrefix(prefix)
         if (rawPath.startsWith(normalizedPrefix)) {
-          detectedPrefix = normalizedPrefix
+          // Generate a simple alias key from the prefix (e.g., '/api/v1' -> 'api')
+          aliasKey =
+            normalizedPrefix.split('/').filter((s) => s)[0] || 'service'
+          aliasValue = normalizedPrefix
           strippedPath = rawPath.slice(normalizedPrefix.length)
           // Ensure stripped path starts with /
           if (!strippedPath.startsWith('/')) {
@@ -212,7 +217,12 @@ function buildMockDashSchema(
       }
 
       const colonPath = strippedPath.replace(/\{([^}]+)\}/g, ':$1')
-      const path = colonPath.startsWith('/') ? colonPath : `/${colonPath}`
+      let path = colonPath.startsWith('/') ? colonPath : `/${colonPath}`
+
+      // If we detected an alias, prepend it to the path
+      if (aliasKey) {
+        path = `{${aliasKey}}${path}`
+      }
       const input: EndpointDef['input'] = {}
 
       if (endpoint.parameters) {
@@ -337,7 +347,8 @@ function buildMockDashSchema(
         method,
         input,
         response,
-        prefix: detectedPrefix,
+        aliasKey,
+        aliasValue,
       })
     }
   }
@@ -410,10 +421,11 @@ function emitTs(data: {
 
       const name = apiPathToCamelCase(`${e.method}${e.path}`)
 
-      // Add prefix option if detected
-      const optionsBlock = e.prefix
-        ? `{ prefix: ${JSON.stringify(e.prefix)} }`
-        : ''
+      // Add alias option if detected
+      const optionsBlock =
+        e.aliasKey && e.aliasValue
+          ? `{ alias: { ${JSON.stringify(e.aliasKey)}: ${JSON.stringify(e.aliasValue)} } }`
+          : ''
 
       return `export const ${name} = define${e.method[0].toUpperCase() + e.method.slice(1)}("${e.path}", { ${inputBlock}${responseBlock}${optionsBlock ? `, options: ${optionsBlock}` : ''} })`
     })

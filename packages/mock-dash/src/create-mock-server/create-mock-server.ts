@@ -45,7 +45,7 @@ export function createMockServer<T extends Record<string, unknown>>(
     }
 
     const method = endpoint.method
-    const path = buildEndpointPath(endpoint.path, endpoint.options?.prefix)
+    const path = buildEndpointPath(endpoint.path, endpoint.options?.alias)
 
     const inputValidators = endpoint.input
       ? Object.entries(endpoint.input).map(([target, zodType]) =>
