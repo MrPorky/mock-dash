@@ -25,6 +25,7 @@ export abstract class Endpoint<
   P extends string = string,
   M extends HttpMethod = HttpMethod,
   I extends EndpointInput = EndpointInputType,
+  Mock = unknown,
 > {
   public readonly method: M
   public readonly path: P
@@ -45,4 +46,7 @@ export abstract class Endpoint<
     this.input = input
     this.options = options
   }
+
+  abstract defineMock(input: Mock): void
+  abstract getMock(): Mock | undefined
 }

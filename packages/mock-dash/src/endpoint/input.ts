@@ -32,6 +32,11 @@ export type ParamFromPath<P extends string> = Partial<
   PathParamToObject<OptionalStringValues, P>
 >
 
+export type ParsedPathParameters<P extends string> = PathParamToObject<
+  string,
+  P
+>
+
 type Query = Record<string, z.ZodType>
 type Json = z.ZodObject | z.ZodRecord
 type Form = Record<string, ZodFormValue | z.ZodArray<ZodFormValue>>

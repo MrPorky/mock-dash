@@ -49,11 +49,10 @@ export function defineDelete<
   I extends EndpointInput<'delete'>,
   P extends string,
   T extends ParamFromPath<P>,
-  R extends StreamResponse,
 >(
   path: P,
-  config: EndpointConfig<R, I, P, T>,
-): StreamEndpoint<P, R, 'delete', I>
+  config: EndpointConfig<StreamResponse, I, P, T>,
+): StreamEndpoint<P, StreamResponse, 'delete', I>
 export function defineDelete<
   I extends EndpointInput<'delete'>,
   P extends string,
@@ -62,9 +61,9 @@ export function defineDelete<
 >(path: P, config: EndpointConfig<R, I, P, T>): HttpEndpoint<P, R, 'delete', I>
 export function defineDelete<
   I extends EndpointInput<'delete'>,
-  R extends z.ZodType | StreamResponse,
   P extends string,
   T extends ParamFromPath<P>,
+  R extends z.ZodType | StreamResponse,
 >(path: P, { input, response, options = {} }: EndpointConfig<R, I, P, T>) {
   if (response instanceof StreamResponse) {
     return new StreamEndpoint('delete', path, response, input, options)

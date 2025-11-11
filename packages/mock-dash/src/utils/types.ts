@@ -34,3 +34,5 @@ export type Combine<T, K extends keyof T = keyof T> = {
 } extends infer O
   ? { [K in keyof O as O[K] extends never ? never : K]: O[K] }
   : never
+
+export type MaybePromise<T> = T | Promise<T>

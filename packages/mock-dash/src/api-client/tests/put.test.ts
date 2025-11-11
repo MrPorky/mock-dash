@@ -20,6 +20,7 @@ describe('PUT endpoints', () => {
         }),
       }),
     }
+
     const app = new Hono().put(
       '/users/:id',
       zValidator(

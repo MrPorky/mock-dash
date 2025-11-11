@@ -10,7 +10,7 @@ import { InterceptorManager } from './interceptor'
 import {
   callStreamEndpoint,
   type StreamEndpointCallSignature,
-} from './sse-call'
+} from './stream-call'
 import {
   callWebSocketEndpoint,
   type WebSocketEndpointCallSignature,
@@ -53,12 +53,18 @@ type EndpointCall<T extends Endpoint> = T extends Endpoint<
   infer _I
 >
   ? {
-      [K in M]: T extends HttpEndpoint<infer _P, infer R>
-        ? HttpEndpointCallSignature<R, _I>
-        : T extends WebSocketEndpoint<infer _P, infer R>
-          ? { $ws: WebSocketEndpointCallSignature<R, _I> }
-          : T extends StreamEndpoint<infer _P, infer R>
-            ? { $stream: StreamEndpointCallSignature<R, _I> }
+      [K in M]: T extends HttpEndpoint<
+        infer _P,
+        infer R,
+        infer _M,
+        infer I,
+        any
+      >
+        ? HttpEndpointCallSignature<R, I>
+        : T extends WebSocketEndpoint<infer _P, infer R, infer _M, infer I, any>
+          ? { $ws: WebSocketEndpointCallSignature<R, I> }
+          : T extends StreamEndpoint<infer _P, infer R, infer _M, infer I, any>
+            ? { $stream: StreamEndpointCallSignature<R, I> }
             : 'not yet implemented or unknown endpoint type'
     }
   : 'error dose not inherit from Endpoint'

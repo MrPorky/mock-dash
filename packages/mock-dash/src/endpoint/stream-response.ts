@@ -1,16 +1,21 @@
 import type z from 'zod'
 
-export abstract class StreamResponse {}
+export abstract class StreamResponse {
+  #privateField = Symbol('private')
+  constructor() {}
+}
 
 export class SSEResponse<
-  E extends Record<string, z.ZodType>,
+  E extends Record<string, z.ZodType> = Record<string, z.ZodType>,
 > extends StreamResponse {
   constructor(public readonly events: E) {
     super()
   }
 }
 
-export class JSONStreamResponse<I extends z.ZodType> extends StreamResponse {
+export class JSONStreamResponse<
+  I extends z.ZodType = z.ZodType,
+> extends StreamResponse {
   constructor(public readonly itemSchema: I) {
     super()
   }

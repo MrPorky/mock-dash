@@ -1,6 +1,4 @@
-// --- Add this helper function to your client ---
-
-import type { StreamChunk, StreamParseError } from '../api-client/sse-call'
+import type { StreamChunk, StreamParseError } from '../api-client/stream-call'
 import type { StreamResponse } from '../endpoint/stream-response'
 
 /**
