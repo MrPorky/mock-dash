@@ -1,8 +1,11 @@
-import type z from 'zod'
+import z from 'zod'
+import type { $ZodErrorTree } from 'zod/v4/core'
 import type { HttpEndpoint } from '../endpoint/http-endpoint'
 import type { EndpointInputType } from '../endpoint/input'
+import { createCoercingSchema } from '../utils/create-coercing-schema'
 import type { Errors } from '../utils/errors'
 import { ApiError, ValidationError } from '../utils/errors'
+import { extractFromFormData } from '../utils/extract-from-form-data'
 import { _prepareFetch } from './_prepare-fetch'
 import type {
   CreateApiClientArgs,
@@ -14,12 +17,24 @@ import type { InterceptorManager } from './interceptor'
 export type HttpEndpointCallSignature<
   R extends z.ZodType,
   I extends EndpointInputType,
-> = (
-  ...args: EndpointArgs<I>
-) => Promise<
-  | { data: z.infer<R>; response: Response; error?: never }
-  | { data?: never; error: Errors; response?: Response }
->
+> = {
+  // Form data parsing signature
+  safeParseForm: I extends { json: z.ZodObject }
+    ? (
+        formData: FormData,
+        autoCoerce?: boolean,
+      ) =>
+        | { success: boolean; data: z.infer<R>; error?: undefined }
+        | { success: boolean; data?: undefined; error: $ZodErrorTree<R> }
+    : never
+  // Call signature
+  (
+    ...args: EndpointArgs<I>
+  ): Promise<
+    | { data: z.infer<R>; response: Response; error?: never }
+    | { data?: never; error: Errors; response?: Response }
+  >
+}
 
 export function callHttpEndpoint(
   pathParams: Record<string, string>,
@@ -32,8 +47,10 @@ export function callHttpEndpoint(
     request: InterceptorManager<FetchOptions>
     response: InterceptorManager<Response>
   },
-): HttpEndpointCallSignature<z.ZodType, any> {
-  return async (inputData) => {
+): HttpEndpointCallSignature<z.ZodType, Required<EndpointInputType>> {
+  const fn = async (
+    inputData: EndpointArgs<Required<EndpointInputType>>[0],
+  ) => {
     const { fullUrl, response, error } = await _prepareFetch(
       pathParams,
       endpoint,
@@ -100,4 +117,34 @@ export function callHttpEndpoint(
       response,
     }
   }
+
+  if (endpoint.input?.json instanceof z.ZodObject) {
+    let schema = endpoint.input.json
+
+    return Object.assign(fn, {
+      safeParseForm: (formData: FormData, autoCoerce = true) => {
+        schema = autoCoerce ? createCoercingSchema(schema) : schema
+        const result = extractFromFormData(formData, schema)
+
+        if (!result.success) {
+          const error = z.treeifyError(result.error)
+          return {
+            success: false,
+            error: error,
+          }
+        }
+
+        return {
+          success: true,
+          data: result.data,
+        }
+      },
+    })
+  }
+
+  return Object.assign(fn, {
+    safeParseForm: () => {
+      throw new Error('No JSON input schema defined for this endpoint')
+    },
+  })
 }

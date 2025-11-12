@@ -1,7 +1,13 @@
 import { Endpoint } from '../endpoint/endpoint'
-import { HttpEndpoint } from '../endpoint/http-endpoint'
-import { StreamEndpoint } from '../endpoint/stream-endpoint'
-import { WebSocketEndpoint } from '../endpoint/ws-endpoint'
+import { type HttpEndpoint, isHttpEndpoint } from '../endpoint/http-endpoint'
+import {
+  isStreamEndpoint,
+  type StreamEndpoint,
+} from '../endpoint/stream-endpoint'
+import {
+  isWebSocketEndpoint,
+  type WebSocketEndpoint,
+} from '../endpoint/ws-endpoint'
 import { deepMerge } from '../utils/deep-merge'
 import type { Combine } from '../utils/types'
 import type { CreateApiClientArgs, FetchOptions } from './client-base'
@@ -143,7 +149,7 @@ function buildNode(
   pathParams: Record<string, string> = {}, // Accumulated parameters
 ) {
   if (segments.length === 0) {
-    if (endpoint instanceof HttpEndpoint) {
+    if (isHttpEndpoint(endpoint)) {
       return {
         [endpoint.method]: callHttpEndpoint(
           pathParams,
@@ -154,7 +160,7 @@ function buildNode(
       }
     }
 
-    if (endpoint instanceof StreamEndpoint) {
+    if (isStreamEndpoint(endpoint)) {
       return {
         [endpoint.method]: {
           $stream: callStreamEndpoint(
@@ -167,7 +173,7 @@ function buildNode(
       }
     }
 
-    if (endpoint instanceof WebSocketEndpoint) {
+    if (isWebSocketEndpoint(endpoint)) {
       return {
         [endpoint.method]: {
           $ws: callWebSocketEndpoint(

@@ -6,7 +6,7 @@ import type { EndpointInput, EndpointInputType } from './input'
 import type { WebSocketResponse } from './ws-response'
 
 export function isWebSocketEndpoint(
-  endpoint: Endpoint,
+  endpoint: unknown,
 ): endpoint is WebSocketEndpoint {
   return endpoint instanceof WebSocketEndpoint
 }

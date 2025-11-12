@@ -38,7 +38,7 @@ export type ParsedPathParameters<P extends string> = PathParamToObject<
 >
 
 type Query = Record<string, z.ZodType>
-type Json = z.ZodObject | z.ZodRecord
+type Json = z.ZodObject
 type Form = Record<string, ZodFormValue | z.ZodArray<ZodFormValue>>
 
 type EndpointInputSlim = {

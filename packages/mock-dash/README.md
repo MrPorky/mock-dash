@@ -24,6 +24,7 @@
     - [Options](#options)
   - [Generate Type-Safe Client](#generate-type-safe-client)
     - [Client Methods](#client-methods)
+    - [Form Data Parsing](#form-data-parsing)
     - [Error Handling](#error-handling)
     - [Interceptors](#interceptors)
   - [Create Mock Server](#create-mock-server)
@@ -325,6 +326,55 @@ const comment = await client.users
   .comments.commentId('789')
   .get()
 ```
+
+#### Form Data Parsing
+
+For endpoints that accept JSON input, MockDash provides a `safeParseForm` utility method to validate and parse FormData into the expected schema format:
+
+```typescript
+// Define an endpoint that accepts JSON input
+const createUser = definePost('/users', {
+  input: {
+    json: z.object({
+      name: z.string(),
+      email: z.string().email(),
+      age: z.coerce.number(), // Will be coerced from string
+    }),
+  },
+  response: userSchema,
+})
+
+// Parse FormData on the client side
+const formData = new FormData()
+formData.append('name', 'John Doe')
+formData.append('email', 'john@example.com')
+formData.append('age', '25') // String that will be coerced to number
+
+// Validate and parse the form data
+const parseResult = client.users.post.safeParseForm(formData)
+
+if (parseResult.success) {
+  // parseResult.data is fully typed and validated
+  console.log(parseResult.data.name) // "John Doe"
+  console.log(parseResult.data.age)  // 25 (number)
+  
+  // Use the parsed data in your API call
+  const response = await client.users.post({ json: parseResult.data })
+} else {
+  // Handle validation errors
+  console.error('Form validation failed:', parseResult.error)
+}
+
+// Disable automatic type coercion if needed
+const strictParseResult = client.users.post.safeParseForm(formData, false)
+```
+
+The `safeParseForm` method:
+- Only available on endpoints with `json` input schemas (not available for streams or WebSockets)
+- Automatically coerces string form values to appropriate types (unless `autoCoerce` is false)
+- Returns a result object with `success` boolean and either `data` or `error`
+- Provides full TypeScript type safety for the parsed data
+- Uses the same validation schema as the endpoint's JSON input
 
 #### Error Handling
 

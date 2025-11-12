@@ -47,7 +47,7 @@ export function isBinaryStreamEndpoint(
 }
 
 export function isStreamEndpoint(
-  endpoint: Endpoint,
+  endpoint: unknown,
 ): endpoint is StreamEndpoint<string, StreamResponse> {
   return endpoint instanceof StreamEndpoint
 }

@@ -4,7 +4,7 @@ import type { EndpointInput, EndpointInputType } from '../endpoint/input'
 import type { MockStructure } from '../utils/create-mock'
 import { Endpoint, type EndpointOptions, type HttpMethod } from './endpoint'
 
-export function isHttpEndpoint(endpoint: Endpoint): endpoint is HttpEndpoint {
+export function isHttpEndpoint(endpoint: unknown): endpoint is HttpEndpoint {
   return endpoint instanceof HttpEndpoint
 }
 
