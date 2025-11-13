@@ -132,16 +132,10 @@ describe('WebSocket endpoints', () => {
         const ws = MockWebSocket.lastInstance
         if (ws) {
           ws.simulateMessage(
-            JSON.stringify({
-              type: 'message',
-              data: { id: '1', text: 'Hello', timestamp: '2023-01-01' },
-            }),
+            JSON.stringify({ id: '1', text: 'Hello', timestamp: '2023-01-01' }),
           )
           ws.simulateMessage(
-            JSON.stringify({
-              type: 'notification',
-              data: { type: 'info', content: 'New user joined' },
-            }),
+            JSON.stringify({ type: 'info', content: 'New user joined' }),
           )
           ws.close()
         }
@@ -242,9 +236,7 @@ describe('WebSocket endpoints', () => {
         const ws = MockWebSocket.lastInstance
         if (ws) {
           ws.simulateMessage('{ invalid json }')
-          ws.simulateMessage(
-            JSON.stringify({ type: 'validMessage', data: { value: 'ok' } }),
-          )
+          ws.simulateMessage(JSON.stringify({ value: 'ok' }))
           ws.close()
         }
       }, 50)
@@ -512,40 +504,6 @@ describe('WebSocket endpoints', () => {
     }
   })
 
-  it('should handle messages without type field', async () => {
-    const apiSchema = {
-      updates: defineGet('/updates', {
-        response: defineWebSocket([z.object({ text: z.string() })], []),
-      }),
-    }
-
-    const client = createApiClient({
-      apiSchema,
-      baseURL: 'http://localhost',
-    })
-
-    const result = await client.updates.get.$ws()
-
-    if (result.data) {
-      const errors: any[] = []
-
-      setTimeout(() => {
-        const ws = MockWebSocket.lastInstance
-        if (ws) {
-          ws.simulateMessage(JSON.stringify({ data: { text: 'no type' } }))
-          ws.close()
-        }
-      }, 50)
-
-      for await (const chunk of result.data) {
-        if (chunk.type === 'error') errors.push(chunk.error)
-      }
-
-      expect(errors.length).toBeGreaterThan(0)
-      expect(errors[0].message).toContain('missing "type" field')
-    }
-  }, 10000)
-
   it('should handle binary ArrayBuffer messages', async () => {
     const apiSchema = {
       updates: defineGet('/updates', {
@@ -731,18 +689,14 @@ describe('WebSocket endpoints', () => {
         const ws = MockWebSocket.lastInstance
         if (ws) {
           // Send JSON message
-          ws.simulateMessage(
-            JSON.stringify({ type: 'update', data: { text: 'hello' } }),
-          )
+          ws.simulateMessage(JSON.stringify({ text: 'hello' }))
 
           // Send binary message
           const buffer = new ArrayBuffer(4)
           ws.dispatchEvent(new MessageEvent('message', { data: buffer }))
 
           // Send another JSON message
-          ws.simulateMessage(
-            JSON.stringify({ type: 'update', data: { text: 'world' } }),
-          )
+          ws.simulateMessage(JSON.stringify({ text: 'world' }))
 
           ws.close()
         }
