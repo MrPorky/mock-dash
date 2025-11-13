@@ -5,6 +5,32 @@ import { defineWebSocket } from '../../endpoint/ws-response'
 import { NetworkError } from '../../utils/errors'
 import { createApiClient } from '../api-client'
 
+// Simple event implementations for Node.js environment
+class MockEvent {
+  type: string
+  constructor(type: string) {
+    this.type = type
+  }
+}
+
+class MockMessageEvent extends MockEvent {
+  data: any
+  constructor(type: string, options: { data?: any } = {}) {
+    super(type)
+    this.data = options.data
+  }
+}
+
+class MockCloseEvent extends MockEvent {
+  code: number
+  reason: string
+  constructor(type: string, options: { code?: number; reason?: string } = {}) {
+    super(type)
+    this.code = options.code ?? 1000
+    this.reason = options.reason ?? ''
+  }
+}
+
 // Mock WebSocket class for testing
 class MockWebSocket {
   static CONNECTING = 0
@@ -15,13 +41,13 @@ class MockWebSocket {
 
   url: string
   readyState: number
-  onopen: ((event: Event) => void) | null = null
-  onmessage: ((event: MessageEvent) => void) | null = null
-  onerror: ((event: Event) => void) | null = null
-  onclose: ((event: CloseEvent) => void) | null = null
+  onopen: ((event: MockEvent) => void) | null = null
+  onmessage: ((event: MockMessageEvent) => void) | null = null
+  onerror: ((event: MockEvent) => void) | null = null
+  onclose: ((event: MockCloseEvent) => void) | null = null
   private listeners: Map<
     string,
-    Array<(event: Event | MessageEvent | CloseEvent) => void>
+    Array<(event: MockEvent | MockMessageEvent | MockCloseEvent) => void>
   > = new Map()
 
   constructor(url: string) {
@@ -31,7 +57,7 @@ class MockWebSocket {
     // Simulate connection opening asynchronously
     setTimeout(() => {
       this.readyState = MockWebSocket.OPEN
-      this.dispatchEvent(new Event('open'))
+      this.dispatchEvent(new MockEvent('open'))
     }, 0)
   }
 
@@ -47,14 +73,17 @@ class MockWebSocket {
     setTimeout(() => {
       this.readyState = MockWebSocket.CLOSED
       this.dispatchEvent(
-        new CloseEvent('close', { code: code ?? 1000, reason: reason ?? '' }),
+        new MockCloseEvent('close', {
+          code: code ?? 1000,
+          reason: reason ?? '',
+        }),
       )
     }, 0)
   }
 
   addEventListener(
     type: string,
-    listener: (event: Event | MessageEvent | CloseEvent) => void,
+    listener: (event: MockEvent | MockMessageEvent | MockCloseEvent) => void,
   ) {
     if (!this.listeners.has(type)) {
       this.listeners.set(type, [])
@@ -62,7 +91,7 @@ class MockWebSocket {
     this.listeners.get(type)?.push(listener)
   }
 
-  dispatchEvent(event: Event | MessageEvent | CloseEvent) {
+  dispatchEvent(event: MockEvent | MockMessageEvent | MockCloseEvent) {
     const listeners = this.listeners.get(event.type) || []
     for (const listener of listeners) {
       listener(event)
@@ -71,11 +100,11 @@ class MockWebSocket {
   }
 
   simulateMessage(data: string) {
-    this.dispatchEvent(new MessageEvent('message', { data }))
+    this.dispatchEvent(new MockMessageEvent('message', { data }))
   }
 
   simulateError() {
-    this.dispatchEvent(new Event('error'))
+    this.dispatchEvent(new MockEvent('error'))
   }
 }
 
@@ -528,7 +557,7 @@ describe('WebSocket endpoints', () => {
           const buffer = new ArrayBuffer(8)
           const view = new Uint8Array(buffer)
           view.set([1, 2, 3, 4, 5, 6, 7, 8])
-          ws.dispatchEvent(new MessageEvent('message', { data: buffer }))
+          ws.dispatchEvent(new MockMessageEvent('message', { data: buffer }))
           ws.close()
         }
       }, 50)
@@ -567,7 +596,7 @@ describe('WebSocket endpoints', () => {
           const blob = new Blob(['test data'], {
             type: 'application/octet-stream',
           })
-          ws.dispatchEvent(new MessageEvent('message', { data: blob }))
+          ws.dispatchEvent(new MockMessageEvent('message', { data: blob }))
           ws.close()
         }
       }, 50)
@@ -603,7 +632,9 @@ describe('WebSocket endpoints', () => {
         if (ws) {
           // Send TypedArray (Uint8Array)
           const typedArray = new Uint8Array([10, 20, 30, 40, 50])
-          ws.dispatchEvent(new MessageEvent('message', { data: typedArray }))
+          ws.dispatchEvent(
+            new MockMessageEvent('message', { data: typedArray }),
+          )
           ws.close()
         }
       }, 50)
@@ -647,7 +678,7 @@ describe('WebSocket endpoints', () => {
           const dataView = new DataView(buffer)
           dataView.setInt32(0, 42)
           dataView.setFloat32(4, 3.14)
-          ws.dispatchEvent(new MessageEvent('message', { data: dataView }))
+          ws.dispatchEvent(new MockMessageEvent('message', { data: dataView }))
           ws.close()
         }
       }, 50)
@@ -693,7 +724,7 @@ describe('WebSocket endpoints', () => {
 
           // Send binary message
           const buffer = new ArrayBuffer(4)
-          ws.dispatchEvent(new MessageEvent('message', { data: buffer }))
+          ws.dispatchEvent(new MockMessageEvent('message', { data: buffer }))
 
           // Send another JSON message
           ws.simulateMessage(JSON.stringify({ text: 'world' }))
