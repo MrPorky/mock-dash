@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import z from 'zod'
 import { defineGet } from '../../endpoint/define-endpoint'
 import { defineWebSocket } from '../../endpoint/ws-response'
-import { NetworkError } from '../../utils/errors'
+import { ApiError, NetworkError } from '../../utils/errors'
 import { createApiClient } from '../api-client'
 
 // Simple event implementations for Node.js environment
@@ -745,4 +745,272 @@ describe('WebSocket endpoints', () => {
       expect(binaryMessages[0]).toBeInstanceOf(ArrayBuffer)
     }
   }, 10000)
+
+  it('should handle array query parameters', async () => {
+    const apiSchema = {
+      updates: defineGet('/updates', {
+        input: {
+          query: {
+            tags: z.array(z.string()).optional(),
+          },
+        },
+        response: defineWebSocket([z.object({ text: z.string() })], []),
+      }),
+    }
+
+    const client = createApiClient({
+      apiSchema,
+      baseURL: 'http://localhost',
+    })
+
+    const result = await client.updates.get.$ws({
+      query: { tags: ['important', 'urgent'] },
+    })
+
+    if (result.controller) {
+      const ws = MockWebSocket.lastInstance
+      expect(ws?.url).toContain('tags=important')
+      expect(ws?.url).toContain('tags=urgent')
+    }
+  })
+
+  it('should handle object query parameters', async () => {
+    const apiSchema = {
+      updates: defineGet('/updates', {
+        input: {
+          query: {
+            filter: z
+              .object({
+                status: z.string(),
+                priority: z.number(),
+              })
+              .optional(),
+          },
+        },
+        response: defineWebSocket([z.object({ text: z.string() })], []),
+      }),
+    }
+
+    const client = createApiClient({
+      apiSchema,
+      baseURL: 'http://localhost',
+    })
+
+    const result = await client.updates.get.$ws({
+      query: {
+        filter: {
+          status: 'active',
+          priority: 1,
+        },
+      },
+    })
+
+    if (result.controller) {
+      const ws = MockWebSocket.lastInstance
+      // URLs are encoded, so check for encoded brackets
+      expect(ws?.url).toContain('filter%5Bstatus%5D=active')
+      expect(ws?.url).toContain('filter%5Bpriority%5D=1')
+    }
+  })
+
+  it('should handle sending message when WebSocket is closed', async () => {
+    const apiSchema = {
+      chat: defineGet('/chat', {
+        response: defineWebSocket([], [z.object({ message: z.string() })]),
+      }),
+    }
+
+    const client = createApiClient({
+      apiSchema,
+      baseURL: 'http://localhost',
+    })
+
+    const result = await client.chat.get.$ws()
+
+    if (result.controller) {
+      // Wait for connection to open
+      await new Promise((resolve) => setTimeout(resolve, 10))
+
+      const ws = MockWebSocket.lastInstance
+      // Close the WebSocket
+      ws?.close()
+
+      // Wait for close to complete
+      await new Promise((resolve) => setTimeout(resolve, 10))
+
+      expect(() => {
+        result.controller.send({ message: 'test' })
+      }).toThrow('WebSocket is not open')
+    }
+  })
+
+  it('should handle sendRaw when WebSocket is closed', async () => {
+    const apiSchema = {
+      chat: defineGet('/chat', {
+        response: defineWebSocket([], []),
+      }),
+    }
+
+    const client = createApiClient({
+      apiSchema,
+      baseURL: 'http://localhost',
+    })
+
+    const result = await client.chat.get.$ws()
+
+    if (result.controller) {
+      // Wait for connection to open
+      await new Promise((resolve) => setTimeout(resolve, 10))
+
+      const ws = MockWebSocket.lastInstance
+      // Close the WebSocket
+      ws?.close()
+
+      // Wait for close to complete
+      await new Promise((resolve) => setTimeout(resolve, 10))
+
+      expect(() => {
+        result.controller.sendRaw('test message')
+      }).toThrow('WebSocket is not open')
+    }
+  })
+
+  it('should handle WebSocket error events', async () => {
+    const apiSchema = {
+      updates: defineGet('/updates', {
+        response: defineWebSocket([z.object({ text: z.string() })], []),
+      }),
+    }
+
+    const client = createApiClient({
+      apiSchema,
+      baseURL: 'http://localhost',
+    })
+
+    const result = await client.updates.get.$ws()
+
+    if (result.data) {
+      const errors: any[] = []
+
+      setTimeout(() => {
+        const ws = MockWebSocket.lastInstance
+        if (ws) {
+          // Simulate WebSocket error
+          ws.simulateError()
+          ws.close()
+        }
+      }, 50)
+
+      for await (const chunk of result.data) {
+        if (chunk.type === 'error') errors.push(chunk.error)
+      }
+
+      expect(errors.length).toBeGreaterThan(0)
+      expect(errors[0].message).toBe('WebSocket error occurred')
+    }
+  }, 10000)
+
+  it('should handle non-Error instances in JSON parse errors', async () => {
+    // Mock JSON.parse to throw a non-Error instance
+    const originalParse = JSON.parse
+    JSON.parse = vi.fn().mockImplementationOnce(() => {
+      throw 'This is not an Error instance'
+    })
+
+    const apiSchema = {
+      updates: defineGet('/updates', {
+        response: defineWebSocket([z.object({ text: z.string() })], []),
+      }),
+    }
+
+    const client = createApiClient({
+      apiSchema,
+      baseURL: 'http://localhost',
+    })
+
+    const result = await client.updates.get.$ws()
+
+    if (result.data) {
+      const errors: any[] = []
+
+      setTimeout(() => {
+        const ws = MockWebSocket.lastInstance
+        if (ws) {
+          // Send invalid JSON that will trigger our mocked JSON.parse
+          ws.simulateMessage('invalid json')
+          ws.close()
+        }
+      }, 50)
+
+      for await (const chunk of result.data) {
+        if (chunk.type === 'error') errors.push(chunk.error)
+      }
+
+      expect(errors.length).toBeGreaterThan(0)
+      expect(errors[0].message).toBe(
+        'Failed to parse WebSocket message as JSON',
+      )
+    }
+
+    // Restore original JSON.parse
+    JSON.parse = originalParse
+  }, 10000)
+
+  it('should handle non-Error instances in WebSocket constructor', async () => {
+    const apiSchema = {
+      updates: defineGet('/updates', {
+        response: defineWebSocket([z.object({ text: z.string() })], []),
+      }),
+    }
+
+    // Mock WebSocket to throw a non-Error instance
+    global.WebSocket = class {
+      constructor() {
+        throw 'Connection failed - not an error instance'
+      }
+    } as any
+
+    const client = createApiClient({
+      apiSchema,
+      baseURL: 'http://localhost',
+    })
+
+    const result = await client.updates.get.$ws()
+
+    expect(result).toHaveProperty('error')
+    if (result.error) {
+      expect(result.error).toBeInstanceOf(NetworkError)
+      expect(result.error.message).toBe('WebSocket connection failed')
+    }
+  })
+
+  it('should handle invalid WebSocket response schema', async () => {
+    // Create a mock endpoint with an invalid schema (not a WebSocket response)
+    const mockEndpoint = {
+      method: 'GET',
+      path: '/updates',
+      response: z.string(), // This is not a WebSocket response schema
+    }
+
+    // We'll need to call the function directly since the client builder validates schemas
+    const { callWebSocketEndpoint } = await import('../ws-call')
+
+    const callFunction = callWebSocketEndpoint(
+      {},
+      mockEndpoint as any,
+      { baseURL: 'http://localhost' },
+      {
+        request: { use: () => {}, interceptors: [] } as any,
+        response: { use: () => {}, interceptors: [] } as any,
+      },
+    )
+
+    const result = await callFunction(undefined as any)
+
+    expect(result).toHaveProperty('error')
+    if (result.error) {
+      expect(result.error).toBeInstanceOf(ApiError)
+      expect(result.error.message).toBe('Invalid WebSocket response schema')
+    }
+  })
 })
