@@ -15,7 +15,7 @@ describe('generateMockApi - GET endpoints', () => {
       }),
     }
 
-    const app = createMockServer(apiSchema, {
+    const { app } = createMockServer(apiSchema, {
       zodToMock: (schema) => {
         if (schema instanceof z.ZodObject) {
           return {
@@ -53,7 +53,7 @@ describe('generateMockApi - GET endpoints', () => {
       name: 'Jane Smith',
     }))
 
-    const app = createMockServer(apiSchema)
+    const { app } = createMockServer(apiSchema)
 
     const res = await app.request('/users/456')
     expect(res.status).toBe(200)
@@ -88,7 +88,7 @@ describe('generateMockApi - GET endpoints', () => {
       total: 2,
     }))
 
-    const app = createMockServer(apiSchema)
+    const { app } = createMockServer(apiSchema)
 
     const res = await app.request('/users/search?q=john&limit=10')
     expect(res.status).toBe(200)
@@ -112,7 +112,7 @@ describe('generateMockApi - GET endpoints', () => {
 
     apiSchema.searchUsers.defineMock(() => ({ results: ['user1', 'user2'] }))
 
-    const app = createMockServer(apiSchema)
+    const { app } = createMockServer(apiSchema)
 
     // Request without required query parameter should fail
     const res = await app.request('/users/search')
@@ -132,7 +132,7 @@ describe('generateMockApi - GET endpoints', () => {
       name: 'User',
     }))
 
-    const app = createMockServer(apiSchema)
+    const { app } = createMockServer(apiSchema)
 
     const res = await app.request('/api/v1/users/123')
     expect(res.status).toBe(200)
@@ -152,7 +152,7 @@ describe('generateMockApi - GET endpoints', () => {
       name: 'User',
     }))
 
-    const app = createMockServer(apiSchema, { base: '/api' })
+    const { app } = createMockServer(apiSchema, { base: '/api' })
 
     const res = await app.request('/api/users/123')
     expect(res.status).toBe(200)
@@ -167,7 +167,7 @@ describe('generateMockApi - GET endpoints', () => {
       }),
     }
 
-    const app = createMockServer(apiSchema)
+    const { app } = createMockServer(apiSchema)
 
     const res = await app.request('/users/123')
     expect(res.status).toBe(500)
@@ -183,7 +183,7 @@ describe('generateMockApi - GET endpoints', () => {
 
     apiSchema.getText.defineMock(() => 'Hello, World!')
 
-    const app = createMockServer(apiSchema)
+    const { app } = createMockServer(apiSchema)
 
     const res = await app.request('/text')
     expect(res.status).toBe(200)
@@ -199,7 +199,7 @@ describe('generateMockApi - GET endpoints', () => {
 
     apiSchema.ping.defineMock(() => undefined)
 
-    const app = createMockServer(apiSchema)
+    const { app } = createMockServer(apiSchema)
 
     const res = await app.request('/ping')
     expect(res.status).toBe(200)
@@ -223,7 +223,7 @@ describe('generateMockApi - GET endpoints', () => {
       title: 'Post Title',
     }))
 
-    const app = createMockServer(apiSchema)
+    const { app } = createMockServer(apiSchema)
 
     const res = await app.request('/users/user123/posts/post456')
     expect(res.status).toBe(200)
@@ -247,7 +247,7 @@ describe('generateMockApi - GET endpoints', () => {
       }
     })
 
-    const app = createMockServer(apiSchema)
+    const { app } = createMockServer(apiSchema)
 
     const res = await app.request('/users/123')
     expect(res.status).toBe(200)
@@ -267,7 +267,7 @@ describe('generateMockApi - GET endpoints', () => {
       customHeader: ctx.honoContext.req.header('X-Custom') || 'none',
     }))
 
-    const app = createMockServer(apiSchema)
+    const { app } = createMockServer(apiSchema)
 
     const res = await app.request('/users/123', {
       headers: { 'X-Custom': 'test-value' },
@@ -291,7 +291,7 @@ describe('generateMockApi - GET endpoints', () => {
 
     let middlewareCalled = false
 
-    const app = createMockServer(apiSchema, {
+    const { app } = createMockServer(apiSchema, {
       addMiddleware: (app) => {
         app.use('*', async (_c, next) => {
           middlewareCalled = true
@@ -316,7 +316,7 @@ describe('generateMockApi - GET endpoints', () => {
       { id: '2', name: 'User 2' },
     ])
 
-    const app = createMockServer(apiSchema)
+    const { app } = createMockServer(apiSchema)
 
     const res = await app.request('/users')
     expect(res.status).toBe(200)
@@ -334,7 +334,7 @@ describe('generateMockApi - GET endpoints', () => {
 
     apiSchema.getText.defineMock(() => ({ not: 'a string' }) as any)
 
-    const app = createMockServer(apiSchema)
+    const { app } = createMockServer(apiSchema)
 
     const res = await app.request('/text')
     expect(res.status).toBe(400)

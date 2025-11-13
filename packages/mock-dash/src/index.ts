@@ -1,4 +1,5 @@
 import { createApiClient } from './api-client/api-client'
+import type { WebSocketController } from './api-client/ws-call'
 import { createMockServer } from './create-mock-server/create-mock-server'
 import {
   defineDelete,
@@ -16,6 +17,7 @@ import {
   defineSSE,
 } from './endpoint/stream-response'
 import { WebSocketEndpoint } from './endpoint/ws-endpoint'
+import { defineWebSocket } from './endpoint/ws-response'
 import {
   ApiError,
   isApiError,
@@ -38,6 +40,7 @@ export {
   defineBinaryStream,
   defineJSONStream,
   defineSSE,
+  defineWebSocket,
   ApiError,
   isApiError,
   isMockError,
@@ -52,4 +55,4 @@ export {
   WebSocketEndpoint,
 }
 
-export type { EndpointOptions }
+export type { EndpointOptions, WebSocketController }

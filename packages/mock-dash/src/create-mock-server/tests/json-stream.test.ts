@@ -23,7 +23,7 @@ describe('generateMockApi - JSON Stream endpoints', () => {
       await stream.writeln({ id: 3, name: 'Charlie' })
     })
 
-    const app = createMockServer(apiSchema)
+    const { app } = createMockServer(apiSchema)
     const response = await app.request('/users/stream')
 
     expect(response.status).toBe(200)
@@ -52,7 +52,7 @@ describe('generateMockApi - JSON Stream endpoints', () => {
       }),
     }
 
-    const app = createMockServer(apiSchema, {
+    const { app } = createMockServer(apiSchema, {
       zodToMock: (schema) => {
         if (schema instanceof z.ZodObject) {
           return {
@@ -95,7 +95,7 @@ describe('generateMockApi - JSON Stream endpoints', () => {
       // Write nothing
     })
 
-    const app = createMockServer(apiSchema)
+    const { app } = createMockServer(apiSchema)
     const response = await app.request('/stream/empty')
 
     expect(response.status).toBe(200)
@@ -128,7 +128,7 @@ describe('generateMockApi - JSON Stream endpoints', () => {
       }
     })
 
-    const app = createMockServer(apiSchema)
+    const { app } = createMockServer(apiSchema)
     const response = await app.request(
       '/items/stream?category=electronics&limit=3',
     )
@@ -172,7 +172,7 @@ describe('generateMockApi - JSON Stream endpoints', () => {
       }
     })
 
-    const app = createMockServer(apiSchema)
+    const { app } = createMockServer(apiSchema)
     const response = await app.request('/search/stream', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -220,7 +220,7 @@ describe('generateMockApi - JSON Stream endpoints', () => {
       })
     })
 
-    const app = createMockServer(apiSchema)
+    const { app } = createMockServer(apiSchema)
     const response = await app.request('/data/complex')
 
     expect(response.status).toBe(200)
@@ -263,7 +263,7 @@ describe('generateMockApi - JSON Stream endpoints', () => {
       })
     })
 
-    const app = createMockServer(apiSchema)
+    const { app } = createMockServer(apiSchema)
     const response = await app.request('/users/user123/posts/stream')
 
     expect(response.status).toBe(200)

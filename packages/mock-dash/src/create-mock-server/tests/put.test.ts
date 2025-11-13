@@ -29,7 +29,7 @@ describe('generateMockApi - PUT endpoints', () => {
       updatedAt: new Date().toISOString(),
     }))
 
-    const app = createMockServer(apiSchema)
+    const { app } = createMockServer(apiSchema)
 
     const res = await app.request('/users/123', {
       method: 'PUT',
@@ -59,7 +59,7 @@ describe('generateMockApi - PUT endpoints', () => {
 
     apiSchema.updateUser.defineMock(() => ({ id: '123' }))
 
-    const app = createMockServer(apiSchema)
+    const { app } = createMockServer(apiSchema)
 
     // Invalid type for age
     const res = await app.request('/users/123', {
@@ -91,7 +91,7 @@ describe('generateMockApi - PUT endpoints', () => {
       title: ctx.inputs.json.title,
     }))
 
-    const app = createMockServer(apiSchema)
+    const { app } = createMockServer(apiSchema)
 
     const res = await app.request('/users/user1/posts/post2', {
       method: 'PUT',
@@ -118,7 +118,7 @@ describe('generateMockApi - PUT endpoints', () => {
 
     apiSchema.updateSettings.defineMock(() => undefined)
 
-    const app = createMockServer(apiSchema)
+    const { app } = createMockServer(apiSchema)
 
     const res = await app.request('/settings', {
       method: 'PUT',

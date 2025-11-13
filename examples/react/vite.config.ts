@@ -1,4 +1,3 @@
-import devServer from '@hono/vite-dev-server'
 import { tanstackRouter } from '@tanstack/router-plugin/vite'
 import react from '@vitejs/plugin-react'
 import { visualizer } from 'rollup-plugin-visualizer'
@@ -7,6 +6,15 @@ import tsconfigPaths from 'vite-tsconfig-paths'
 
 // https://vite.dev/config/
 export default defineConfig({
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+        ws: true, // Enable WebSocket proxying
+      },
+    },
+  },
   build: {
     rollupOptions: {
       treeshake: {
@@ -33,9 +41,5 @@ export default defineConfig({
     }),
     visualizer(),
     tsconfigPaths(),
-    devServer({
-      entry: '@examples/shared/server',
-      exclude: [/^(?!\/api(?:\/|$)).*/],
-    }),
   ],
 })

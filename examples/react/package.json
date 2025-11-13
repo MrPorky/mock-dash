@@ -4,7 +4,9 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "dev": "vite",
+    "dev": "concurrently \"pnpm run dev:server\" \"pnpm run dev:client\"",
+    "dev:server": "pnpm --filter @examples/shared dev",
+    "dev:client": "vite",
     "build": "vite build && tsc -b",
     "check": "tsc --noEmit"
   },

@@ -12,6 +12,8 @@ dist
 dist-ssr
 *.local
 *gen.ts
+.tanstack
+tsconfig.tsbuildinfo
 
 # Editor directories and files
 .vscode/*

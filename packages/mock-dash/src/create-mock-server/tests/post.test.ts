@@ -29,7 +29,7 @@ describe('generateMockApi - POST endpoints', () => {
       createdAt: new Date().toISOString(),
     }))
 
-    const app = createMockServer(apiSchema)
+    const { app } = createMockServer(apiSchema)
 
     const res = await app.request('/users', {
       method: 'POST',
@@ -59,7 +59,7 @@ describe('generateMockApi - POST endpoints', () => {
 
     apiSchema.createUser.defineMock(() => ({ id: 'new-id' }))
 
-    const app = createMockServer(apiSchema)
+    const { app } = createMockServer(apiSchema)
 
     // Invalid email
     const res = await app.request('/users', {
@@ -91,7 +91,7 @@ describe('generateMockApi - POST endpoints', () => {
       text: ctx.inputs.json.text,
     }))
 
-    const app = createMockServer(apiSchema)
+    const { app } = createMockServer(apiSchema)
 
     const res = await app.request('/posts/post-456/comments', {
       method: 'POST',
@@ -126,7 +126,7 @@ describe('generateMockApi - POST endpoints', () => {
       notified: ctx.inputs.query.notify === 'true',
     }))
 
-    const app = createMockServer(apiSchema)
+    const { app } = createMockServer(apiSchema)
 
     const res = await app.request('/users?notify=true', {
       method: 'POST',
@@ -148,7 +148,7 @@ describe('generateMockApi - POST endpoints', () => {
 
     apiSchema.trigger.defineMock(() => ({ triggered: true }))
 
-    const app = createMockServer(apiSchema)
+    const { app } = createMockServer(apiSchema)
 
     const res = await app.request('/trigger', { method: 'POST' })
     expect(res.status).toBe(200)
@@ -168,7 +168,7 @@ describe('generateMockApi - POST endpoints', () => {
 
     apiSchema.notify.defineMock(() => undefined)
 
-    const app = createMockServer(apiSchema)
+    const { app } = createMockServer(apiSchema)
 
     const res = await app.request('/notify', {
       method: 'POST',
@@ -198,7 +198,7 @@ describe('generateMockApi - POST endpoints', () => {
       }
     })
 
-    const app = createMockServer(apiSchema)
+    const { app } = createMockServer(apiSchema)
 
     const res = await app.request('/users', {
       method: 'POST',

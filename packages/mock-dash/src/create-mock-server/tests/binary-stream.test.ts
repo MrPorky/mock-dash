@@ -18,7 +18,7 @@ describe('generateMockApi - Binary Stream endpoints', () => {
       await stream.write(new TextEncoder().encode('Binary content here'))
     })
 
-    const app = createMockServer(apiSchema)
+    const { app } = createMockServer(apiSchema)
     const response = await app.request('/files/123/download')
 
     expect(response.status).toBe(200)
@@ -41,7 +41,7 @@ describe('generateMockApi - Binary Stream endpoints', () => {
       // Write nothing
     })
 
-    const app = createMockServer(apiSchema)
+    const { app } = createMockServer(apiSchema)
     const response = await app.request('/files/empty')
 
     expect(response.status).toBe(200)
@@ -67,7 +67,7 @@ describe('generateMockApi - Binary Stream endpoints', () => {
       await stream.write(new TextEncoder().encode('Result data'))
     })
 
-    const app = createMockServer(apiSchema)
+    const { app } = createMockServer(apiSchema)
     const response = await app.request('/process', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -94,7 +94,7 @@ describe('generateMockApi - Binary Stream endpoints', () => {
       }
     })
 
-    const app = createMockServer(apiSchema)
+    const { app } = createMockServer(apiSchema)
     const response = await app.request('/files/large')
 
     expect(response.status).toBe(200)
@@ -123,7 +123,7 @@ describe('generateMockApi - Binary Stream endpoints', () => {
       )
     })
 
-    const app = createMockServer(apiSchema)
+    const { app } = createMockServer(apiSchema)
     const response = await app.request('/download?format=compressed&size=1024')
 
     expect(response.status).toBe(200)
@@ -145,7 +145,7 @@ describe('generateMockApi - Binary Stream endpoints', () => {
       await stream.write(new TextEncoder().encode('Async content'))
     })
 
-    const app = createMockServer(apiSchema)
+    const { app } = createMockServer(apiSchema)
     const response = await app.request('/files/async')
 
     expect(response.status).toBe(200)
@@ -170,7 +170,7 @@ describe('generateMockApi - Binary Stream endpoints', () => {
       await stream.write(new Uint8Array(buffer))
     })
 
-    const app = createMockServer(apiSchema)
+    const { app } = createMockServer(apiSchema)
     const response = await app.request('/binary')
 
     expect(response.status).toBe(200)

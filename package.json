@@ -12,13 +12,16 @@
     "check": "pnpm -r check"
   },
   "dependencies": {
-    "hono": "^4.10.4"
+    "hono": "^4.10.5"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.3.4",
+    "@biomejs/biome": "2.3.5",
     "@faker-js/faker": "^10.1.0",
-    "@types/node": "^24.10.0",
+    "@hono/node-server": "^1.19.6",
+    "@hono/node-ws": "^1.2.0",
+    "@types/node": "^24.10.1",
     "@vitest/coverage-v8": "4.0.8",
+    "concurrently": "^9.2.1",
     "prettier": "^3.6.2",
     "rollup-plugin-visualizer": "^6.0.5",
     "typescript": "^5.9.3",

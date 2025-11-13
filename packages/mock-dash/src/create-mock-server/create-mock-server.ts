@@ -1,7 +1,8 @@
+import type { createNodeWebSocket } from '@hono/node-ws'
 import { zValidator } from '@hono/zod-validator'
 import { Hono, type ValidationTargets } from 'hono'
 import { type SSEMessage, stream, streamSSE } from 'hono/streaming'
-import type { UpgradeWebSocket, WSContext } from 'hono/ws'
+import type { SendOptions, UpgradeWebSocket, WSContext } from 'hono/ws'
 import z from 'zod'
 import { Endpoint } from '../endpoint/endpoint'
 import { isHttpEndpoint } from '../endpoint/http-endpoint'
@@ -25,6 +26,7 @@ export interface MockGenerationOptions {
   readonly base?: string
   readonly addMiddleware?: (app: Hono) => void
   readonly zodToMock?: <Z extends z.ZodType>(response: Z) => z.infer<Z>
+  readonly createNodeWebSocket?: typeof createNodeWebSocket
   readonly upgradeWebSocket?: UpgradeWebSocket
 }
 
@@ -33,6 +35,9 @@ export function createMockServer<T extends Record<string, unknown>>(
   options: MockGenerationOptions = {},
 ) {
   const app = new Hono().basePath(options.base ?? '')
+  const { injectWebSocket, upgradeWebSocket: nodeUpgradeWebSocket } =
+    options.createNodeWebSocket ? options.createNodeWebSocket({ app }) : {}
+  const upgradeWebSocket = options.upgradeWebSocket || nodeUpgradeWebSocket
 
   options.addMiddleware?.(app)
 
@@ -40,7 +45,7 @@ export function createMockServer<T extends Record<string, unknown>>(
     endpoint: Endpoint,
     //mock?: IMock<HttpMethodPath, z.ZodType | ZodArray<z.ZodType>, any>,
   ) {
-    if (isWebSocketEndpoint(endpoint) && !options.upgradeWebSocket) {
+    if (isWebSocketEndpoint(endpoint) && !upgradeWebSocket) {
       throw new Error('options.upgradeWebSocket is not defined')
     }
 
@@ -74,8 +79,12 @@ export function createMockServer<T extends Record<string, unknown>>(
 
         if (isWebSocketEndpoint(endpoint)) {
           function modifyWsContext(ws: WSContext, endpoint: WebSocketEndpoint) {
-            const send = ws.send
-            ws.send = (data, options) => {
+            const clonews = Object.assign(
+              Object.create(Object.getPrototypeOf(ws)),
+              ws,
+            ) as WSContext
+
+            clonews.send = (data: unknown, options?: SendOptions) => {
               const result = z
                 .union(endpoint.response.serverToClient)
                 .safeParse(data)
@@ -89,12 +98,14 @@ export function createMockServer<T extends Record<string, unknown>>(
                 result.data instanceof ArrayBuffer ||
                 isBinaryArrayBuffer(result.data)
               )
-                send.call(ws, result.data, options)
-              else send.call(ws, JSON.stringify(result.data), options)
+                ws.send.call(ws, result.data, options)
+              else ws.send.call(ws, JSON.stringify(result.data), options)
             }
+
+            return clonews
           }
 
-          const upgradedWebSocketHandler = options.upgradeWebSocket!((_c) => {
+          const upgradedWebSocketHandler = upgradeWebSocket!((_c) => {
             let mock = endpoint.getMock()
             if (!mock) {
               mock = {
@@ -119,14 +130,14 @@ export function createMockServer<T extends Record<string, unknown>>(
 
             return {
               onClose(evt, ws) {
-                modifyWsContext(ws, endpoint)
+                const modifiedWs = modifyWsContext(ws, endpoint)
 
-                mock.onClose?.(evt, ws)
+                mock.onClose?.(evt, modifiedWs)
               },
               onError(evt, ws) {
-                modifyWsContext(ws, endpoint)
+                const modifiedWs = modifyWsContext(ws, endpoint)
 
-                mock.onError?.(evt, ws)
+                mock.onError?.(evt, modifiedWs)
               },
               onMessage(evt, ws) {
                 let data = evt.data
@@ -146,14 +157,14 @@ export function createMockServer<T extends Record<string, unknown>>(
                   throw new MockError('Invalid WebSocket message', 400)
                 }
 
-                modifyWsContext(ws, endpoint)
+                const modifiedWs = modifyWsContext(ws, endpoint)
 
-                mock.onMessage?.({ ...evt, data: result.data }, ws)
+                mock.onMessage?.({ ...evt, data: result.data }, modifiedWs)
               },
               onOpen(evt, ws) {
-                modifyWsContext(ws, endpoint)
+                const modifiedWs = modifyWsContext(ws, endpoint)
 
-                mock.onOpen?.(evt, ws)
+                mock.onOpen?.(evt, modifiedWs)
               },
             }
           })
@@ -356,5 +367,5 @@ export function createMockServer<T extends Record<string, unknown>>(
     }
   }
 
-  return app
+  return { app, injectWebSocket }
 }

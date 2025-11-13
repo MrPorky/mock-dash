@@ -19,7 +19,7 @@ describe('generateMockApi - DELETE endpoints', () => {
       deleted: true,
     }))
 
-    const app = createMockServer(apiSchema)
+    const { app } = createMockServer(apiSchema)
 
     const res = await app.request('/users/123', { method: 'DELETE' })
     expect(res.status).toBe(200)
@@ -45,7 +45,7 @@ describe('generateMockApi - DELETE endpoints', () => {
       success: true,
     }))
 
-    const app = createMockServer(apiSchema)
+    const { app } = createMockServer(apiSchema)
 
     const res = await app.request('/posts/post1/comments/comment2', {
       method: 'DELETE',
@@ -79,7 +79,7 @@ describe('generateMockApi - DELETE endpoints', () => {
       reason: ctx.inputs.query.reason || 'no reason provided',
     }))
 
-    const app = createMockServer(apiSchema)
+    const { app } = createMockServer(apiSchema)
 
     const res = await app.request('/users/123?soft=true&reason=testing', {
       method: 'DELETE',
@@ -99,7 +99,7 @@ describe('generateMockApi - DELETE endpoints', () => {
 
     apiSchema.clearCache.defineMock(() => ({ cleared: true }))
 
-    const app = createMockServer(apiSchema)
+    const { app } = createMockServer(apiSchema)
 
     const res = await app.request('/cache', { method: 'DELETE' })
     expect(res.status).toBe(200)
@@ -116,7 +116,7 @@ describe('generateMockApi - DELETE endpoints', () => {
 
     apiSchema.deleteUser.defineMock(() => undefined)
 
-    const app = createMockServer(apiSchema)
+    const { app } = createMockServer(apiSchema)
 
     const res = await app.request('/users/123', { method: 'DELETE' })
     expect(res.status).toBe(200)
@@ -130,7 +130,7 @@ describe('generateMockApi - DELETE endpoints', () => {
       }),
     }
 
-    const app = createMockServer(apiSchema)
+    const { app } = createMockServer(apiSchema)
 
     const res = await app.request('/users/123', { method: 'DELETE' })
     expect(res.status).toBe(500)
@@ -151,7 +151,7 @@ describe('generateMockApi - DELETE endpoints', () => {
 
     apiSchema.deleteUser.defineMock(() => ({ deleted: true }))
 
-    const app = createMockServer(apiSchema)
+    const { app } = createMockServer(apiSchema)
 
     // Missing required query parameter
     const res = await app.request('/users/123', { method: 'DELETE' })

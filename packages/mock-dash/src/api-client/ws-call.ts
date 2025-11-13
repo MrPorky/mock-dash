@@ -285,25 +285,7 @@ async function* wsMessageParser<S extends Array<z.ZodType>>(
       return
     }
 
-    // Extract message type
-    const messageType = parsedMessage.type
-    if (!messageType) {
-      messageQueue.push({
-        type: 'error',
-        error: new Error(
-          'WebSocket message missing "type" field. Expected format: { type: "messageType", data: {...} }',
-        ),
-        raw: rawData,
-      })
-
-      if (resolver) {
-        resolver()
-        resolver = null
-      }
-      return
-    }
-
-    const validation = z.union(schemas).safeParse(parsedMessage.data)
+    const validation = z.union(schemas).safeParse(parsedMessage)
     if (validation.success) {
       messageQueue.push({
         type: 'message',

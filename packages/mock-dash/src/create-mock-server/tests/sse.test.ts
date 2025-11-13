@@ -35,7 +35,7 @@ describe('generateMockApi - SSE endpoints', () => {
       })
     })
 
-    const app = createMockServer(apiSchema)
+    const { app } = createMockServer(apiSchema)
     const response = await app.request('/events/notifications')
 
     expect(response.status).toBe(200)
@@ -60,7 +60,7 @@ describe('generateMockApi - SSE endpoints', () => {
       }),
     }
 
-    const app = createMockServer(apiSchema, {
+    const { app } = createMockServer(apiSchema, {
       zodToMock: (schema) => {
         if (schema instanceof z.ZodObject) {
           return {
@@ -93,7 +93,7 @@ describe('generateMockApi - SSE endpoints', () => {
       // Write nothing
     })
 
-    const app = createMockServer(apiSchema)
+    const { app } = createMockServer(apiSchema)
     const response = await app.request('/events/empty')
 
     expect(response.status).toBe(200)
@@ -134,7 +134,7 @@ describe('generateMockApi - SSE endpoints', () => {
       }
     })
 
-    const app = createMockServer(apiSchema)
+    const { app } = createMockServer(apiSchema)
     const response = await app.request(
       '/events/filtered?category=alerts&limit=3',
     )
@@ -177,7 +177,7 @@ describe('generateMockApi - SSE endpoints', () => {
       }
     })
 
-    const app = createMockServer(apiSchema)
+    const { app } = createMockServer(apiSchema)
     const response = await app.request('/subscribe', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -216,7 +216,7 @@ describe('generateMockApi - SSE endpoints', () => {
       })
     })
 
-    const app = createMockServer(apiSchema)
+    const { app } = createMockServer(apiSchema)
     const response = await app.request('/events/mixed')
 
     expect(response.status).toBe(200)
@@ -249,7 +249,7 @@ describe('generateMockApi - SSE endpoints', () => {
       })
     })
 
-    const app = createMockServer(apiSchema)
+    const { app } = createMockServer(apiSchema)
     const response = await app.request('/events/stable')
 
     expect(response.status).toBe(200)
@@ -293,7 +293,7 @@ describe('generateMockApi - SSE endpoints', () => {
       })
     })
 
-    const app = createMockServer(apiSchema)
+    const { app } = createMockServer(apiSchema)
     const response = await app.request('/users/user123/events')
 
     expect(response.status).toBe(200)

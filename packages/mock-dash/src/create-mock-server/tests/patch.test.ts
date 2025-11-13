@@ -27,7 +27,7 @@ describe('generateMockApi - PATCH endpoints', () => {
       email: ctx.inputs.json.email || 'default@example.com',
     }))
 
-    const app = createMockServer(apiSchema)
+    const { app } = createMockServer(apiSchema)
 
     const res = await app.request('/users/123', {
       method: 'PATCH',
@@ -71,7 +71,7 @@ describe('generateMockApi - PATCH endpoints', () => {
       }
     })
 
-    const app = createMockServer(apiSchema)
+    const { app } = createMockServer(apiSchema)
 
     const res = await app.request('/profiles/123', {
       method: 'PATCH',
@@ -100,7 +100,7 @@ describe('generateMockApi - PATCH endpoints', () => {
 
     apiSchema.patchUser.defineMock(() => ({ id: '123' }))
 
-    const app = createMockServer(apiSchema)
+    const { app } = createMockServer(apiSchema)
 
     // Invalid email format
     const res = await app.request('/users/123', {
@@ -124,7 +124,7 @@ describe('generateMockApi - PATCH endpoints', () => {
 
     apiSchema.patchSettings.defineMock(() => undefined)
 
-    const app = createMockServer(apiSchema)
+    const { app } = createMockServer(apiSchema)
 
     const res = await app.request('/settings/setting1', {
       method: 'PATCH',

@@ -1,8 +1,8 @@
 import type z from 'zod'
 
 export abstract class StreamResponse {
+  // biome-ignore lint/correctness/noUnusedPrivateClassMembers: unique symbol to prevent external extension
   #privateField = Symbol('private')
-  constructor() {}
 }
 
 export class SSEResponse<

@@ -1,12 +1,13 @@
 import { Hono } from 'hono'
 import { describe, expect, it } from 'vitest'
 import z from 'zod'
-import { defineDelete } from '../../endpoint/define-endpoint'
+import { defineDelete, definePut } from '../../endpoint/define-endpoint'
 import { createApiClient } from '../api-client'
 
 describe('DELETE endpoints', () => {
   it('should perform DELETE request with void response', async () => {
     const apiSchema = {
+      updateUser: definePut('/users/:id', { response: z.void() }),
       deleteUser: defineDelete('/users/:id', { response: z.void() }),
     }
     const app = new Hono().delete('/users/:id', (c) => c.body(null, 204))
@@ -17,7 +18,7 @@ describe('DELETE endpoints', () => {
     })
     const res = await client.users.id('123').delete()
     expect(res).toHaveProperty('data')
-    //@ts-expect-error res.data is void/never
+    // @ts-expect-error - data is void
     if (res.data) expect(res.data).toBeUndefined()
   })
 

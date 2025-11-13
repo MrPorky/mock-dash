@@ -113,7 +113,7 @@ describe('generateMockApi - WebSocket endpoints', () => {
 
     const mockUpgradeWebSocket: any = () => () => {}
 
-    const app = createMockServer(apiSchema, {
+    const { app } = createMockServer(apiSchema, {
       upgradeWebSocket: mockUpgradeWebSocket,
     })
 
