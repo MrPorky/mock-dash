@@ -15,10 +15,25 @@
 - [Why MockDash?](#why-mockdash)
 - [Installation](#installation)
 - [Quick Start](#quick-start)
-- [Project Structure](#project-structure)
-- [API Endpoint Format](#api-endpoint-format)
 - [Features](#features)
-- [Development Workflow](#development-workflow)
+- [Usage](#usage)
+  - [Define Endpoints](#define-endpoints)
+    - [HTTP Methods](#http-methods)
+    - [Streams](#streams)
+    - [WebSockets](#websockets)
+    - [Options](#options)
+  - [Generate Type-Safe Client](#generate-type-safe-client)
+    - [Client Methods](#client-methods)
+    - [Form Data Parsing](#form-data-parsing)
+    - [Error Handling](#error-handling)
+    - [Interceptors](#interceptors)
+  - [Create Mock Server](#create-mock-server)
+    - [Define Mock Responses](#define-mock-responses)
+    - [Start Server](#start-server)
+    - [WebSocket Support](#websocket-support)
+  - [Utilities](#utilities)
+  - [CLI Tool](#cli-tool)
+    - [Generate specs from OpenAPI](#generate-specs-from-openapi)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -47,536 +62,582 @@ MockDash has minimal dependencies:
 
 ## Quick Start
 
-### 1. Define Your Models
+Here's a simple example to get you started:
 
-```ts
-// src/models/user.ts
-import { z } from 'zod'
+```typescript
+import z from 'zod'
+import { defineGet, definePost, createApiClient, createMockServer } from 'mock-dash'
 
-export const userSchema = z.object({
-  id: z.string(),
-  personalNumber: z.string(),
-  name: z.string(),
-  givenName: z.string(),
-  surname: z.string(),
-})
-
-export type User = z.infer<typeof userSchema>
-```
-
-### 2. Create API Endpoints
-
-```ts
-// src/api/schemas/users.ts
-import { defineEndpoint } from 'mock-dash'
-import { z } from 'zod'
-import { userSchema } from '../../models/user'
-
-export const getUserById = defineEndpoint('@get/users/:id', {
-  response: userSchema,
-})
-
-export const getUsers = defineEndpoint('@get/users', {
-  input: {
-    query: z.object({
-      page: z.string().optional(),
-      limit: z.string().optional(),
-    }),
-  },
-  response: z.array(userSchema),
-})
-
-export const createUser = defineEndpoint('@post/users', {
-  input: {
-    json: z.object({
-      personalNumber: z.string()
-        .length(12)
-        .regex(/^\d+$/),
+// 1. Define your API schema once
+const apiSchema = {
+  getUser: defineGet('/users/:id', {
+    response: z.object({
+      id: z.string(),
       name: z.string(),
-      givenName: z.string(),
-      surname: z.string(),
+      email: z.string().email(),
     }),
-  },
-  response: userSchema,
-})
-
-export const updateUser = defineEndpoint('@put/users/:id', {
-  input: {
-    json: userSchema.omit({ id: true }),
-  },
-  response: userSchema,
-})
-```
-
-```ts
-// src/api/schemas/index.ts
-export * from './users'
-```
-
-
-### Plain Text & Void Responses
-
-While most endpoints return JSON objects/arrays, MockDash also supports endpoints that return plain text (e.g. health checks, version strings) or no content at all (204 responses). The client automatically decides how to read the body based on the response schema you provide:
-
-Behavior:
-
-- If the endpoint's `response` is `z.string()` (including any formatted string like `z.email()`, `z.uuid()`, etc.), the client reads the body using `response.text()` and validates it with Zod.
-- If the endpoint's `response` is `z.void()`, the client does not attempt to parse a body (useful for 204 No Content / empty responses) and returns `undefined`.
-- For all other Zod schemas (objects, arrays, numbers, booleans, unions, etc.) the client parses the body as JSON and then validates it.
-
-Examples:
-
-```ts
-import { defineEndpoint } from 'mock-dash'
-import { z } from 'zod'
-
-// Plain text response (e.g. GET /version -> '1.2.3')
-export const getVersion = defineEndpoint('@get/version', {
-  response: z.string(),
-})
-
-// Email-formatted string response (parsed as text, still validated)
-export const getContactEmail = defineEndpoint('@get/support/email', {
-  response: z.email(),
-})
-
-// Void / empty response (e.g. 204 on successful logout)
-export const logout = defineEndpoint('@post/auth/logout', {
-  response: z.void(),
-})
-
-// Standard JSON response still works the same
-export const getUser = defineEndpoint('@get/users/:id', {
-  response: z.object({ id: z.string(), name: z.string() }),
-})
-```
-
-Usage in the client:
-
-```ts
-const version = await apiClient('@get/version')        // type: string
-const email = await apiClient('@get/support/email')    // type: string
-await apiClient('@post/auth/logout')                   // type: void (undefined)
-const user = await apiClient('@get/users/:id', { param: { id: '123' } })
-```
-
-Notes:
-
-- If a string endpoint actually returns JSON (e.g. '"value"'), it will not be parsed; you'll receive the raw text. Use a JSON schema (e.g. `z.object(...)`) if you expect JSON.
-- For numeric / boolean primitives, define a JSON shape (e.g. `{ value: z.number() }`) if the server returns JSON, or wrap the primitive in a string endpoint if the server returns raw text and you want to parse it yourself.
-- A `z.never()` response is not supported (it will always fail validation) and typically indicates a design issue.
-- **Single Source of Truth**: Define your API schema once using Zod
-- **Type-Safe Client**: Get a fully typed API client for your frontend
-- **Mock Server**: Automatically generate a Hono mock server for development
-- **Frontend Independence**: Work on frontend features while waiting for backend implementation
-- **Zero Configuration**: Works out of the box with sensible defaults
-
-
-### 3. Create Your API Client
-
-```ts
-// src/api/client.ts
-import { createApiClient } from 'mock-dash'
-import * as apiSchema from './schemas'
-
-export const apiClient = createApiClient({
-  apiSchema,
-  baseURL: process.env.VITE_API_URL || 'http://localhost:3000/api'
-})
-
-// Usage in your frontend
-const user = await apiClient('@get/users/:id', { param: { id: '123' } }) // Fully typed!
-const users = await apiClient('@get/users', { query: { page: '1' } })
-
-// Usage with @tanstack/query
-useQuery({
-  queryKey: ['session'],
-  queryFn: async () => {
-    const data = await apiClient('@post/auth/get-session')
-
-    setUser(data)
-
-    return data
-  },
-  retry: false, // Don't retry on 401/403 errors
-  throwOnError: false,
-})
-
-useMutation({
-  mutationFn: () => apiClient('@post/auth/revoke-session'),
-  onSuccess: () => setUser(null),
-})
-
-// Using interceptors
-const navigate = useNavigate()
-
-useEffect(() => {
-  const removeInterceptor = apiClient.interceptors.response.addInterceptor((_c, res) => {
-    if (res.status === 401) {
-      navigate({
-        to: '/login',
-        search: {
-          redirect: location.href,
-        },
-      })
-    }
-    return res
-  })
-
-  return removeInterceptor
-}, [navigate])
-```
-
-### 4. Generate Mock Server
-
-```ts
-// mock-server/index.ts
-import { generateMockApi } from 'mock-dash'
-import { zocker } from 'zocker'
-import * as apiSchema from '../src/api/schemas'
-
-// Optional: Define custom mocks
-apiSchema.getUserById.defineMock({
-  mockFn: () => ({
-    id: '123',
-    personalNumber: '199001011234',
-    name: 'John Doe',
-    givenName: 'John',
-    surname: 'Doe',
-  })
-})
-
-// Use any Zod-compatible faker library
-function generateFakeData(zodSchema) {
-  // You can use zocker, @anatine/zod-mock, or any other Zod faker
-  return zocker(zodSchema).generate()
+  }),
+  createUser: definePost('/users', {
+    input: {
+      json: z.object({
+        name: z.string(),
+        email: z.string().email(),
+      }),
+    },
+    response: z.object({
+      id: z.string(),
+      name: z.string(),
+      email: z.string(),
+      createdAt: z.string(),
+    }),
+  }),
 }
 
-const { app, mockContext } = generateMockApi(apiSchema, generateFakeData, {
-  base: '/api',
-  addMiddleware: (app) => {
-    // Add CORS, auth, or other middleware
-    app.use('*', async (c, next) => {
-      c.header('Access-Control-Allow-Origin', '*')
-      await next()
-    })
-  }
+// 2. Create a type-safe API client
+const client = createApiClient({
+  apiSchema,
+  baseURL: 'https://api.example.com',
 })
 
-export default app
+// 3. Use the client with full type safety
+const response = await client.users.id('123').get()
+if (response.data) {
+  console.log(response.data.name) // TypeScript knows this is a string
+}
+
+// 4. Create a mock server for development
+apiSchema.getUser.defineMock((ctx) => ({
+  id: ctx.inputs.param.id,
+  name: 'John Doe',
+  email: 'john@example.com',
+}))
+
+apiSchema.createUser.defineMock((ctx) => ({
+  id: 'new-user-123',
+  name: ctx.inputs.json.name,
+  email: ctx.inputs.json.email,
+  createdAt: new Date().toISOString(),
+}))
+
+const mockServer = createMockServer(apiSchema)
 ```
-
-### 5. Run Your Mock Server
-
-If you're using Vite, there's an awesome package called `@hono/vite-dev-server` to run the mock server at the same time as your frontend:
-
-```ts
-export default defineConfig({
-  plugins: [
-    devServer({
-      entry: './mock-server/index.ts',
-      // only run the dev server on /api routes
-      exclude: [/^(?!\/api(?:\/|$)).*/],
-    }),
-  ],
-})
-```
-
-Otherwise, check out [hono.dev](https://hono.dev/docs/getting-started/basic) or [Hono templates](https://github.com/honojs/starter/tree/main/templates) to run it your preferred way:
-
-```ts
-// mock-server/server.ts
-// node example using `tsx watch mock-server/server.ts`
-import { serve } from '@hono/node-server'
-import app from './index'
-
-serve({
-  fetch: app.fetch,
-  port: 8787,
-})
-```
-
-## Project Structure
-
-```
-src/
-├── models/           # Zod schemas for your data models
-│   ├── index.ts
-│   ├── user.ts
-│   └── product.ts
-├── api/
-│   ├── client.ts     # API client instance
-│   └── schemas/      # API endpoint definitions
-│       ├── index.ts
-│       ├── users.ts
-│       └── products.ts
-mock-server/
-├── index.ts          # Mock server setup
-└── server.ts         # Server entry point (optional)
-```
-
-## API Endpoint Format
-
-MockDash uses a simple convention for defining endpoints:
-
-- `@{method}/{path}` - Define HTTP method and path
-- `input` - Define request validation (query, param, json, form)
-- `response` - Define response schema
-
-```ts
-const getUserById = defineEndpoint('@get/users/:id', {
-  response: userSchema,
-})
-
-const createUser = defineEndpoint('@post/users', {
-  input: {
-    json: createUserSchema,
-  },
-  response: userSchema,
-})
-```
-
-### Prefix Option
-
-You can add a `prefix` to an endpoint without changing its key. This is useful if your runtime API path is versioned or nested (e.g. `/api/v1`) but you want to keep keys concise.
-
-```ts
-const getVersionedUser = defineEndpoint(
-  '@get/users/:id',
-  { response: userSchema },
-  { prefix: '/api/v1' },
-)
-
-// Calls still use the original key:
-await apiClient('@get/users/:id', { param: { id: '123' } })
-// Fetches: GET /api/v1/users/123
-
-// Prefix normalization examples:
-defineEndpoint('@get/ping', { response: z.string() }, { prefix: '///api///v2//' })
-// Runtime path => /api/v2/ping
-```
-
-Rules:
-* Key remains unchanged for client calls & inference.
-* Prefix is prepended to the path seen by fetch and the mock server.
-* Multiple/duplicate slashes are collapsed, trailing slash removed, leading slash enforced.
-* Use a shared constant for many endpoints:
-
-```ts
-const API_PREFIX = '/api/v2'
-export const listProducts = defineEndpoint('@get/products', { response: z.array(productSchema) }, { prefix: API_PREFIX })
-export const createProduct = defineEndpoint('@post/products', { input: { json: createProductSchema }, response: productSchema }, { prefix: API_PREFIX })
-```
-
-## CLI Tool
-
-MockDash includes a powerful CLI tool to generate MockDash schemas directly from OpenAPI/Swagger specifications. This bridges the gap between existing API documentation and MockDash, allowing you to quickly get started with type-safe API clients and mock servers.
-
-### Installation
-
-The CLI is included with the MockDash package:
-
-```bash
-npx mock-dash --help
-```
-
-### Basic Usage
-
-Generate a MockDash schema from an OpenAPI specification:
-
-```bash
-# From a local file
-npx mock-dash generate ./openapi.json
-
-# From a remote URL
-npx mock-dash generate https://api.example.com/openapi.json
-
-# Specify output file
-npx mock-dash generate ./openapi.yaml --out src/api/generated-schema.ts
-```
-
-### Advanced Options
-
-#### Strip Path Prefixes
-
-If your OpenAPI spec includes path prefixes (like `/api/v1`) that you want to handle with MockDash's prefix option:
-
-```bash
-# Strip /api/v1 from paths and add as prefix option
-npx mock-dash generate ./openapi.json --prefix /api/v1
-
-# Multiple prefixes (comma-separated)
-npx mock-dash generate ./openapi.json --prefix /api/v1,/api/v2
-npx mock-dash generate ./openapi.json --prefix /api/v1 --prefix /api/v2
-```
-
-This will generate endpoints like:
-```ts
-export const getUser = defineEndpoint('@get/users/:id', { 
-  response: userSchema 
-}, { prefix: '/api/v1' })
-```
-
-#### Properties Required by Default
-
-By default, the CLI follows OpenAPI's `required` array. To treat all object properties as required unless explicitly marked optional:
-
-```bash
-npx mock-dash generate ./openapi.json --properties-required-by-default
-```
-
-### Generated Output
-
-The CLI generates a TypeScript file with:
-
-- **Zod model schemas** for all OpenAPI components
-- **Typed endpoint definitions** using `defineEndpoint`
-- **Proper imports** for MockDash and Zod
-- **Camel-cased naming** for better JavaScript/TypeScript conventions
-
-Example generated output:
-```ts
-// Generated by mock-dash CLI
-import { z } from 'zod'
-import { defineEndpoint } from 'mock-dash'
-
-export const UserModel = z.object({
-  id: z.string(),
-  name: z.string(),
-  email: z.email()
-})
-
-export const getUserById = defineEndpoint('@get/users/:id', {
-  input: { param: { "id": z.string() } },
-  response: UserModel
-})
-
-export const createUser = defineEndpoint('@post/users', {
-  input: { json: UserModel.omit({ id: true }) },
-  response: UserModel
-})
-```
-
-### CLI Options
-
-| Option | Short | Description |
-|--------|--------|-------------|
-| `--out <file>` | `-o` | Output file path (default: `mock-dash-schema.ts`) |
-| `--prefix <prefix>` | `-p` | Strip prefix from paths and add as prefix option |
-| `--properties-required-by-default` | `-prbd` | Treat all properties as required by default |
-| `--help` | `-h` | Show help message |
 
 ## Features
 
-### Current Features
+- ✅ **Type-Safe API Client**: Automatically generated client with full TypeScript support
+- ✅ **Mock Server**: Hono-based mock server for development and testing
+- ✅ **Zod Validation**: Request/response validation using Zod schemas
+- ✅ **Path Parameters**: Support for dynamic URL segments (`:id`, `:slug`, etc.)
+- ✅ **Query Parameters**: Type-safe query string handling
+- ✅ **Request Bodies**: JSON, form data, and custom content types
+- ✅ **Stream Support**: Server-Sent Events (SSE) and JSON streaming
+- ✅ **WebSocket Support**: Real-time bidirectional communication
+- ✅ **Error Handling**: Structured error types for different failure modes
+- ✅ **Interceptors**: Request/response transformation and middleware
+- ✅ **OpenAPI Generation**: Generate schemas from existing OpenAPI specs
+- ✅ **Path Aliases**: Support for API versioning and prefixes
 
-- ✅ **Type Safety**: Full TypeScript support with inferred types from Zod schemas
-- ✅ **Single Source of Truth**: Define your API once, use everywhere
-- ✅ **Request/Response Validation**: Automatic validation using Zod schemas
-- ✅ **Mock Server Generation**: Instantly generate Hono-based mock servers
-- ✅ **Fake Data Generation**: Automatic realistic test data using any Zod faker
-- ✅ **Middleware Support**: Add authentication, CORS, logging, and custom middleware
-- ✅ **Path Parameters**: Full support for dynamic routes with type safety
-- ✅ **Query Parameters**: Type-safe query string handling and validation
-- ✅ **Multiple Input Types**: Support for JSON, form data, query params, and headers
-- ✅ **Framework Agnostic**: Works with any frontend framework (React, Vue, Svelte, etc.)
-- ✅ **Development Ready**: Perfect for frontend-first development workflows
-- ✅ **OpenAPI Integration** - Generate Zod schemas and TypeScript models directly from OpenAPI/Swagger specifications, bridging existing API documentation with MockDash
+## Usage
 
-### Roadmap to Stable Version
+### Define Endpoints
 
-The following key features are planned before the stable 1.0 release:
+#### HTTP Methods
 
-- ⌛ **Server-Sent Events (SSE) Support** - Enable real-time data streaming in the generated API client with full TypeScript support for SSE endpoints
-- ⌛ **Enhanced Mock Data Generation** - Provide intuitive APIs to register custom faker functions for specific properties, enabling domain-specific realistic test data
-- ⌛ **Integrated Form Handling** - Built-in form utilities with validation, error handling, and seamless API client integration for rapid frontend development
-- ⌛ **Stateful Mock Collections** - Persistent in-memory collections with CRUD operations, allowing shared state across mock endpoints for more realistic development scenarios
-- ⌛ **Comprehensive Framework Examples** - Fully working example projects for React, Next.js, Nuxt, SvelteKit, Astro, and SolidJS demonstrating best practices and framework-specific integration patterns
+MockDash supports all standard HTTP methods with type-safe definitions:
 
-## Development Workflow
+```typescript
+import z from 'zod'
+import { defineGet, definePost, definePut, definePatch, defineDelete } from 'mock-dash'
 
-1. Define your data models using Zod schemas
-2. Create API endpoints with `defineEndpoint` for each route
-3. Generate type-safe API client for frontend development
-4. Add custom mocks with `defineMock` for realistic test data
-5. Run mock server for immediate frontend testing
-6. Replace mock server with real backend when ready
-7. Keep endpoint definitions in sync as API evolves
-
-## Advanced Usage
-
-### Custom Mock Data
-
-You can provide custom mock implementations for specific endpoints:
-
-```ts
-import { faker } from '@faker-js/faker'
-
-// Custom mock with parameters
-getUserById.defineMock({
-  mockFn: ({ inputs }) => ({
-    id: inputs.param.id,
-    personalNumber: faker.string.numeric(12),
-    name: faker.person.fullName(),
-    givenName: faker.person.firstName(),
-    surname: faker.person.lastName(),
-  })
+// GET endpoint with query parameters
+const getUsers = defineGet('/users', {
+  input: {
+    query: {
+      page: z.string().optional(),
+      limit: z.coerce.number().optional(),
+      search: z.string().optional(),
+    },
+  },
+  response: z.array(z.object({
+    id: z.string(),
+    name: z.string(),
+    email: z.string(),
+  })),
 })
 
-// Custom mock with faker shorthand
-getUsers.defineMock({
-  mockFn: {
-    length: 10,
-    faker: () => ({
-      id: faker.string.uuid(),
-      personalNumber: faker.string.numeric(12),
-      name: faker.person.fullName(),
-      givenName: faker.person.firstName(),
-      surname: faker.person.lastName(),
+// POST endpoint with JSON body
+const createUser = definePost('/users', {
+  input: {
+    json: z.object({
+      name: z.string(),
+      email: z.string().email(),
+      age: z.number().min(18),
+    }),
+  },
+  response: z.object({
+    id: z.string(),
+    name: z.string(),
+    email: z.string(),
+    age: z.number(),
+    createdAt: z.string(),
+  }),
+})
+
+// PUT endpoint with path parameters
+const updateUser = definePut('/users/:id', {
+  input: {
+    json: z.object({
+      name: z.string().optional(),
+      email: z.string().email().optional(),
+    }),
+  },
+  response: z.object({
+    id: z.string(),
+    name: z.string(),
+    email: z.string(),
+    updatedAt: z.string(),
+  }),
+})
+
+// DELETE endpoint
+const deleteUser = defineDelete('/users/:id', {
+  response: z.void(),
+})
+```
+
+#### Streams
+
+MockDash supports different types of streaming responses:
+
+```typescript
+import { defineSSE, defineJSONStream, defineBinaryStream } from 'mock-dash'
+
+// Server-Sent Events
+const notifications = defineGet('/notifications', {
+  response: defineSSE({
+    message: z.object({
+      type: z.literal('message'),
+      content: z.string(),
+    }),
+    alert: z.object({
+      type: z.literal('alert'),
+      level: z.enum(['info', 'warning', 'error']),
+      message: z.string(),
+    }),
+  }),
+})
+
+// JSON streaming
+const streamData = defineGet('/stream', {
+  response: defineJSONStream(
+    z.object({
+      id: z.string(),
+      timestamp: z.number(),
+      data: z.any(),
     })
-  }
+  ),
+})
+
+// Binary streaming
+const downloadFile = defineGet('/files/:id', {
+  response: defineBinaryStream('application/pdf'),
 })
 ```
 
-### Error Handling
+#### WebSockets
 
-The API client includes built-in error handling and validation:
+Define real-time WebSocket endpoints with typed message schemas:
 
-```ts
-try {
-  const user = await apiClient('@get/users/:id', { param: { id: 'invalid' } })
+```typescript
+import { defineWebSocket } from 'mock-dash'
+
+const chatEndpoint = defineGet('/chat/:roomId', {
+  response: defineWebSocket(
+    // Server-to-client messages
+    [
+      z.object({ type: z.literal('message'), text: z.string(), user: z.string() }),
+      z.object({ type: z.literal('userJoined'), user: z.string() }),
+      z.object({ type: z.literal('userLeft'), user: z.string() }),
+    ],
+    // Client-to-server messages
+    [
+      z.object({ type: z.literal('sendMessage'), text: z.string() }),
+      z.object({ type: z.literal('join'), user: z.string() }),
+    ]
+  ),
+})
+```
+
+#### Options
+
+Configure endpoints with additional options:
+
+```typescript
+// Path aliases for API versioning
+const getUser = defineGet('{api}/users/:id', {
+  response: userSchema,
+  options: {
+    alias: { api: '/api/v1' },
+  },
+})
+
+// Custom headers or middleware configuration
+const secureEndpoint = defineGet('/admin/users', {
+  response: userListSchema,
+  options: {
+    // Custom options can be used by your middleware
+    requiresAuth: true,
+  },
+})
+```
+
+### Generate Type-Safe Client
+
+#### Client Methods
+
+The API client provides a fluent interface matching your endpoint paths:
+
+```typescript
+const client = createApiClient({
+  apiSchema,
+  baseURL: 'https://api.example.com',
+  // Optional: custom fetch implementation
+  fetch: customFetch,
+})
+
+// Simple GET request
+const users = await client.users.get({ query: { limit: 10 } })
+
+// GET with path parameters
+const user = await client.users.id('123').get()
+
+// POST with JSON body
+const newUser = await client.users.post({
+  json: { name: 'John', email: 'john@example.com' },
+})
+
+// Nested paths
+const userPosts = await client.users.id('123').posts.get()
+
+// Complex nested paths with multiple parameters
+const comment = await client.users
+  .userId('123')
+  .posts.postId('456')
+  .comments.commentId('789')
+  .get()
+```
+
+#### Form Data Parsing
+
+For endpoints that accept JSON input, MockDash provides a `safeParseForm` utility method to validate and parse FormData into the expected schema format:
+
+```typescript
+// Define an endpoint that accepts JSON input
+const createUser = definePost('/users', {
+  input: {
+    json: z.object({
+      name: z.string(),
+      email: z.string().email(),
+      age: z.coerce.number(), // Will be coerced from string
+    }),
+  },
+  response: userSchema,
+})
+
+// Parse FormData on the client side
+const formData = new FormData()
+formData.append('name', 'John Doe')
+formData.append('email', 'john@example.com')
+formData.append('age', '25') // String that will be coerced to number
+
+// Validate and parse the form data
+const parseResult = client.users.post.safeParseForm(formData)
+
+if (parseResult.success) {
+  // parseResult.data is fully typed and validated
+  console.log(parseResult.data.name) // "John Doe"
+  console.log(parseResult.data.age)  // 25 (number)
+  
+  // Use the parsed data in your API call
+  const response = await client.users.post({ json: parseResult.data })
+} else {
+  // Handle validation errors
+  console.error('Form validation failed:', parseResult.error)
 }
-catch (error) {
-  if (error.status === 404) {
-    console.log('User not found')
+
+// Disable automatic type coercion if needed
+const strictParseResult = client.users.post.safeParseForm(formData, false)
+```
+
+The `safeParseForm` method:
+- Only available on endpoints with `json` input schemas (not available for streams or WebSockets)
+- Automatically coerces string form values to appropriate types (unless `autoCoerce` is false)
+- Returns a result object with `success` boolean and either `data` or `error`
+- Provides full TypeScript type safety for the parsed data
+- Uses the same validation schema as the endpoint's JSON input
+
+#### Error Handling
+
+MockDash provides structured error types for comprehensive error handling:
+
+```typescript
+import { isApiError, isNetworkError, isValidationError } from 'mock-dash'
+
+const response = await client.users.id('123').get()
+
+if (response.error) {
+  if (isApiError(response.error)) {
+    // HTTP error (4xx, 5xx)
+    console.error(`API Error ${response.error.status}:`, response.error.message)
+  } else if (isNetworkError(response.error)) {
+    // Network connectivity issues
+    console.error('Network Error:', response.error.message)
+  } else if (isValidationError(response.error)) {
+    // Schema validation failures
+    console.error('Validation Error:', response.error.getFieldErrors())
   }
-  else if (error.status === 400) {
-    console.log('Validation error:', error.body)
-  }
+} else {
+  // Success - response.data is fully typed
+  console.log('User:', response.data)
 }
 ```
 
-### Interceptors
+#### Interceptors
 
-Add global request/response interceptors:
+Add global request/response interceptors for authentication, logging, etc.:
 
-```ts
-// Request interceptor
-apiClient.interceptors.request.addInterceptor((config) => {
-  config.headers = {
-    ...config.headers,
-    Authorization: `Bearer ${getToken()}`
-  }
-  return config
-})
+```typescript
+// Request interceptor for authentication
+client.interceptors.request.use((context, options) => ({
+  ...options,
+  headers: {
+    ...options.headers,
+    Authorization: `Bearer ${getAuthToken()}`,
+  },
+}))
 
-// Response interceptor
-apiClient.interceptors.response.addInterceptor((config, response) => {
-  if (response.status === 401) {
-    // Handle unauthorized
-    redirectToLogin()
-  }
+// Response interceptor for logging
+client.interceptors.response.use((context, response) => {
+  console.log(`${context.method} ${context.url} - ${response.status}`)
   return response
+})
+
+// Local interceptors for specific requests
+await client.users.get({
+  transformRequest: (context, options) => ({
+    ...options,
+    headers: { ...options.headers, 'X-Custom': 'value' },
+  }),
+  transformResponse: (context, response) => {
+    // Process response
+    return response
+  },
+})
+```
+
+### Create Mock Server
+
+#### Define Mock Responses
+
+Create realistic mock responses for development and testing:
+
+```typescript
+// Static mock responses
+apiSchema.getUser.defineMock({
+  id: '123',
+  name: 'John Doe',
+  email: 'john@example.com',
+})
+
+// Dynamic mock responses with access to request context
+apiSchema.getUser.defineMock((ctx) => ({
+  id: ctx.inputs.param.id,
+  name: 'Dynamic User',
+  email: `user${ctx.inputs.param.id}@example.com`,
+}))
+
+// Mock with query parameters
+apiSchema.searchUsers.defineMock((ctx) => ({
+  users: [
+    {
+      id: '1',
+      name: `Search result for: ${ctx.inputs.query.q}`,
+      email: 'user1@example.com',
+    },
+  ],
+  total: 1,
+}))
+
+// Mock with JSON body
+apiSchema.createUser.defineMock((ctx) => ({
+  id: Math.random().toString(36),
+  name: ctx.inputs.json.name,
+  email: ctx.inputs.json.email,
+  createdAt: new Date().toISOString(),
+}))
+
+// Async mock functions
+apiSchema.getUser.defineMock(async (ctx) => {
+  // Simulate database lookup
+  await new Promise(resolve => setTimeout(resolve, 100))
+  return {
+    id: ctx.inputs.param.id,
+    name: 'Async User',
+    email: 'async@example.com',
+  }
+})
+
+// Access to Hono context for advanced scenarios
+apiSchema.getUser.defineMock((ctx) => ({
+  id: ctx.inputs.param.id,
+  name: 'User',
+  customHeader: ctx.honoContext.req.header('X-Custom') || 'none',
+}))
+```
+
+#### Start Server
+
+Create and configure your mock server:
+
+```typescript
+import { createMockServer } from 'mock-dash'
+
+// Basic server
+const app = createMockServer(apiSchema)
+
+// Server with custom options
+const app = createMockServer(apiSchema, {
+  // Base path for all endpoints
+  base: '/api/v1',
+  
+  // Custom fetch function for network requests
+  fetch: customFetch,
+  
+  // Automatic mock generation from Zod schemas
+  zodToMock: (schema) => {
+    // Custom logic to generate mock data from Zod schema
+    if (schema instanceof z.ZodString) return 'mock-string'
+    if (schema instanceof z.ZodNumber) return 42
+    // ... handle other types
+  },
+  
+  // Custom middleware
+  addMiddleware: (app) => {
+    app.use('*', async (c, next) => {
+      // Add CORS headers
+      c.header('Access-Control-Allow-Origin', '*')
+      await next()
+    })
+  },
+})
+
+// Start the server (if using in Node.js)
+import { serve } from '@hono/node-server'
+serve({ fetch: app.fetch, port: 3000 })
+```
+
+#### WebSocket Support
+
+For WebSocket endpoints, provide the `upgradeWebSocket` function (see [hono](https://hono.dev/docs/helpers/websocket)):
+
+```typescript
+import { createMockServer } from 'mock-dash'
+
+// Define WebSocket mocks
+apiSchema.chat.defineMock((ctx) => ({
+  onOpen: () => {
+    console.log(`User joined room ${ctx.inputs.param.roomId}`)
+  },
+  onMessage: (ws, message) => {
+    // Echo messages back to all clients
+    ws.send({
+      type: 'message',
+      text: message.text,
+      user: 'mock-user',
+    })
+  },
+  onClose: () => {
+    console.log('User left')
+  },
+}))
+
+const app = createMockServer(apiSchema, {
+  // Provide WebSocket upgrade function (depends on your runtime)
+  upgradeWebSocket: (handler) => (c) => {
+    // Implementation depends on your WebSocket library
+    // This is just an example structure
+    return c.upgradeWebSocket(handler)
+  },
+})
+```
+
+### Utilities
+
+MockDash includes several utility functions for common tasks:
+
+```typescript
+import { MockError } from 'mock-dash'
+
+// Throw specific HTTP errors from mock functions
+apiSchema.getUser.defineMock((ctx) => {
+  if (ctx.inputs.param.id === 'not-found') {
+    throw new MockError('User not found', 404)
+  }
+  
+  return { id: ctx.inputs.param.id, name: 'Found User' }
+})
+```
+
+### CLI Tool
+
+MockDash provides a CLI tool to generate schemas from OpenAPI specifications.
+
+#### Generate specs from OpenAPI
+
+Convert existing OpenAPI specifications to MockDash schemas:
+
+```bash
+# Generate from OpenAPI JSON
+npx mock-dash generate ./api-spec.json --out ./src/api-schema.ts
+
+# Generate from OpenAPI YAML  
+npx mock-dash generate ./api-spec.yaml --out ./src/api-schema.ts
+
+# Strip prefixes and use aliases for API versioning
+npx mock-dash generate ./api-spec.json \
+  --out ./src/api-schema.ts \
+  --prefix "/api/v1,/api/v2"
+
+# Make all properties required by default
+npx mock-dash generate ./api-spec.json \
+  --out ./src/api-schema.ts \
+  --properties-required-by-default
+
+# Short form options
+npx mock-dash generate ./api-spec.json -o ./schema.ts -p "/api/v1" -prbd
+```
+
+The generated file will export:
+
+```typescript
+// Component schemas
+export const userModel = z.object({ /* ... */ })
+export const productModel = z.object({ /* ... */ })
+
+// Endpoint definitions
+export const getUsersId = defineGet('/users/:id', {
+  response: userModel,
+})
+
+export const postUsers = definePost('/users', {
+  input: { json: userModel },
+  response: userModel,
+})
+
+// With prefix aliases
+export const getApiUsers = defineGet('{api}/users', {
+  response: z.array(userModel),
+  options: { alias: { api: '/api/v1' } },
 })
 ```
 

@@ -18,10 +18,14 @@
   "scripts": {
     "gen:schemas": "pnpm exec mock-dash generate ./src/swagger.json -o ./src/schemas/auth.gen.ts -prbd",
     "build": "tsc",
-    "check": "tsc --noEmit"
+    "check": "tsc --noEmit",
+    "dev": "tsx src/server/index.ts"
   },
   "dependencies": {
     "mock-dash": "workspace:*"
+  },
+  "devDependencies": {
+    "tsx": "^4.20.6"
   },
   "files": [
     "src",

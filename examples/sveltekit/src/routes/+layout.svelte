@@ -1,5 +1,8 @@
 <script lang='ts'>
+import { page } from '$app/stores'
 import favicon from '$lib/assets/favicon.svg'
+import Header from '$lib/components/Header.svelte'
+import './index.css'
 
 const { children } = $props()
 </script>
@@ -8,24 +11,21 @@ const { children } = $props()
   <link rel='icon' href={favicon} />
 </svelte:head>
 
-{@render children?.()}
+<main>
+  <Header />
+  <nav>
+    <ul>
+      <li>
+        <a href="/http-demo" class={$page.route.id === '/http-demo' ? 'active' : ''}>Http</a>
+      </li>
+      <li>
+        <a href="/stream-demo" class={$page.route.id === '/stream-demo' ? 'active' : ''}>Streaming</a>
+      </li>
+      <li>
+        <a href="/ws-demo" class={$page.route.id === '/ws-demo' ? 'active' : ''}>WebSocket</a>
+      </li>
+    </ul>
+  </nav>
+  {@render children?.()}
+</main>
 
-<style>
-  :global(html, body, body > div) {
-    margin: 0;
-    padding: 0;
-    min-height: 100vh;
-    min-height: 100lvh;
-  }
-
-  :global(body > div) {
-    display: flex;
-    flex-direction: column;
-    background-color: var(--purpur-color-background-primary);
-    color: var(--purpur-color-text-default);
-  }
-
-  :global(body > div > main) {
-    flex: 1;
-  }
-</style>

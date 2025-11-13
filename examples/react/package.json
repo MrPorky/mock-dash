@@ -4,25 +4,27 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "dev": "vite",
+    "dev": "concurrently \"pnpm run dev:server\" \"pnpm run dev:client\"",
+    "dev:server": "pnpm --filter @examples/shared dev",
+    "dev:client": "vite",
     "build": "vite build && tsc -b",
     "check": "tsc --noEmit"
   },
   "dependencies": {
     "@examples/shared": "workspace:*",
-    "@tanstack/react-router": "^1.133.22",
+    "@tanstack/react-router": "^1.135.2",
     "mock-dash": "workspace:*",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"
   },
   "devDependencies": {
     "@hono/vite-dev-server": "^0.23.0",
-    "@tanstack/router-plugin": "^1.133.22",
-    "@types/react": "^19.2.2",
-    "@types/react-dom": "^19.2.2",
-    "@vitejs/plugin-react": "^5.0.4",
+    "@tanstack/router-plugin": "^1.135.2",
+    "@types/react": "^19.2.4",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^5.1.1",
     "babel-plugin-react-compiler": "19.1.0-rc.3",
-    "globals": "^16.4.0",
+    "globals": "^16.5.0",
     "typescript-plugin-css-modules": "^5.2.0",
     "vite-tsconfig-paths": "^5.1.4"
   }
