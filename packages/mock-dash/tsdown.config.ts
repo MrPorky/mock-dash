@@ -11,7 +11,7 @@ export default defineConfig([
   },
   {
     name: 'cli',
-    entry: {'cli': 'src/cli/index.ts'},
+    entry: { cli: 'src/cli/index.ts' },
     format: 'esm',
     dts: false,
     sourcemap: false,

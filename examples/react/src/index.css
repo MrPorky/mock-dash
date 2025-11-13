@@ -50,6 +50,11 @@ nav li {
   margin: 0;
 }
 
+button {
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
 nav button {
   width: 100%;
   border: none;
@@ -118,11 +123,6 @@ textarea {
 
 input::placeholder {
   color: #6b7280;
-}
-
-button {
-  font-weight: 500;
-  transition: all 0.2s ease;
 }
 
 button[type="button"] {

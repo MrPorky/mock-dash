@@ -160,7 +160,7 @@ const { app, injectWebSocket } = createMockServer(apiSchema, {
   createNodeWebSocket,
 })
 
-const port = process.env.PORT ? parseInt(process.env.PORT) : 3001
+const port = process.env.PORT ? Number.parseInt(process.env.PORT, 10) : 3001
 const server = serve({
   fetch: app.fetch,
   port,

@@ -16,30 +16,6 @@ function getBaseType(schema: unknown): z.ZodType {
   return schema
 }
 
-function setNestedValue(
-  obj: Record<string, unknown>,
-  path: string,
-  value: unknown,
-): void {
-  const keys = path.split('.')
-  let current = obj
-
-  for (let i = 0; i < keys.length - 1; i++) {
-    const key = keys[i]
-    if (
-      !(key in current) ||
-      typeof current[key] !== 'object' ||
-      current[key] === null
-    ) {
-      current[key] = {}
-    }
-    current = current[key] as Record<string, unknown>
-  }
-
-  const finalKey = keys[keys.length - 1]
-  current[finalKey] = value
-}
-
 function extractNestedObjectFields(
   formData: FormData,
   schema: z.ZodObject<any>,

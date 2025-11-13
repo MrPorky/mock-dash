@@ -4,12 +4,15 @@ import { createCoercingSchema } from '../create-coercing-schema'
 
 describe('createCoercingSchema', () => {
   it('should throw error for non-ZodType schema', () => {
+    // @ts-expect-error Testing invalid input
     expect(() => createCoercingSchema('not a schema')).toThrow(
       'Expected a z.ZodType schema',
     )
+    // @ts-expect-error Testing invalid input
     expect(() => createCoercingSchema({})).toThrow(
       'Expected a z.ZodType schema',
     )
+    // @ts-expect-error Testing invalid input
     expect(() => createCoercingSchema(null)).toThrow(
       'Expected a z.ZodType schema',
     )
