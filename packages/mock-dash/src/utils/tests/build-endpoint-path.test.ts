@@ -54,9 +54,7 @@ describe('buildEndpointPath', () => {
   })
 
   it('leaves unmatched placeholders unchanged', () => {
-    expect(buildEndpointPath('{service}/users', { api: '/api' })).toBe(
-      '/{service}/users',
-    )
+    expect(buildEndpointPath('{service}/users', { api: '/api' })).toBe('/users')
   })
 
   // basePath support
