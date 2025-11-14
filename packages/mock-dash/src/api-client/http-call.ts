@@ -24,8 +24,16 @@ export type HttpEndpointCallSignature<
         formData: FormData,
         autoCoerce?: boolean,
       ) =>
-        | { success: boolean; data: z.infer<R>; error?: undefined }
-        | { success: boolean; data?: undefined; error: $ZodErrorTree<R> }
+        | {
+            success: true
+            data: z.infer<I['json']>
+            error?: undefined
+          }
+        | {
+            success: false
+            data?: undefined
+            error: $ZodErrorTree<R>
+          }
     : never
   // Call signature
   (
@@ -142,13 +150,13 @@ export function callHttpEndpoint(
         if (!result.success) {
           const error = z.treeifyError(result.error)
           return {
-            success: false,
+            success: false as const,
             error: error,
           }
         }
 
         return {
-          success: true,
+          success: true as const,
           data: result.data,
         }
       },
