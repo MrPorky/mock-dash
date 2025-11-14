@@ -331,7 +331,7 @@ describe('Server-Sent Events (SSE)', () => {
     const receivedB: z.infer<typeof eventSchema.typeB>[] = []
     const receivedC: z.infer<typeof eventSchema.typeC>[] = []
     const errors: Errors[] = []
-    const result = await client['multi-events'].get.$stream()
+    const result = await client.multiEvents.get.$stream()
     if (result.data) {
       for await (const chunk of result.data) {
         if (chunk.type === 'event') {

@@ -2,6 +2,7 @@ import { Endpoint } from '../endpoint/endpoint'
 import { isHttpEndpoint } from '../endpoint/http-endpoint'
 import { isStreamEndpoint } from '../endpoint/stream-endpoint'
 import { isWebSocketEndpoint } from '../endpoint/ws-endpoint'
+import { toCamelCase } from '../utils/to-camel-case'
 import type { CreateApiClientArgs, FetchOptions } from './client-base'
 import type { Client } from './client-type'
 import { callHttpEndpoint } from './http-call'
@@ -15,12 +16,15 @@ type ParsedSegment =
 
 function parsePath(path: string): ParsedSegment[] {
   const segments = path.replace(/^\/|\/$/g, '').split('/')
-
   return segments.filter(Boolean).map((segment) => {
-    if (segment.startsWith(':')) {
-      return { type: 'param', name: segment.substring(1) }
+    const paramMatch = segment.match(/^:(.*)$/)
+
+    if (paramMatch) {
+      return { type: 'param', name: paramMatch[1] }
     } else {
-      return { type: 'resource', name: segment }
+      const resourceName = segment.replace(/^\{(.*)\}$/, '$1')
+
+      return { type: 'resource', name: resourceName }
     }
   })
 }
@@ -110,9 +114,11 @@ function buildApiClientFromTree(
   }
 
   for (const [key, childNode] of node.children.entries()) {
+    const clientKey = toCamelCase(key)
+
     if (childNode.segmentType === 'resource') {
-      clientNode[key] = {
-        ...clientNode[key],
+      clientNode[clientKey] = {
+        ...clientNode[clientKey],
         ...buildApiClientFromTree(
           childNode,
           requestOptions,
@@ -121,7 +127,7 @@ function buildApiClientFromTree(
         ),
       }
     } else if (childNode.segmentType === 'param') {
-      clientNode[key] = (paramValue: string) => {
+      clientNode[clientKey] = (paramValue: string) => {
         const newParams = { ...pathParams, [key]: paramValue }
 
         return buildApiClientFromTree(

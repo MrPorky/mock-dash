@@ -31,7 +31,7 @@ describe('Alias functionality in createApiClient', () => {
         fetch: app.fetch,
       })
 
-      const res = await client['{api}'].users.id('123').get()
+      const res = await client.api.users.id('123').get()
       expect(res).toHaveProperty('data')
       if (res.data) {
         expect(res.data.id).toBe('123')
@@ -67,9 +67,7 @@ describe('Alias functionality in createApiClient', () => {
         fetch: app.fetch,
       })
 
-      const res = await client['{service}']['{version}'].resources
-        .id('456')
-        .get()
+      const res = await client.service.version.resources.id('456').get()
       expect(res).toHaveProperty('data')
       if (res.data) {
         expect(res.data.id).toBe('456')
@@ -103,10 +101,7 @@ describe('Alias functionality in createApiClient', () => {
         fetch: app.fetch,
       })
 
-      const res = await client['{api}'].users
-        .userId('123')
-        .posts.postId('456')
-        .get()
+      const res = await client.api.users.userId('123').posts.postId('456').get()
       expect(res).toHaveProperty('data')
       if (res.data) {
         expect(res.data.userId).toBe('123')
@@ -141,7 +136,7 @@ describe('Alias functionality in createApiClient', () => {
         fetch: app.fetch,
       })
 
-      const res = await client['{api}'].users.search.get({
+      const res = await client.api.users.search.get({
         query: { q: 'john', limit: '10' },
       })
       expect(res).toHaveProperty('data')
@@ -183,7 +178,7 @@ describe('Alias functionality in createApiClient', () => {
         fetch: app.fetch,
       })
 
-      const res = await client['{api}'].users.post({
+      const res = await client.api.users.post({
         json: { name: 'Jane Doe', email: 'jane@example.com' },
       })
 
@@ -213,7 +208,7 @@ describe('Alias functionality in createApiClient', () => {
         fetch: app.fetch,
       })
 
-      const res = await client['{root}'].health.get()
+      const res = await client.root.health.get()
       expect(res).toHaveProperty('data')
       if (res.data) {
         expect(res.data.status).toBe('ok')
@@ -241,7 +236,7 @@ describe('Alias functionality in createApiClient', () => {
         fetch: app.fetch,
       })
 
-      const res = await client['{api}'].users.id('123').get()
+      const res = await client.api.users.id('123').get()
       expect(res).toHaveProperty('data')
       if (res.data) {
         expect(res.data.id).toBe('123')
@@ -286,18 +281,227 @@ describe('Alias functionality in createApiClient', () => {
       })
 
       // Test GET with alias
-      const getRes = await client['{api}'].users.id('123').get()
+      const getRes = await client.api.users.id('123').get()
       expect(getRes).toHaveProperty('data')
       if (getRes.data) expect(getRes.data.name).toBe('Original Name')
 
       // Test PUT with alias
-      const putRes = await client['{api}'].users.id('123').put({
+      const putRes = await client.api.users.id('123').put({
         json: { name: 'Updated Name' },
       })
       expect(putRes).toHaveProperty('data')
       if (putRes.data) {
         expect(putRes.data.name).toBe('Updated Name')
         expect(putRes.data.updated).toBe(true)
+      }
+    })
+  })
+
+  describe('CamelCase path conversion', () => {
+    it('should convert kebab-case path segments to camelCase', async () => {
+      const apiSchema = {
+        getUserProfile: defineGet('/user-profiles/:user-id/profile-data', {
+          response: z.object({ userId: z.string(), profileData: z.string() }),
+        }),
+      }
+
+      const app = new Hono().get(
+        '/user-profiles/:user-id/profile-data',
+        (c) => {
+          const userId = c.req.param('user-id')
+          return c.json({ userId, profileData: 'Sample profile' })
+        },
+      )
+
+      const client = createApiClient({
+        apiSchema,
+        baseURL: 'http://localhost',
+        fetch: app.fetch,
+      })
+
+      // Access using camelCase
+      const res = await client.userProfiles.userId('123').profileData.get()
+      expect(res).toHaveProperty('data')
+      if (res.data) {
+        expect(res.data.userId).toBe('123')
+        expect(res.data.profileData).toBe('Sample profile')
+      }
+    })
+
+    it('should convert kebab-case aliases to camelCase', async () => {
+      const apiSchema = {
+        getApiData: defineGet('/{api-version}/user-accounts/:user-id', {
+          response: z.object({ userId: z.string(), accountType: z.string() }),
+          options: {
+            alias: { 'api-version': '/api/v1' },
+          },
+        }),
+      }
+
+      const app = new Hono().get('/api/v1/user-accounts/:user-id', (c) => {
+        const { 'user-id': userId } = c.req.param()
+        return c.json({ userId, accountType: 'premium' })
+      })
+
+      const client = createApiClient({
+        apiSchema,
+        baseURL: 'http://localhost',
+        fetch: app.fetch,
+      })
+
+      // Access using camelCase conversion of kebab-case alias
+      const res = await client.apiVersion.userAccounts.userId('456').get()
+      expect(res).toHaveProperty('data')
+      if (res.data) {
+        expect(res.data.userId).toBe('456')
+        expect(res.data.accountType).toBe('premium')
+      }
+    })
+
+    it('should handle mixed camelCase and kebab-case segments with aliases', async () => {
+      const apiSchema = {
+        getComplexData: defineGet(
+          '/{api-service}/user-data/:userId/profile-settings',
+          {
+            response: z.object({
+              userId: z.string(),
+              profileSettings: z.object({ theme: z.string() }),
+            }),
+            options: {
+              alias: { 'api-service': '/api-service' },
+            },
+          },
+        ),
+      }
+
+      const app = new Hono().get(
+        '/api-service/user-data/:userId/profile-settings',
+        (c) => {
+          const { userId } = c.req.param()
+          return c.json({
+            userId,
+            profileSettings: { theme: 'dark' },
+          })
+        },
+      )
+
+      const client = createApiClient({
+        apiSchema,
+        baseURL: 'http://localhost',
+        fetch: app.fetch,
+      })
+
+      const res = await client.apiService.userData
+        .userId('789')
+        .profileSettings.get()
+      expect(res).toHaveProperty('data')
+      if (res.data) {
+        expect(res.data.userId).toBe('789')
+        expect(res.data.profileSettings.theme).toBe('dark')
+      }
+    })
+
+    it('should handle deeply nested kebab-case paths with POST requests', async () => {
+      const apiSchema = {
+        createUserAccount: definePost(
+          '/{service-api}/user-management/create-account',
+          {
+            input: {
+              json: z.object({
+                userName: z.string(),
+                emailAddress: z.string(),
+              }),
+            },
+            response: z.object({
+              accountId: z.string(),
+              userName: z.string(),
+              status: z.string(),
+            }),
+            options: {
+              alias: { 'service-api': '/api/v2' },
+            },
+          },
+        ),
+      }
+
+      const app = new Hono().post(
+        '/api/v2/user-management/create-account',
+        async (c) => {
+          const body = await c.req.json()
+          return c.json({
+            accountId: 'acc-123',
+            userName: body.userName,
+            status: 'created',
+          })
+        },
+      )
+
+      const client = createApiClient({
+        apiSchema,
+        baseURL: 'http://localhost',
+        fetch: app.fetch,
+      })
+
+      const res = await client.serviceApi.userManagement.createAccount.post({
+        json: { userName: 'johndoe', emailAddress: 'john@example.com' },
+      })
+
+      expect(res).toHaveProperty('data')
+      if (res.data) {
+        expect(res.data.accountId).toBe('acc-123')
+        expect(res.data.userName).toBe('johndoe')
+        expect(res.data.status).toBe('created')
+      }
+    })
+
+    it('should preserve already camelCase segments', async () => {
+      const apiSchema = {
+        getUserData: defineGet('/userProfiles/:userId/personalData', {
+          response: z.object({ userId: z.string(), personalData: z.string() }),
+        }),
+      }
+
+      const app = new Hono().get('/userProfiles/:userId/personalData', (c) => {
+        const { userId } = c.req.param()
+        return c.json({ userId, personalData: 'Personal info' })
+      })
+
+      const client = createApiClient({
+        apiSchema,
+        baseURL: 'http://localhost',
+        fetch: app.fetch,
+      })
+
+      const res = await client.userProfiles.userId('999').personalData.get()
+      expect(res).toHaveProperty('data')
+      if (res.data) {
+        expect(res.data.userId).toBe('999')
+        expect(res.data.personalData).toBe('Personal info')
+      }
+    })
+
+    it('should handle single character segments and numbers correctly', async () => {
+      const apiSchema = {
+        getVersionData: defineGet('/api-v2/user-a/data-1', {
+          response: z.object({ version: z.string(), data: z.string() }),
+        }),
+      }
+
+      const app = new Hono().get('/api-v2/user-a/data-1', (c) => {
+        return c.json({ version: 'v2', data: 'sample-data' })
+      })
+
+      const client = createApiClient({
+        apiSchema,
+        baseURL: 'http://localhost',
+        fetch: app.fetch,
+      })
+
+      const res = await client.apiV2.userA.data1.get()
+      expect(res).toHaveProperty('data')
+      if (res.data) {
+        expect(res.data.version).toBe('v2')
+        expect(res.data.data).toBe('sample-data')
       }
     })
   })
@@ -364,8 +568,8 @@ describe('Alias functionality in createApiClient', () => {
         fetch: app.fetch,
       })
 
-      const res1 = await client['{api}'].v1.users.get()
-      const res2 = await client['{service}'].v2.users.get()
+      const res1 = await client.api.v1.users.get()
+      const res2 = await client.service.v2.users.get()
 
       expect(res1).toHaveProperty('data')
       expect(res2).toHaveProperty('data')

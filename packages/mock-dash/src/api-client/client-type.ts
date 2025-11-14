@@ -30,6 +30,11 @@ type EndpointCall<T extends Endpoint> = T extends Endpoint<
     }
   : 'error dose not inherit from Endpoint'
 
+type ToCamelCase<S extends string> =
+  S extends `${infer P1}-${infer P2}${infer REST}`
+    ? `${P1}${Capitalize<ToCamelCase<`${P2}${REST}`>>}`
+    : S
+
 type GetNextSegments<
   P extends string,
   E_Union extends Endpoint,
@@ -55,8 +60,10 @@ type ApiClientRecursiveNode<
     ? Record<string, any>
     : {
         [S in GetNextSegments<P, E_Union> as S extends `:${infer PARAM}`
-          ? PARAM
-          : S]: S extends `:${infer _PARAM}`
+          ? ToCamelCase<PARAM>
+          : S extends `{${infer ALIAS}}`
+            ? ToCamelCase<ALIAS>
+            : ToCamelCase<S>]: S extends `:${infer _PARAM}`
           ? (value: string) => ApiClientRecursiveNode<`${P}/${S}`, E_Union>
           : ApiClientRecursiveNode<`${P}/${S}`, E_Union>
       })
