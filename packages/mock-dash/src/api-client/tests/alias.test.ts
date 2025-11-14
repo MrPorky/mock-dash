@@ -76,6 +76,40 @@ describe('Alias functionality in createApiClient', () => {
       }
     })
 
+    it('support undefined aliases', async () => {
+      const apiSchema = {
+        getResource: defineGet('/{service}/{version}/resources/:id', {
+          response: z.object({
+            id: z.string(),
+            service: z.string(),
+            version: z.string(),
+          }),
+          options: {
+            alias: {},
+          },
+        }),
+      }
+
+      const app = new Hono().get('/resources/:id', (c) => {
+        const { id } = c.req.param()
+        return c.json({ id, service: 'api', version: 'v2' })
+      })
+
+      const client = createApiClient({
+        apiSchema,
+        baseURL: 'http://localhost',
+        fetch: app.fetch,
+      })
+
+      const res = await client.service.version.resources.id('456').get()
+      expect(res).toHaveProperty('data')
+      if (res.data) {
+        expect(res.data.id).toBe('456')
+        expect(res.data.service).toBe('api')
+        expect(res.data.version).toBe('v2')
+      }
+    })
+
     it('should support path aliases with complex nested paths', async () => {
       const apiSchema = {
         getUserPosts: defineGet('/{api}/users/:userId/posts/:postId', {

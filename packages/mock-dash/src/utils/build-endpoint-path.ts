@@ -15,12 +15,14 @@ export function buildEndpointPath(
   let working = path.trim()
   working = working.replace(/^\/+/g, '')
   let rawPath = `/${working}`
+  const aliasMatches = Array.from(rawPath.matchAll(/\{([^}]+)\}/g))
 
   // Replace aliases in the path
-  if (alias) {
-    for (const [key, value] of Object.entries(alias)) {
-      const placeholder = `{${key}}`
+  if (aliasMatches) {
+    for (const key of aliasMatches) {
+      const placeholder = `/{${key[1]}}`
       if (rawPath.includes(placeholder)) {
+        const value = alias?.[key[1]] ? alias[key[1]] : ''
         const normalized = normalizePrefix(value)
         rawPath = rawPath.replace(placeholder, normalized)
       }
