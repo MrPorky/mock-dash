@@ -29,8 +29,11 @@ describe('JSON Stream (NDJSON)', () => {
       fetch: app.fetch,
     })
 
-    const received: any[] = []
-    const errors: any[] = []
+    const received: {
+      id: string
+      name: string
+    }[] = []
+    const errors: Error[] = []
     const result = await client.stream.users.get.$stream()
 
     expect(result).toHaveProperty('data')
@@ -62,8 +65,10 @@ describe('JSON Stream (NDJSON)', () => {
       baseURL: 'http://localhost',
       fetch: app.fetch,
     })
-    const received: any[] = []
-    const errors: any[] = []
+    const received: {
+      value: number
+    }[] = []
+    const errors: Error[] = []
     const result = await client.stream.numbers.get.$stream()
     if (result.data) {
       for await (const chunk of result.data) {
@@ -96,7 +101,9 @@ describe('JSON Stream (NDJSON)', () => {
       fetch: app.fetch,
     })
     const controller = new AbortController()
-    const received: any[] = []
+    const received: {
+      seq: number
+    }[] = []
     const result = await client.stream.slow.get.$stream({
       signal: controller.signal,
     })

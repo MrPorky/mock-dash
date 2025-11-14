@@ -5,22 +5,23 @@ import { describe, expect, it, vi } from 'vitest'
 import z from 'zod'
 import { defineGet } from '../../endpoint/define-endpoint'
 import { defineSSE } from '../../endpoint/stream-response'
-import { ApiError, NetworkError } from '../../utils/errors'
+import { ApiError, type Errors, NetworkError } from '../../utils/errors'
 import { createApiClient } from '../api-client'
 
 describe('Server-Sent Events (SSE)', () => {
   it('should handle basic SSE endpoint', async () => {
+    const eventSchema = {
+      notification: z.object({
+        id: z.string(),
+        message: z.string(),
+        timestamp: z.string(),
+      }),
+      heartbeat: z.object({ status: z.literal('alive') }),
+    }
     const apiSchema = {
       notificationStream: defineGet('/events/notifications', {
         input: { query: { userId: z.string() } },
-        response: defineSSE({
-          notification: z.object({
-            id: z.string(),
-            message: z.string(),
-            timestamp: z.string(),
-          }),
-          heartbeat: z.object({ status: z.literal('alive') }),
-        }),
+        response: defineSSE(eventSchema),
       }),
     }
     const app = new Hono().get(
@@ -47,40 +48,47 @@ describe('Server-Sent Events (SSE)', () => {
       baseURL: 'http://localhost',
       fetch: app.fetch,
     })
-    const received: any[] = []
-    const errors: any[] = []
+    const receivedNotifications: z.infer<typeof eventSchema.notification>[] = []
+    const receivedHeartbeats: z.infer<typeof eventSchema.heartbeat>[] = []
+    const errors: Errors[] = []
     let closed = false
     const result = await client.events.notifications.get.$stream({
       query: { userId: '123' },
     })
     if (result.data) {
       for await (const chunk of result.data) {
-        if (chunk.type === 'event') received.push(chunk.data)
+        if (chunk.type === 'event') {
+          if (chunk.name === 'notification')
+            receivedNotifications.push(chunk.data)
+          if (chunk.name === 'heartbeat') receivedHeartbeats.push(chunk.data)
+        }
         if (chunk.type === 'error') errors.push(chunk.error)
       }
       closed = true
     }
-    expect(received).toHaveLength(2)
+    expect(receivedNotifications).toHaveLength(1)
+    expect(receivedHeartbeats).toHaveLength(1)
     expect(errors).toHaveLength(0)
     expect(closed).toBe(true)
   })
 
   it('should handle SSE with path parameters', async () => {
+    const eventSchema = {
+      userUpdate: z.object({
+        userId: z.string(),
+        field: z.string(),
+        newValue: z.string(),
+      }),
+      userAction: z.object({
+        userId: z.string(),
+        action: z.string(),
+        timestamp: z.string(),
+      }),
+    }
     const apiSchema = {
       userEvents: defineGet('/users/:userId/events', {
         input: { query: { since: z.string().optional() } },
-        response: defineSSE({
-          userUpdate: z.object({
-            userId: z.string(),
-            field: z.string(),
-            newValue: z.string(),
-          }),
-          userAction: z.object({
-            userId: z.string(),
-            action: z.string(),
-            timestamp: z.string(),
-          }),
-        }),
+        response: defineSSE(eventSchema),
       }),
     }
     const app = new Hono().get(
@@ -111,20 +119,25 @@ describe('Server-Sent Events (SSE)', () => {
       baseURL: 'http://localhost',
       fetch: app.fetch,
     })
-    const received: any[] = []
-    const errors: any[] = []
+    const receivedUpdates: z.infer<typeof eventSchema.userUpdate>[] = []
+    const receivedActions: z.infer<typeof eventSchema.userAction>[] = []
+    const errors: Errors[] = []
     let closed = false
     const result = await client.users
       .userId('user123')
       .events.get.$stream({ query: { since: '2023-01-01' } })
     if (result.data) {
       for await (const chunk of result.data) {
-        if (chunk.type === 'event') received.push(chunk.data)
+        if (chunk.type === 'event') {
+          if (chunk.name === 'userUpdate') receivedUpdates.push(chunk.data)
+          if (chunk.name === 'userAction') receivedActions.push(chunk.data)
+        }
         if (chunk.type === 'error') errors.push(chunk.error)
       }
       closed = true
     }
-    expect(received).toHaveLength(2)
+    expect(receivedUpdates).toHaveLength(1)
+    expect(receivedActions).toHaveLength(1)
     expect(errors).toHaveLength(0)
     expect(closed).toBe(true)
   })
@@ -141,12 +154,12 @@ describe('Server-Sent Events (SSE)', () => {
       baseURL: 'http://localhost',
       fetch: app.fetch,
     })
-    const errors: any[] = []
+    const errors: Errors[] = []
     const result = await client.events.get.$stream()
     if (result.error) errors.push(result.error)
     expect(errors).toHaveLength(1)
     expect(errors[0]).toBeInstanceOf(ApiError)
-    expect(errors[0].status).toBe(500)
+    expect((errors[0] as ApiError).status).toBe(500)
   })
 
   it('should handle SSE network errors', async () => {
@@ -167,9 +180,10 @@ describe('Server-Sent Events (SSE)', () => {
   })
 
   it('should handle malformed SSE data', async () => {
+    const validationEventModel = z.object({ message: z.string() })
     const apiSchema = {
       streamEvents: defineGet('/events', {
-        response: defineSSE({ validEvent: z.object({ message: z.string() }) }),
+        response: defineSSE({ validEvent: validationEventModel }),
       }),
     }
     const app = new Hono().get('/events', (c) =>
@@ -186,8 +200,8 @@ describe('Server-Sent Events (SSE)', () => {
       baseURL: 'http://localhost',
       fetch: app.fetch,
     })
-    const received: any[] = []
-    const errors: any[] = []
+    const received: z.infer<typeof validationEventModel>[] = []
+    const errors: Errors[] = []
     let closed = false
     const result = await client.events.get.$stream()
     if (result.data) {
@@ -235,8 +249,8 @@ describe('Server-Sent Events (SSE)', () => {
       headers: { ...options.headers, Authorization: 'Bearer token123' },
     }))
     client.interceptors.request.use(requestInterceptor)
-    const received: any[] = []
-    const errors: any[] = []
+    const received: { encrypted: string }[] = []
+    const errors: Errors[] = []
     const result = await client.secure.events.get.$stream({
       query: { token: 'abc123' },
       headers: { 'X-Custom-Header': 'custom-value' },
@@ -282,13 +296,14 @@ describe('Server-Sent Events (SSE)', () => {
   })
 
   it('should handle multiple event types correctly', async () => {
+    const eventSchema = {
+      typeA: z.object({ type: z.literal('A'), data: z.string() }),
+      typeB: z.object({ type: z.literal('B'), value: z.number() }),
+      typeC: z.object({ type: z.literal('C'), items: z.array(z.string()) }),
+    }
     const apiSchema = {
       multiEvents: defineGet('/multi-events', {
-        response: defineSSE({
-          typeA: z.object({ type: z.literal('A'), data: z.string() }),
-          typeB: z.object({ type: z.literal('B'), value: z.number() }),
-          typeC: z.object({ type: z.literal('C'), items: z.array(z.string()) }),
-        }),
+        response: defineSSE(eventSchema),
       }),
     }
     const app = new Hono().get('/multi-events', (c) =>
@@ -312,16 +327,24 @@ describe('Server-Sent Events (SSE)', () => {
       baseURL: 'http://localhost',
       fetch: app.fetch,
     })
-    const received: any[] = []
-    const errors: any[] = []
+    const receivedA: z.infer<typeof eventSchema.typeA>[] = []
+    const receivedB: z.infer<typeof eventSchema.typeB>[] = []
+    const receivedC: z.infer<typeof eventSchema.typeC>[] = []
+    const errors: Errors[] = []
     const result = await client['multi-events'].get.$stream()
     if (result.data) {
       for await (const chunk of result.data) {
-        if (chunk.type === 'event') received.push(chunk.data)
+        if (chunk.type === 'event') {
+          if (chunk.name === 'typeA') receivedA.push(chunk.data)
+          if (chunk.name === 'typeB') receivedB.push(chunk.data)
+          if (chunk.name === 'typeC') receivedC.push(chunk.data)
+        }
         if (chunk.type === 'error') errors.push(chunk.error)
       }
     }
-    expect(received).toHaveLength(3)
+    expect(receivedA).toHaveLength(1)
+    expect(receivedB).toHaveLength(1)
+    expect(receivedC).toHaveLength(1)
     expect(errors).toHaveLength(0)
   })
 })

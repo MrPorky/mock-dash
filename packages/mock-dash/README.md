@@ -648,7 +648,7 @@ export const postUsers = definePost('/users', {
 })
 
 // With prefix aliases
-export const getApiUsers = defineGet('{api}/users', {
+export const getApiUsers = defineGet('/{api}/users', {
   response: z.array(userModel),
   options: { alias: { api: '/api/v1' } },
 })

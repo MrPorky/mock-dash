@@ -20,10 +20,10 @@ import type {
 import type { InterceptorManager } from './interceptor'
 
 // Represents a successfully parsed SSE event
-type SSEEvent<T> = {
+type SSEEvent<K, T> = {
   type: 'event'
   /** The event name (e.g., 'message') */
-  name: string
+  name: K
   /** The parsed and validated data */
   data: T
   /** The event ID, if provided */
@@ -54,7 +54,7 @@ export type StreamChunk<R extends StreamResponse> = R extends SSEResponse<
 >
   ? // E is { eventName: ZodType }. We infer the data type for each event.
     {
-      [K in keyof E]: SSEEvent<z.infer<E[K]>>
+      [K in keyof E]: SSEEvent<K, z.infer<E[K]>>
     }[keyof E]
   : R extends JSONStreamResponse<infer I>
     ? JSONStreamItem<z.infer<I>>

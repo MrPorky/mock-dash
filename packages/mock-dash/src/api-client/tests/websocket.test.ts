@@ -14,10 +14,13 @@ class MockEvent {
 }
 
 class MockMessageEvent extends MockEvent {
-  data: any
-  constructor(type: string, options: { data?: any } = {}) {
+  data: string | ArrayBuffer | Blob | ArrayBufferView
+  constructor(
+    type: string,
+    options: { data?: string | ArrayBuffer | Blob | ArrayBufferView } = {},
+  ) {
     super(type)
-    this.data = options.data
+    this.data = options.data ?? ''
   }
 }
 
@@ -124,20 +127,18 @@ describe('WebSocket endpoints', () => {
   })
 
   it('should handle basic WebSocket endpoint', async () => {
+    const serverMessages = [
+      z.object({
+        id: z.string(),
+        text: z.string(),
+        timestamp: z.string(),
+      }),
+      z.object({ type: z.string(), content: z.string() }),
+    ]
     const apiSchema = {
       chatStream: defineGet('/chat', {
         input: { query: { userId: z.string() } },
-        response: defineWebSocket(
-          [
-            z.object({
-              id: z.string(),
-              text: z.string(),
-              timestamp: z.string(),
-            }),
-            z.object({ type: z.string(), content: z.string() }),
-          ],
-          [],
-        ),
+        response: defineWebSocket(serverMessages, []),
       }),
     }
 
@@ -154,7 +155,7 @@ describe('WebSocket endpoints', () => {
     if (result.data && result.controller) {
       // Wait for connection to open
       const statusUpdates: string[] = []
-      const messages: any[] = []
+      const messages: z.infer<(typeof serverMessages)[number]>[] = []
 
       // Simulate some messages
       setTimeout(() => {
@@ -258,8 +259,8 @@ describe('WebSocket endpoints', () => {
     const result = await client.updates.get.$ws()
 
     if (result.data) {
-      const received: any[] = []
-      const errors: any[] = []
+      const received: { value: string }[] = []
+      const errors: Error[] = []
 
       setTimeout(() => {
         const ws = MockWebSocket.lastInstance
@@ -295,7 +296,7 @@ describe('WebSocket endpoints', () => {
     const result = await client.updates.get.$ws()
 
     if (result.data) {
-      const errors: any[] = []
+      const errors: Error[] = []
 
       setTimeout(() => {
         const ws = MockWebSocket.lastInstance
@@ -462,7 +463,7 @@ describe('WebSocket endpoints', () => {
     const result = await client.updates.get.$ws()
 
     if (result.data) {
-      const errors: any[] = []
+      const errors: Error[] = []
 
       setTimeout(() => {
         const ws = MockWebSocket.lastInstance
@@ -548,7 +549,7 @@ describe('WebSocket endpoints', () => {
     const result = await client.updates.get.$ws()
 
     if (result.data) {
-      const binaryMessages: any[] = []
+      const binaryMessages: (ArrayBuffer | Blob | SharedArrayBuffer)[] = []
 
       setTimeout(() => {
         const ws = MockWebSocket.lastInstance
@@ -568,7 +569,9 @@ describe('WebSocket endpoints', () => {
 
       expect(binaryMessages).toHaveLength(1)
       expect(binaryMessages[0]).toBeInstanceOf(ArrayBuffer)
-      expect(binaryMessages[0].byteLength).toBe(8)
+      if (binaryMessages[0] instanceof ArrayBuffer) {
+        expect(binaryMessages[0].byteLength).toBe(8)
+      }
     }
   }, 10000)
 
@@ -587,7 +590,7 @@ describe('WebSocket endpoints', () => {
     const result = await client.updates.get.$ws()
 
     if (result.data) {
-      const binaryMessages: any[] = []
+      const binaryMessages: (ArrayBuffer | Blob | SharedArrayBuffer)[] = []
 
       setTimeout(() => {
         const ws = MockWebSocket.lastInstance
@@ -625,7 +628,7 @@ describe('WebSocket endpoints', () => {
     const result = await client.updates.get.$ws()
 
     if (result.data) {
-      const binaryMessages: any[] = []
+      const binaryMessages: (ArrayBuffer | Blob | SharedArrayBuffer)[] = []
 
       setTimeout(() => {
         const ws = MockWebSocket.lastInstance
@@ -645,10 +648,12 @@ describe('WebSocket endpoints', () => {
 
       expect(binaryMessages).toHaveLength(1)
       expect(binaryMessages[0]).toBeInstanceOf(ArrayBuffer)
-      expect(binaryMessages[0].byteLength).toBe(5)
+      if (binaryMessages[0] instanceof ArrayBuffer) {
+        expect(binaryMessages[0].byteLength).toBe(5)
+      }
 
       // Verify the data is correct
-      const view = new Uint8Array(binaryMessages[0])
+      const view = new Uint8Array(binaryMessages[0] as ArrayBuffer)
       expect(Array.from(view)).toEqual([10, 20, 30, 40, 50])
     }
   }, 10000)
@@ -668,7 +673,7 @@ describe('WebSocket endpoints', () => {
     const result = await client.updates.get.$ws()
 
     if (result.data) {
-      const binaryMessages: any[] = []
+      const binaryMessages: (ArrayBuffer | Blob | SharedArrayBuffer)[] = []
 
       setTimeout(() => {
         const ws = MockWebSocket.lastInstance
@@ -689,10 +694,12 @@ describe('WebSocket endpoints', () => {
 
       expect(binaryMessages).toHaveLength(1)
       expect(binaryMessages[0]).toBeInstanceOf(ArrayBuffer)
-      expect(binaryMessages[0].byteLength).toBe(16)
+      if (binaryMessages[0] instanceof ArrayBuffer) {
+        expect(binaryMessages[0].byteLength).toBe(16)
+      }
 
       // Verify the data is correct
-      const view = new DataView(binaryMessages[0])
+      const view = new DataView(binaryMessages[0] as ArrayBuffer)
       expect(view.getInt32(0)).toBe(42)
       expect(view.getFloat32(4)).toBeCloseTo(3.14, 2)
     }
@@ -713,8 +720,8 @@ describe('WebSocket endpoints', () => {
     const result = await client.updates.get.$ws()
 
     if (result.data) {
-      const jsonMessages: any[] = []
-      const binaryMessages: any[] = []
+      const jsonMessages: { text: string }[] = []
+      const binaryMessages: (ArrayBuffer | Blob | SharedArrayBuffer)[] = []
 
       setTimeout(() => {
         const ws = MockWebSocket.lastInstance
@@ -890,7 +897,7 @@ describe('WebSocket endpoints', () => {
     const result = await client.updates.get.$ws()
 
     if (result.data) {
-      const errors: any[] = []
+      const errors: Error[] = []
 
       setTimeout(() => {
         const ws = MockWebSocket.lastInstance
@@ -931,7 +938,7 @@ describe('WebSocket endpoints', () => {
     const result = await client.updates.get.$ws()
 
     if (result.data) {
-      const errors: any[] = []
+      const errors: Error[] = []
 
       setTimeout(() => {
         const ws = MockWebSocket.lastInstance
