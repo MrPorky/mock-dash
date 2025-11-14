@@ -201,6 +201,357 @@ describe('extractFromFormData', () => {
     })
   })
 
+  describe('array with objects extraction', () => {
+    it('should extract arrays of objects using indexed dot notation', () => {
+      const schema = z.object({
+        name: z.string(),
+        users: z.array(
+          z.object({
+            name: z.string(),
+            email: z.string(),
+            age: z.coerce.number(),
+          }),
+        ),
+      })
+
+      const formData = new FormData()
+      formData.append('name', 'User List')
+      formData.append('users[0].name', 'John Doe')
+      formData.append('users[0].email', 'john@example.com')
+      formData.append('users[0].age', '25')
+      formData.append('users[1].name', 'Jane Smith')
+      formData.append('users[1].email', 'jane@example.com')
+      formData.append('users[1].age', '30')
+
+      const result = extractFromFormData(formData, schema)
+
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.data).toEqual({
+          name: 'User List',
+          users: [
+            { name: 'John Doe', email: 'john@example.com', age: 25 },
+            { name: 'Jane Smith', email: 'jane@example.com', age: 30 },
+          ],
+        })
+      }
+    })
+
+    it('should handle arrays of objects with optional fields', () => {
+      const schema = z.object({
+        products: z.array(
+          z.object({
+            name: z.string(),
+            price: z.coerce.number(),
+            description: z.string().optional(),
+            category: z.string().optional(),
+          }),
+        ),
+      })
+
+      const formData = new FormData()
+      formData.append('products[0].name', 'Laptop')
+      formData.append('products[0].price', '999.99')
+      formData.append('products[0].description', 'High-end laptop')
+      formData.append('products[1].name', 'Mouse')
+      formData.append('products[1].price', '25.50')
+
+      const result = extractFromFormData(formData, schema)
+
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.data).toEqual({
+          products: [
+            { name: 'Laptop', price: 999.99, description: 'High-end laptop' },
+            { name: 'Mouse', price: 25.5 },
+          ],
+        })
+      }
+    })
+
+    it('should handle nested objects within array items', () => {
+      const schema = z.object({
+        employees: z.array(
+          z.object({
+            name: z.string(),
+            contact: z.object({
+              email: z.string(),
+              phone: z.string().optional(),
+            }),
+            address: z.object({
+              street: z.string(),
+              city: z.string(),
+              country: z.string().default('US'),
+            }),
+          }),
+        ),
+      })
+
+      const formData = new FormData()
+      formData.append('employees[0].name', 'Alice Johnson')
+      formData.append('employees[0].contact.email', 'alice@company.com')
+      formData.append('employees[0].contact.phone', '+1-555-0101')
+      formData.append('employees[0].address.street', '123 Main St')
+      formData.append('employees[0].address.city', 'New York')
+      formData.append('employees[1].name', 'Bob Wilson')
+      formData.append('employees[1].contact.email', 'bob@company.com')
+      formData.append('employees[1].address.street', '456 Oak Ave')
+      formData.append('employees[1].address.city', 'Los Angeles')
+
+      const result = extractFromFormData(formData, schema)
+
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.data).toEqual({
+          employees: [
+            {
+              name: 'Alice Johnson',
+              contact: { email: 'alice@company.com', phone: '+1-555-0101' },
+              address: {
+                street: '123 Main St',
+                city: 'New York',
+                country: 'US',
+              },
+            },
+            {
+              name: 'Bob Wilson',
+              contact: { email: 'bob@company.com' },
+              address: {
+                street: '456 Oak Ave',
+                city: 'Los Angeles',
+                country: 'US',
+              },
+            },
+          ],
+        })
+      }
+    })
+
+    it('should handle arrays within array objects', () => {
+      const schema = z.object({
+        teams: z.array(
+          z.object({
+            name: z.string(),
+            members: z.array(z.string()),
+            skills: z.array(z.string()),
+          }),
+        ),
+      })
+
+      const formData = new FormData()
+      formData.append('teams[0].name', 'Frontend Team')
+      formData.append('teams[0].members', 'Alice')
+      formData.append('teams[0].members', 'Bob')
+      formData.append('teams[0].skills', 'React')
+      formData.append('teams[0].skills', 'TypeScript')
+      formData.append('teams[1].name', 'Backend Team')
+      formData.append('teams[1].members', 'Charlie')
+      formData.append('teams[1].skills', 'Node.js')
+
+      const result = extractFromFormData(formData, schema)
+
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.data).toEqual({
+          teams: [
+            {
+              name: 'Frontend Team',
+              members: ['Alice', 'Bob'],
+              skills: ['React', 'TypeScript'],
+            },
+            {
+              name: 'Backend Team',
+              members: ['Charlie'],
+              skills: ['Node.js'],
+            },
+          ],
+        })
+      }
+    })
+
+    it('should handle sparse arrays with gaps in indices', () => {
+      const schema = z.object({
+        items: z.array(
+          z.object({
+            name: z.string(),
+            value: z.coerce.number(),
+          }),
+        ),
+      })
+
+      const formData = new FormData()
+      formData.append('items[0].name', 'First Item')
+      formData.append('items[0].value', '100')
+      formData.append('items[2].name', 'Third Item')
+      formData.append('items[2].value', '300')
+      formData.append('items[4].name', 'Fifth Item')
+      formData.append('items[4].value', '500')
+
+      const result = extractFromFormData(formData, schema)
+
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.data).toEqual({
+          items: [
+            { name: 'First Item', value: 100 },
+            { name: 'Third Item', value: 300 },
+            { name: 'Fifth Item', value: 500 },
+          ],
+        })
+      }
+    })
+
+    it('should handle empty arrays of objects', () => {
+      const schema = z.object({
+        name: z.string(),
+        items: z.array(
+          z.object({
+            title: z.string(),
+            price: z.coerce.number(),
+          }),
+        ),
+      })
+
+      const formData = new FormData()
+      formData.append('name', 'Empty List')
+
+      const result = extractFromFormData(formData, schema)
+
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.data).toEqual({
+          name: 'Empty List',
+          items: [],
+        })
+      }
+    })
+
+    it('should handle optional arrays of objects', () => {
+      const schema = z.object({
+        name: z.string(),
+        items: z
+          .array(
+            z.object({
+              title: z.string(),
+              price: z.coerce.number(),
+            }),
+          )
+          .optional(),
+      })
+
+      const formData = new FormData()
+      formData.append('name', 'Test')
+      formData.append('items[0].title', 'Item 1')
+      formData.append('items[0].price', '10')
+
+      const result = extractFromFormData(formData, schema)
+
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.data).toEqual({
+          name: 'Test',
+          items: [{ title: 'Item 1', price: 10 }],
+        })
+      }
+    })
+
+    it('should handle complex mixed structures with array objects', () => {
+      const schema = z.object({
+        project: z.object({
+          name: z.string(),
+          tasks: z.array(
+            z.object({
+              title: z.string(),
+              assignees: z.array(z.string()),
+              metadata: z.object({
+                priority: z.string(),
+                estimatedHours: z.coerce.number(),
+                tags: z.array(z.string()),
+              }),
+            }),
+          ),
+        }),
+        settings: z.object({
+          notifications: z.coerce.boolean(),
+        }),
+      })
+
+      const formData = new FormData()
+      formData.append('project.name', 'Web App')
+      formData.append('project.tasks[0].title', 'Setup Database')
+      formData.append('project.tasks[0].assignees', 'John')
+      formData.append('project.tasks[0].assignees', 'Jane')
+      formData.append('project.tasks[0].metadata.priority', 'high')
+      formData.append('project.tasks[0].metadata.estimatedHours', '8')
+      formData.append('project.tasks[0].metadata.tags', 'backend')
+      formData.append('project.tasks[0].metadata.tags', 'database')
+      formData.append('project.tasks[1].title', 'Design UI')
+      formData.append('project.tasks[1].assignees', 'Alice')
+      formData.append('project.tasks[1].metadata.priority', 'medium')
+      formData.append('project.tasks[1].metadata.estimatedHours', '12')
+      formData.append('project.tasks[1].metadata.tags', 'frontend')
+      formData.append('settings.notifications', 'true')
+
+      const result = extractFromFormData(formData, schema)
+
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.data).toEqual({
+          project: {
+            name: 'Web App',
+            tasks: [
+              {
+                title: 'Setup Database',
+                assignees: ['John', 'Jane'],
+                metadata: {
+                  priority: 'high',
+                  estimatedHours: 8,
+                  tags: ['backend', 'database'],
+                },
+              },
+              {
+                title: 'Design UI',
+                assignees: ['Alice'],
+                metadata: {
+                  priority: 'medium',
+                  estimatedHours: 12,
+                  tags: ['frontend'],
+                },
+              },
+            ],
+          },
+          settings: {
+            notifications: true,
+          },
+        })
+      }
+    })
+
+    it('should validate array object fields and fail appropriately', () => {
+      const schema = z.object({
+        users: z.array(
+          z.object({
+            name: z.string().min(2),
+            age: z.coerce.number().min(0).max(150),
+            email: z.string().email(),
+          }),
+        ),
+      })
+
+      const formData = new FormData()
+      formData.append('users[0].name', 'A') // Too short
+      formData.append('users[0].age', '200') // Too high
+      formData.append('users[0].email', 'invalid-email') // Invalid email
+
+      const result = extractFromFormData(formData, schema)
+
+      expect(result.success).toBe(false)
+      if (!result.success) {
+        expect(result.error).toBeDefined()
+      }
+    })
+  })
+
   describe('nested object extraction', () => {
     it('should extract nested objects using dot notation', () => {
       const schema = z.object({

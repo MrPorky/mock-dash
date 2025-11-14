@@ -39,10 +39,27 @@ function extractNestedObjectFields(
         output[key] = nestedOutput
       }
     } else if (baseType instanceof z.ZodArray) {
-      const values = formData.getAll(fullKey)
-      if (fieldSchema instanceof z.ZodOptional && values.length === 0)
-        output[key] = undefined
-      else output[key] = values
+      const arrayElementType = getBaseType(baseType.element)
+
+      if (arrayElementType instanceof z.ZodObject) {
+        // Handle arrays of objects with indexed notation like array[0].field
+        const arrayItems = extractArrayOfObjects(
+          formData,
+          arrayElementType,
+          fullKey,
+        )
+        if (fieldSchema instanceof z.ZodOptional && arrayItems.length === 0) {
+          output[key] = undefined
+        } else {
+          output[key] = arrayItems
+        }
+      } else {
+        // Handle arrays of primitives
+        const values = formData.getAll(fullKey)
+        if (fieldSchema instanceof z.ZodOptional && values.length === 0)
+          output[key] = undefined
+        else output[key] = values
+      }
     } else {
       const value = formData.get(fullKey)
       if (value !== null) {
@@ -59,6 +76,41 @@ function extractNestedObjectFields(
   }
 
   return output
+}
+
+function extractArrayOfObjects(
+  formData: FormData,
+  objectSchema: z.ZodObject<any>,
+  arrayFieldName: string,
+): Record<string, unknown>[] {
+  const arrayItems: Map<number, Record<string, unknown>> = new Map()
+  const arrayPattern = new RegExp(
+    `^${escapeRegExp(arrayFieldName)}\\[(\\d+)\\]\\.(.+)$`,
+  )
+  const fieldIndexes: Set<number> = new Set()
+  for (const key of formData.keys()) {
+    const match = key.match(arrayPattern)?.[1]
+    if (match) {
+      fieldIndexes.add(parseInt(match, 10))
+    }
+  }
+
+  // Collect all form data entries that match the array pattern
+  for (const index of fieldIndexes) {
+    const fieldPath = `${arrayFieldName}[${index}]`
+    const nestedOutput = extractNestedObjectFields(
+      formData,
+      objectSchema,
+      fieldPath,
+    )
+    arrayItems.set(index, nestedOutput)
+  }
+
+  return Array.from(arrayItems.values())
+}
+
+function escapeRegExp(string: string): string {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
 
 export const extractFromFormData = <T extends z.ZodObject>(

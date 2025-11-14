@@ -1,7 +1,7 @@
 {
   "name": "mock-dash",
   "type": "module",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "A TypeScript library for generating type-safe API clients and mock servers from Zod schemas",
   "author": "Eskil Ganslandt",
   "license": "MIT",
