@@ -34,6 +34,8 @@ export type HttpEndpointCallSignature<
     | { data: z.infer<R>; response: Response; error?: never }
     | { data?: never; error: Errors; response?: Response }
   >
+  // Throwing version
+  orThrow: (...args: EndpointArgs<I>) => Promise<z.infer<R>>
 }
 
 export function callHttpEndpoint(
@@ -118,10 +120,21 @@ export function callHttpEndpoint(
     }
   }
 
+  const orThrowFn = async (
+    ...args: EndpointArgs<Required<EndpointInputType>>
+  ): Promise<z.infer<z.ZodType>> => {
+    const result = await fn(...args)
+    if (result.error) {
+      throw result.error
+    }
+    return result.data
+  }
+
   if (endpoint.input?.json instanceof z.ZodObject) {
     let schema = endpoint.input.json
 
     return Object.assign(fn, {
+      orThrow: orThrowFn,
       safeParseForm: (formData: FormData, autoCoerce = true) => {
         schema = autoCoerce ? createCoercingSchema(schema) : schema
         const result = extractFromFormData(formData, schema)
@@ -143,6 +156,7 @@ export function callHttpEndpoint(
   }
 
   return Object.assign(fn, {
+    orThrow: orThrowFn,
     safeParseForm: () => {
       throw new Error('No JSON input schema defined for this endpoint')
     },

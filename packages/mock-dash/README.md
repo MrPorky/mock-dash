@@ -327,6 +327,19 @@ const comment = await client.users
   .get()
 ```
 
+#### orThrow Methods
+For scenarios where you want to throw errors directly instead of handling them in the response object, use the `orThrow` method:
+
+```typescript
+try {
+  const user = await client.users.id('123').get.orThrow()
+  console.log(user.name)
+} catch (error) {
+  // Handle errors directly
+  console.error('Error fetching user:', error)
+}
+```
+
 #### Form Data Parsing
 
 For endpoints that accept JSON input, MockDash provides a `safeParseForm` utility method to validate and parse FormData into the expected schema format:
