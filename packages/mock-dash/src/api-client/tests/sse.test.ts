@@ -48,11 +48,13 @@ describe('Server-Sent Events (SSE)', () => {
       baseURL: 'http://localhost',
       fetch: app.fetch,
     })
-    const receivedNotifications: z.infer<typeof eventSchema.notification>[] = []
-    const receivedHeartbeats: z.infer<typeof eventSchema.heartbeat>[] = []
+    const receivedNotifications: (typeof client.infer.events.notifications.get.$stream.response.notification)[] =
+      []
+    const receivedHeartbeats: (typeof client.infer.events.notifications.get.$stream.response.heartbeat)[] =
+      []
     const errors: Errors[] = []
     let closed = false
-    const result = await client.events.notifications.get.$stream({
+    const result = await client.api.events.notifications.get.$stream({
       query: { userId: '123' },
     })
     if (result.data) {
@@ -123,7 +125,7 @@ describe('Server-Sent Events (SSE)', () => {
     const receivedActions: z.infer<typeof eventSchema.userAction>[] = []
     const errors: Errors[] = []
     let closed = false
-    const result = await client.users
+    const result = await client.api.users
       .userId('user123')
       .events.get.$stream({ query: { since: '2023-01-01' } })
     if (result.data) {
@@ -155,7 +157,7 @@ describe('Server-Sent Events (SSE)', () => {
       fetch: app.fetch,
     })
     const errors: Errors[] = []
-    const result = await client.events.get.$stream()
+    const result = await client.api.events.get.$stream()
     if (result.error) errors.push(result.error)
     expect(errors).toHaveLength(1)
     expect(errors[0]).toBeInstanceOf(ApiError)
@@ -174,7 +176,7 @@ describe('Server-Sent Events (SSE)', () => {
       baseURL: 'http://localhost',
       fetch: mockFetch,
     })
-    const res = await client.events.get.$stream()
+    const res = await client.api.events.get.$stream()
     expect(res).toHaveProperty('error')
     if (res.error) expect(res.error).toBeInstanceOf(NetworkError)
   })
@@ -203,7 +205,7 @@ describe('Server-Sent Events (SSE)', () => {
     const received: z.infer<typeof validationEventModel>[] = []
     const errors: Errors[] = []
     let closed = false
-    const result = await client.events.get.$stream()
+    const result = await client.api.events.get.$stream()
     if (result.data) {
       for await (const chunk of result.data) {
         if (chunk.type === 'event') received.push(chunk.data)
@@ -251,7 +253,7 @@ describe('Server-Sent Events (SSE)', () => {
     client.interceptors.request.use(requestInterceptor)
     const received: { encrypted: string }[] = []
     const errors: Errors[] = []
-    const result = await client.secure.events.get.$stream({
+    const result = await client.api.secure.events.get.$stream({
       query: { token: 'abc123' },
       headers: { 'X-Custom-Header': 'custom-value' },
     })
@@ -290,7 +292,9 @@ describe('Server-Sent Events (SSE)', () => {
     })
     const controller = new AbortController()
     controller.abort()
-    const res = await client.events.get.$stream({ signal: controller.signal })
+    const res = await client.api.events.get.$stream({
+      signal: controller.signal,
+    })
     expect(res).toHaveProperty('error')
     if (res.error) expect(res.error).toBeInstanceOf(NetworkError)
   })
@@ -331,7 +335,7 @@ describe('Server-Sent Events (SSE)', () => {
     const receivedB: z.infer<typeof eventSchema.typeB>[] = []
     const receivedC: z.infer<typeof eventSchema.typeC>[] = []
     const errors: Errors[] = []
-    const result = await client.multiEvents.get.$stream()
+    const result = await client.api.multiEvents.get.$stream()
     if (result.data) {
       for await (const chunk of result.data) {
         if (chunk.type === 'event') {

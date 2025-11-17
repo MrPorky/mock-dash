@@ -31,7 +31,7 @@ describe('Alias functionality in createApiClient', () => {
         fetch: app.fetch,
       })
 
-      const res = await client.api.users.id('123').get()
+      const res = await client.api.api.users.id('123').get()
       expect(res).toHaveProperty('data')
       if (res.data) {
         expect(res.data.id).toBe('123')
@@ -67,7 +67,7 @@ describe('Alias functionality in createApiClient', () => {
         fetch: app.fetch,
       })
 
-      const res = await client.service.version.resources.id('456').get()
+      const res = await client.api.service.version.resources.id('456').get()
       expect(res).toHaveProperty('data')
       if (res.data) {
         expect(res.data.id).toBe('456')
@@ -101,7 +101,7 @@ describe('Alias functionality in createApiClient', () => {
         fetch: app.fetch,
       })
 
-      const res = await client.service.version.resources.id('456').get()
+      const res = await client.api.service.version.resources.id('456').get()
       expect(res).toHaveProperty('data')
       if (res.data) {
         expect(res.data.id).toBe('456')
@@ -135,7 +135,10 @@ describe('Alias functionality in createApiClient', () => {
         fetch: app.fetch,
       })
 
-      const res = await client.api.users.userId('123').posts.postId('456').get()
+      const res = await client.api.api.users
+        .userId('123')
+        .posts.postId('456')
+        .get()
       expect(res).toHaveProperty('data')
       if (res.data) {
         expect(res.data.userId).toBe('123')
@@ -170,7 +173,7 @@ describe('Alias functionality in createApiClient', () => {
         fetch: app.fetch,
       })
 
-      const res = await client.api.users.search.get({
+      const res = await client.api.api.users.search.get({
         query: { q: 'john', limit: '10' },
       })
       expect(res).toHaveProperty('data')
@@ -212,7 +215,7 @@ describe('Alias functionality in createApiClient', () => {
         fetch: app.fetch,
       })
 
-      const res = await client.api.users.post({
+      const res = await client.api.api.users.post({
         json: { name: 'Jane Doe', email: 'jane@example.com' },
       })
 
@@ -242,7 +245,7 @@ describe('Alias functionality in createApiClient', () => {
         fetch: app.fetch,
       })
 
-      const res = await client.root.health.get()
+      const res = await client.api.root.health.get()
       expect(res).toHaveProperty('data')
       if (res.data) {
         expect(res.data.status).toBe('ok')
@@ -270,7 +273,7 @@ describe('Alias functionality in createApiClient', () => {
         fetch: app.fetch,
       })
 
-      const res = await client.api.users.id('123').get()
+      const res = await client.api.api.users.id('123').get()
       expect(res).toHaveProperty('data')
       if (res.data) {
         expect(res.data.id).toBe('123')
@@ -315,12 +318,12 @@ describe('Alias functionality in createApiClient', () => {
       })
 
       // Test GET with alias
-      const getRes = await client.api.users.id('123').get()
+      const getRes = await client.api.api.users.id('123').get()
       expect(getRes).toHaveProperty('data')
       if (getRes.data) expect(getRes.data.name).toBe('Original Name')
 
       // Test PUT with alias
-      const putRes = await client.api.users.id('123').put({
+      const putRes = await client.api.api.users.id('123').put({
         json: { name: 'Updated Name' },
       })
       expect(putRes).toHaveProperty('data')
@@ -354,7 +357,7 @@ describe('Alias functionality in createApiClient', () => {
       })
 
       // Access using camelCase
-      const res = await client.userProfiles.userId('123').profileData.get()
+      const res = await client.api.userProfiles.userId('123').profileData.get()
       expect(res).toHaveProperty('data')
       if (res.data) {
         expect(res.data.userId).toBe('123')
@@ -384,7 +387,7 @@ describe('Alias functionality in createApiClient', () => {
       })
 
       // Access using camelCase conversion of kebab-case alias
-      const res = await client.apiVersion.userAccounts.userId('456').get()
+      const res = await client.api.apiVersion.userAccounts.userId('456').get()
       expect(res).toHaveProperty('data')
       if (res.data) {
         expect(res.data.userId).toBe('456')
@@ -425,7 +428,7 @@ describe('Alias functionality in createApiClient', () => {
         fetch: app.fetch,
       })
 
-      const res = await client.apiService.userData
+      const res = await client.api.apiService.userData
         .userId('789')
         .profileSettings.get()
       expect(res).toHaveProperty('data')
@@ -476,9 +479,11 @@ describe('Alias functionality in createApiClient', () => {
         fetch: app.fetch,
       })
 
-      const res = await client.serviceApi.userManagement.createAccount.post({
-        json: { userName: 'johndoe', emailAddress: 'john@example.com' },
-      })
+      const res = await client.api.serviceApi.userManagement.createAccount.post(
+        {
+          json: { userName: 'johndoe', emailAddress: 'john@example.com' },
+        },
+      )
 
       expect(res).toHaveProperty('data')
       if (res.data) {
@@ -506,7 +511,7 @@ describe('Alias functionality in createApiClient', () => {
         fetch: app.fetch,
       })
 
-      const res = await client.userProfiles.userId('999').personalData.get()
+      const res = await client.api.userProfiles.userId('999').personalData.get()
       expect(res).toHaveProperty('data')
       if (res.data) {
         expect(res.data.userId).toBe('999')
@@ -531,7 +536,7 @@ describe('Alias functionality in createApiClient', () => {
         fetch: app.fetch,
       })
 
-      const res = await client.apiV2.userA.data1.get()
+      const res = await client.api.apiV2.userA.data1.get()
       expect(res).toHaveProperty('data')
       if (res.data) {
         expect(res.data.version).toBe('v2')
@@ -571,7 +576,7 @@ describe('Alias functionality in createApiClient', () => {
       })
 
       // Test endpoint without alias
-      const res1 = await client.users.id('123').get()
+      const res1 = await client.api.users.id('123').get()
       expect(res1).toHaveProperty('data')
       if (res1.data) expect(res1.data.name).toBe('No Alias User')
     })
@@ -602,8 +607,8 @@ describe('Alias functionality in createApiClient', () => {
         fetch: app.fetch,
       })
 
-      const res1 = await client.api.v1.users.get()
-      const res2 = await client.service.v2.users.get()
+      const res1 = await client.api.api.v1.users.get()
+      const res2 = await client.api.service.v2.users.get()
 
       expect(res1).toHaveProperty('data')
       expect(res2).toHaveProperty('data')

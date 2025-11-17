@@ -42,7 +42,7 @@ describe('PUT endpoints', () => {
       baseURL: 'http://localhost',
       fetch: app.fetch,
     })
-    const res = await client.users
+    const res = await client.api.users
       .id('123')
       .put({ json: { name: 'Jane Doe', email: 'jane@example.com' } })
     expect(res).toHaveProperty('data')

@@ -43,7 +43,7 @@ describe('GET endpoints', () => {
       baseURL: 'http://localhost',
       fetch: app.fetch,
     })
-    const res = await client.users.id('123').get({ query: { page: '1' } })
+    const res = await client.api.users.id('123').get({ query: { page: '1' } })
     expect(res).toHaveProperty('data')
     if (res.data) {
       expect(res.data).toEqual({ id: '123', name: 'John Doe' })
@@ -67,7 +67,7 @@ describe('GET endpoints', () => {
       baseURL: 'http://localhost',
       fetch: app.fetch,
     })
-    const res = await client.users.get()
+    const res = await client.api.users.get()
     expect(res).toHaveProperty('data')
     if (res.data) {
       expect(res.data).toHaveLength(2)
@@ -107,7 +107,7 @@ describe('GET endpoints', () => {
       baseURL: 'http://localhost',
       fetch: app.fetch,
     })
-    const res = await client.users.search.get({ query: { q: 'john' } })
+    const res = await client.api.users.search.get({ query: { q: 'john' } })
     expect(res).toHaveProperty('data')
     if (res.data) {
       expect(res.data.users).toHaveLength(1)
@@ -129,7 +129,7 @@ describe('GET endpoints', () => {
       baseURL: 'http://localhost',
       fetch: app.fetch,
     })
-    await client.users.id('123').get({
+    await client.api.users.id('123').get({
       headers: { Authorization: 'Bearer token123', 'X-Custom': 'value' },
     })
     const request = fetchSpy.mock.calls[0][0] as Request
@@ -156,7 +156,9 @@ describe('GET endpoints', () => {
     })
     const controller = new AbortController()
     controller.abort()
-    const res = await client.users.id('123').get({ signal: controller.signal })
+    const res = await client.api.users
+      .id('123')
+      .get({ signal: controller.signal })
     expect(res).toHaveProperty('error')
     if (res.error) {
       expect(res.error).toBeInstanceOf(NetworkError)
@@ -206,7 +208,7 @@ describe('GET endpoints', () => {
       baseURL: 'http://localhost',
       fetch: app.fetch,
     })
-    await client.search.get({
+    await client.api.search.get({
       query: {
         q: 'test query',
         filters: ['filter1', 'filter2'],
@@ -242,7 +244,7 @@ describe('GET endpoints', () => {
       baseURL: 'http://localhost',
       fetch: app.fetch,
     })
-    const res = await client.users.userId('456').posts.postId('123').get()
+    const res = await client.api.users.userId('456').posts.postId('123').get()
     expect(res).toHaveProperty('data')
     if (res.data) expect(res.data.id).toBe('123')
   })
@@ -272,7 +274,7 @@ describe('GET endpoints', () => {
       baseURL: 'http://localhost',
       fetch: app.fetch,
     })
-    const res = await client.users
+    const res = await client.api.users
       .userId('123')
       .posts.postId('456')
       .comments.commentId('789')
@@ -299,7 +301,7 @@ describe('GET endpoints', () => {
       baseURL: 'http://localhost',
       fetch: mockFetch,
     })
-    const res = await client.broken.get()
+    const res = await client.api.broken.get()
     expect(res).toHaveProperty('error')
     if (res.error) {
       expect(res.error).toBeInstanceOf(ApiError)
@@ -321,8 +323,8 @@ describe('GET endpoints', () => {
       baseURL: 'http://localhost',
       fetch: app.fetch,
     })
-    const jsonRes = await client.api.json.get()
-    const textRes = await client.api.text.get()
+    const jsonRes = await client.api.api.json.get()
+    const textRes = await client.api.api.text.get()
     if (jsonRes.data) expect(jsonRes.data).toEqual({ type: 'json' })
     if (textRes.data) expect(textRes.data).toBe('plain text response')
   })
@@ -346,7 +348,7 @@ describe('GET endpoints', () => {
         baseURL: 'http://localhost',
         fetch: mockFetch,
       })
-      const res = await client.test.get()
+      const res = await client.api.test.get()
       expect(res).toHaveProperty('error')
       if (res.error) expect((res.error as ApiError).status).toBe(status)
     }
@@ -369,7 +371,7 @@ describe('GET endpoints', () => {
       baseURL: 'http://localhost',
       fetch: mockFetch,
     })
-    const res = await client.users.id('999').get()
+    const res = await client.api.users.id('999').get()
     expect(res).toHaveProperty('error')
     if (res.error) expect((res.error as ApiError).status).toBe(404)
   })
@@ -388,7 +390,7 @@ describe('GET endpoints', () => {
       baseURL: 'http://localhost',
       fetch: mockFetch,
     })
-    const res = await client.users.id('123').get()
+    const res = await client.api.users.id('123').get()
     expect(res).toHaveProperty('error')
     if (res.error) expect(res.error).toBeInstanceOf(NetworkError)
   })
@@ -413,7 +415,7 @@ describe('GET endpoints', () => {
       headers: { ...options.headers, 'X-Custom-Header': 'test-value' },
     }))
     client.interceptors.request.use(requestInterceptor)
-    await client.users.id('123').get()
+    await client.api.users.id('123').get()
     const request = fetchSpy.mock.calls[0][0] as Request
 
     expect(requestInterceptor).toHaveBeenCalled()
@@ -436,7 +438,7 @@ describe('GET endpoints', () => {
     })
     const responseInterceptor = vi.fn((_context, response) => response)
     client.interceptors.response.use(responseInterceptor)
-    await client.users.id('123').get()
+    await client.api.users.id('123').get()
     expect(responseInterceptor).toHaveBeenCalled()
   })
 
@@ -459,7 +461,7 @@ describe('GET endpoints', () => {
       headers: { ...options.headers, 'X-Local-Header': 'local-value' },
     }))
     const localResponseTransformer = vi.fn((_context, response) => response)
-    await client.users.id('123').get({
+    await client.api.users.id('123').get({
       transformRequest: localRequestTransformer,
       transformResponse: localResponseTransformer,
     })
@@ -498,7 +500,7 @@ describe('GET endpoints', () => {
       order.push('response-2')
       return r
     })
-    await client.users.id('123').get()
+    await client.api.users.id('123').get()
     expect(order).toEqual([
       'request-1',
       'request-2',

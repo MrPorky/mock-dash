@@ -40,7 +40,7 @@ describe('Unsafe API calls', () => {
         fetch: app.fetch,
       })
 
-      const userData = await client.users.id('123').get.orThrow()
+      const userData = await client.api.users.id('123').get.orThrow()
 
       // Should return data directly, not wrapped in result object
       expect(userData).toEqual({
@@ -72,12 +72,12 @@ describe('Unsafe API calls', () => {
         fetch: mockFetch,
       })
 
-      await expect(client.users.id('999').get.orThrow()).rejects.toThrow(
+      await expect(client.api.users.id('999').get.orThrow()).rejects.toThrow(
         ApiError,
       )
 
       try {
-        await client.users.id('999').get.orThrow()
+        await client.api.users.id('999').get.orThrow()
       } catch (error) {
         expect(error).toBeInstanceOf(ApiError)
         expect((error as ApiError).status).toBe(404)
@@ -110,12 +110,12 @@ describe('Unsafe API calls', () => {
         fetch: app.fetch,
       })
 
-      await expect(client.users.id('123').get.orThrow()).rejects.toThrow(
+      await expect(client.api.users.id('123').get.orThrow()).rejects.toThrow(
         ValidationError,
       )
 
       try {
-        await client.users.id('123').get.orThrow()
+        await client.api.users.id('123').get.orThrow()
       } catch (error) {
         expect(error).toBeInstanceOf(ValidationError)
         expect((error as ValidationError).validationType).toBe('response')
@@ -139,7 +139,7 @@ describe('Unsafe API calls', () => {
         fetch: mockFetch,
       })
 
-      await expect(client.users.id('123').get.orThrow()).rejects.toThrow(
+      await expect(client.api.users.id('123').get.orThrow()).rejects.toThrow(
         NetworkError,
       )
     })
@@ -182,7 +182,7 @@ describe('Unsafe API calls', () => {
         fetch: app.fetch,
       })
 
-      const newUser = await client.users.post.orThrow({
+      const newUser = await client.api.users.post.orThrow({
         json: { name: 'Jane Doe', email: 'jane@example.com' },
       })
 
@@ -218,7 +218,7 @@ describe('Unsafe API calls', () => {
       })
 
       await expect(
-        client.users.post.orThrow({
+        client.api.users.post.orThrow({
           json: { name: 'John', email: 'john@example.com' },
         }),
       ).rejects.toThrow(ApiError)
@@ -264,7 +264,7 @@ describe('Unsafe API calls', () => {
         fetch: app.fetch,
       })
 
-      const updatedUser = await client.users.id('123').put.orThrow({
+      const updatedUser = await client.api.users.id('123').put.orThrow({
         json: { name: 'Updated Jane', email: 'updated.jane@example.com' },
       })
 
@@ -318,7 +318,7 @@ describe('Unsafe API calls', () => {
         fetch: app.fetch,
       })
 
-      const patchedUser = await client.users.id('123').patch.orThrow({
+      const patchedUser = await client.api.users.id('123').patch.orThrow({
         json: { name: 'Patched Name' },
       })
 
@@ -345,7 +345,9 @@ describe('Unsafe API calls', () => {
         fetch: app.fetch,
       })
 
-      const deleteResult = await client.users.id('123').confirm.delete.orThrow()
+      const deleteResult = await client.api.users
+        .id('123')
+        .confirm.delete.orThrow()
 
       expect(deleteResult.deleted).toBe(true)
       expect(deleteResult.deletedAt).toBe('2023-01-01T12:00:00Z')
@@ -364,7 +366,7 @@ describe('Unsafe API calls', () => {
         fetch: app.fetch,
       })
 
-      const result = await client.users.id('123').delete.orThrow()
+      const result = await client.api.users.id('123').delete.orThrow()
 
       // void response should return undefined
       expect(result).toBeUndefined()
@@ -393,12 +395,12 @@ describe('Unsafe API calls', () => {
       })
 
       // Safe call returns error in result object
-      const safeResult = await client.users.id('999').get()
+      const safeResult = await client.api.users.id('999').get()
       expect(safeResult).toHaveProperty('error')
       expect(safeResult.error).toBeInstanceOf(ApiError)
 
       // Unsafe call throws the error
-      await expect(client.users.id('999').get.orThrow()).rejects.toThrow(
+      await expect(client.api.users.id('999').get.orThrow()).rejects.toThrow(
         ApiError,
       )
     })
@@ -431,7 +433,7 @@ describe('Unsafe API calls', () => {
       })
 
       // TypeScript should infer the correct type without the wrapper
-      const user = await client.users.id('123').get.orThrow()
+      const user = await client.api.users.id('123').get.orThrow()
 
       // These should be directly accessible without checking for error
       expect(user.id).toBe('123')
@@ -495,7 +497,7 @@ describe('Unsafe API calls', () => {
         fetch: app.fetch,
       })
 
-      const searchResult = await client.users.search.get.orThrow({
+      const searchResult = await client.api.users.search.get.orThrow({
         query: { q: 'john', page: '1', limit: '10' },
       })
 
@@ -530,7 +532,7 @@ describe('Unsafe API calls', () => {
         fetch: app.fetch,
       })
 
-      const post = await client.users
+      const post = await client.api.users
         .userId('456')
         .posts.postId('123')
         .get.orThrow()
@@ -563,7 +565,7 @@ describe('Unsafe API calls', () => {
         headers: { ...options.headers, 'X-Custom-Header': 'test-value' },
       }))
 
-      const userData = await client.users.id('123').get.orThrow()
+      const userData = await client.api.users.id('123').get.orThrow()
 
       expect(userData.id).toBe('123')
       expect(userData.name).toBe('John Doe')

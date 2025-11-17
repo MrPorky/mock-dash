@@ -68,14 +68,14 @@ describe('Multiple endpoints under same parameter path', () => {
     })
 
     // Test that all three HTTP methods work on the same parameter path
-    const getUserRes = await client.users.id('123').get()
+    const getUserRes = await client.api.users.id('123').get()
     expect(getUserRes).toHaveProperty('data')
     if (getUserRes.data) {
       expect(getUserRes.data.id).toBe('123')
       expect(getUserRes.data.name).toBe('John Doe')
     }
 
-    const updateUserRes = await client.users.id('123').put({
+    const updateUserRes = await client.api.users.id('123').put({
       json: { name: 'Updated John', email: 'john.updated@example.com' },
     })
     expect(updateUserRes).toHaveProperty('data')
@@ -84,7 +84,7 @@ describe('Multiple endpoints under same parameter path', () => {
       expect(updateUserRes.data.updatedAt).toBe('2023-01-01T12:00:00Z')
     }
 
-    const deleteUserRes = await client.users.id('123').delete()
+    const deleteUserRes = await client.api.users.id('123').delete()
     expect(deleteUserRes).toHaveProperty('data')
   })
 
@@ -172,14 +172,14 @@ describe('Multiple endpoints under same parameter path', () => {
     }) // Type assertion to bypass TypeScript complexity
 
     // Test different sub-resources under same parameter
-    const getUserInfoRes = await client.users.id('456').info.get()
+    const getUserInfoRes = await client.api.users.id('456').info.get()
     expect(getUserInfoRes).toHaveProperty('data')
     if (getUserInfoRes.data) {
       expect(getUserInfoRes.data.id).toBe('456')
       expect(getUserInfoRes.data.profile.bio).toBe('Software engineer')
     }
 
-    const updateUserInfoRes = await client.users.id('456').info.put({
+    const updateUserInfoRes = await client.api.users.id('456').info.put({
       json: { bio: 'Updated bio', location: 'Updated location' },
     })
     expect(updateUserInfoRes).toHaveProperty('data')
@@ -188,7 +188,7 @@ describe('Multiple endpoints under same parameter path', () => {
       expect(updateUserInfoRes.data.updatedAt).toBe('2023-01-01T13:00:00Z')
     }
 
-    const getUserMetricsRes = await client.users.id('789').metrics.get()
+    const getUserMetricsRes = await client.api.users.id('789').metrics.get()
     expect(getUserMetricsRes).toHaveProperty('data')
     if (getUserMetricsRes.data) {
       expect(getUserMetricsRes.data.userId).toBe('789')
@@ -320,7 +320,7 @@ describe('Multiple endpoints under same parameter path', () => {
     }) // Type assertion to bypass TypeScript complexity
 
     // Test deeply nested parameter structures
-    const getTaskRes = await client.users
+    const getTaskRes = await client.api.users
       .userId('user1')
       .projects.projectId('proj1')
       .tasks.taskId('task1')
@@ -332,7 +332,7 @@ describe('Multiple endpoints under same parameter path', () => {
       expect(getTaskRes.data.projectId).toBe('proj1')
     }
 
-    const updateTaskRes = await client.users
+    const updateTaskRes = await client.api.users
       .userId('user1')
       .projects.projectId('proj1')
       .tasks.taskId('task1')
@@ -346,7 +346,7 @@ describe('Multiple endpoints under same parameter path', () => {
     }
 
     // Test additional resource under deeply nested parameters
-    const getCommentsRes = await client.users
+    const getCommentsRes = await client.api.users
       .userId('user1')
       .projects.projectId('proj1')
       .tasks.taskId('task1')
@@ -357,7 +357,7 @@ describe('Multiple endpoints under same parameter path', () => {
       expect(getCommentsRes.data[0].content).toBe('First comment')
     }
 
-    const createCommentRes = await client.users
+    const createCommentRes = await client.api.users
       .userId('user1')
       .projects.projectId('proj1')
       .tasks.taskId('task1')
@@ -430,29 +430,29 @@ describe('Multiple endpoints under same parameter path', () => {
     }) // Type assertion to bypass TypeScript complexity
 
     // Test static resource endpoints work alongside parametric ones
-    const getUsersListRes = await client.users.get()
+    const getUsersListRes = await client.api.users.get()
     expect(getUsersListRes.data).toEqual([{ id: '1', name: 'User 1' }])
 
-    const createUserRes = await client.users.post({
+    const createUserRes = await client.api.users.post({
       json: { name: 'New User', email: 'new@example.com' },
     })
     expect(createUserRes.data?.name).toBe('New User')
 
     // Test parameter-based endpoints
-    const getUserRes = await client.users.id('123').get()
+    const getUserRes = await client.api.users.id('123').get()
     expect(getUserRes.data?.id).toBe('123')
 
     // Test nested resources under parameters
-    const getUserSettingsRes = await client.users.id('123').settings.get()
+    const getUserSettingsRes = await client.api.users.id('123').settings.get()
     expect(getUserSettingsRes.data?.userId).toBe('123')
     expect(getUserSettingsRes.data?.theme).toBe('dark')
 
-    const getUserProfileRes = await client.users.id('123').profile.get()
+    const getUserProfileRes = await client.api.users.id('123').profile.get()
     expect(getUserProfileRes.data?.userId).toBe('123')
     expect(getUserProfileRes.data?.bio).toBe('Developer')
 
     // Test deeply nested mixed structures
-    const getUserPreferencesRes = await client.users
+    const getUserPreferencesRes = await client.api.users
       .id('123')
       .settings.preferences.get()
     expect(getUserPreferencesRes.data?.userId).toBe('123')
@@ -519,7 +519,7 @@ describe('Multiple endpoints under same parameter path', () => {
     }) // Type assertion to bypass TypeScript complexity
 
     // Test different parameter names under same base
-    const getUserPostRes = await client.users
+    const getUserPostRes = await client.api.users
       .userId('user1')
       .posts.postId('post1')
       .get()
@@ -527,7 +527,7 @@ describe('Multiple endpoints under same parameter path', () => {
     expect(getUserPostRes.data?.postId).toBe('post1')
     expect(getUserPostRes.data?.title).toBe('Post Title')
 
-    const getUserCommentRes = await client.users
+    const getUserCommentRes = await client.api.users
       .userId('user1')
       .comments.commentId('comment1')
       .get()
@@ -536,7 +536,7 @@ describe('Multiple endpoints under same parameter path', () => {
     expect(getUserCommentRes.data?.content).toBe('Comment Content')
 
     // Test same parameter names in different contexts
-    const getProjectTaskRes = await client.projects
+    const getProjectTaskRes = await client.api.projects
       .id('proj1')
       .tasks.taskId('task1')
       .get()
@@ -544,7 +544,7 @@ describe('Multiple endpoints under same parameter path', () => {
     expect(getProjectTaskRes.data?.taskId).toBe('task1')
     expect(getProjectTaskRes.data?.title).toBe('Project Task')
 
-    const getUserTaskRes = await client.users
+    const getUserTaskRes = await client.api.users
       .id('user1')
       .tasks.taskId('task1')
       .get()
@@ -703,57 +703,59 @@ describe('Multiple endpoints under same parameter path', () => {
     })
 
     // Test root-level endpoints
-    const healthRes = await client.health.get()
+    const healthRes = await client.api.health.get()
     expect(healthRes.data?.status).toBe('ok')
     expect(healthRes.data?.timestamp).toBe('2023-01-01T12:00:00Z')
 
-    const versionRes = await client.version.get()
+    const versionRes = await client.api.version.get()
     expect(versionRes.data?.version).toBe('1.0.0')
     expect(versionRes.data?.build).toBe('12345')
 
-    const statsRes = await client.stats.get()
+    const statsRes = await client.api.stats.get()
     expect(statsRes.data?.requests).toBe(1000)
     expect(statsRes.data?.uptime).toBe(3600)
 
     // Test multiple different paths after single parameter
     const userId = 'user123'
 
-    const profileRes = await client.users.id(userId).profile.get()
+    const profileRes = await client.api.users.id(userId).profile.get()
     expect(profileRes.data?.userId).toBe(userId)
     expect(profileRes.data?.name).toBe('John Doe')
     expect(profileRes.data?.bio).toBe('Software developer')
 
-    const settingsRes = await client.users.id(userId).settings.get()
+    const settingsRes = await client.api.users.id(userId).settings.get()
     expect(settingsRes.data?.userId).toBe(userId)
     expect(settingsRes.data?.theme).toBe('dark')
     expect(settingsRes.data?.language).toBe('en')
 
-    const postsRes = await client.users.id(userId).posts.get()
+    const postsRes = await client.api.users.id(userId).posts.get()
     expect(Array.isArray(postsRes.data)).toBe(true)
     expect(postsRes.data?.[0]?.userId).toBe(userId)
 
-    const notificationsRes = await client.users.id(userId).notifications.get()
+    const notificationsRes = await client.api.users
+      .id(userId)
+      .notifications.get()
     expect(Array.isArray(notificationsRes.data)).toBe(true)
     expect(notificationsRes.data?.[0]?.message).toBe('Welcome!')
 
-    const friendsRes = await client.users.id(userId).friends.get()
+    const friendsRes = await client.api.users.id(userId).friends.get()
     expect(Array.isArray(friendsRes.data)).toBe(true)
     expect(friendsRes.data?.[0]?.status).toBe('online')
 
     // Test mixed HTTP methods on parameter paths
-    const createPostRes = await client.users.id(userId).posts.post({
+    const createPostRes = await client.api.users.id(userId).posts.post({
       json: { title: 'New Post', content: 'Post content' },
     })
     expect(createPostRes.data?.title).toBe('New Post')
     expect(createPostRes.data?.userId).toBe(userId)
 
-    const updateSettingsRes = await client.users.id(userId).settings.put({
+    const updateSettingsRes = await client.api.users.id(userId).settings.put({
       json: { theme: 'light', language: 'es' },
     })
     expect(updateSettingsRes.data?.theme).toBe('light')
     expect(updateSettingsRes.data?.language).toBe('es')
 
-    const deleteNotificationRes = await client.users
+    const deleteNotificationRes = await client.api.users
       .id(userId)
       .notifications.notificationId('notif1')
       .delete()
@@ -946,7 +948,7 @@ describe('Multiple endpoints under same parameter path', () => {
     const commentId = 'comment101'
 
     // Test two-level parameters with different sub-paths
-    const projectRes = await client.orgs
+    const projectRes = await client.api.orgs
       .orgId(orgId)
       .projects.projectId(projectId)
       .get()
@@ -954,28 +956,28 @@ describe('Multiple endpoints under same parameter path', () => {
     expect(projectRes.data?.projectId).toBe(projectId)
     expect(projectRes.data?.name).toBe('Sample Project')
 
-    const membersRes = await client.orgs
+    const membersRes = await client.api.orgs
       .orgId(orgId)
       .projects.projectId(projectId)
       .members.get()
     expect(Array.isArray(membersRes.data)).toBe(true)
     expect(membersRes.data?.[0]?.role).toBe('admin')
 
-    const settingsRes = await client.orgs
+    const settingsRes = await client.api.orgs
       .orgId(orgId)
       .projects.projectId(projectId)
       .settings.get()
     expect(settingsRes.data?.projectId).toBe(projectId)
     expect(settingsRes.data?.visibility).toBe('public')
 
-    const issuesRes = await client.orgs
+    const issuesRes = await client.api.orgs
       .orgId(orgId)
       .projects.projectId(projectId)
       .issues.get()
     expect(Array.isArray(issuesRes.data)).toBe(true)
     expect(issuesRes.data?.[0]?.status).toBe('open')
 
-    const analyticsRes = await client.orgs
+    const analyticsRes = await client.api.orgs
       .orgId(orgId)
       .projects.projectId(projectId)
       .analytics.get()
@@ -983,7 +985,7 @@ describe('Multiple endpoints under same parameter path', () => {
     expect(analyticsRes.data?.contributors).toBe(5)
 
     // Test three-level parameters
-    const commentsRes = await client.orgs
+    const commentsRes = await client.api.orgs
       .orgId(orgId)
       .projects.projectId(projectId)
       .issues.issueId(issueId)
@@ -991,7 +993,7 @@ describe('Multiple endpoints under same parameter path', () => {
     expect(Array.isArray(commentsRes.data)).toBe(true)
     expect(commentsRes.data?.[0]?.content).toBe('Great issue!')
 
-    const createCommentRes = await client.orgs
+    const createCommentRes = await client.api.orgs
       .orgId(orgId)
       .projects.projectId(projectId)
       .issues.issueId(issueId)
@@ -1001,7 +1003,7 @@ describe('Multiple endpoints under same parameter path', () => {
     expect(createCommentRes.data?.content).toBe('New comment')
     expect(createCommentRes.data?.author).toBe('alice')
 
-    const updateIssueRes = await client.orgs
+    const updateIssueRes = await client.api.orgs
       .orgId(orgId)
       .projects.projectId(projectId)
       .issues.issueId(issueId)
@@ -1012,7 +1014,7 @@ describe('Multiple endpoints under same parameter path', () => {
     expect(updateIssueRes.data?.status).toBe('closed')
 
     // Test four-level parameters
-    const repliesRes = await client.orgs
+    const repliesRes = await client.api.orgs
       .orgId(orgId)
       .projects.projectId(projectId)
       .issues.issueId(issueId)
@@ -1255,15 +1257,15 @@ describe('Multiple endpoints under same parameter path', () => {
     })
 
     // Test root-level admin and API endpoints
-    const systemRes = await client.admin.system.get()
+    const systemRes = await client.api.admin.system.get()
     expect(systemRes.data?.status).toBe('healthy')
     expect(systemRes.data?.load).toBe(0.75)
 
-    const logsRes = await client.admin.logs.get()
+    const logsRes = await client.api.admin.logs.get()
     expect(Array.isArray(logsRes.data)).toBe(true)
     expect(logsRes.data?.[0]?.level).toBe('INFO')
 
-    const apiInfoRes = await client.api.info.get()
+    const apiInfoRes = await client.api.api.info.get()
     expect(apiInfoRes.data?.name).toBe('MockDash API')
     expect(apiInfoRes.data?.endpoints).toBe(25)
 
@@ -1273,45 +1275,45 @@ describe('Multiple endpoints under same parameter path', () => {
     const projectId = 'proj789'
     const departmentId = 'dept101'
 
-    const companyInfoRes = await client.companies
+    const companyInfoRes = await client.api.companies
       .companyId(companyId)
       .info.get()
     expect(companyInfoRes.data?.id).toBe(companyId)
     expect(companyInfoRes.data?.name).toBe('Tech Corp')
 
-    const employeesRes = await client.companies
+    const employeesRes = await client.api.companies
       .companyId(companyId)
       .employees.get()
     expect(Array.isArray(employeesRes.data)).toBe(true)
     expect(employeesRes.data?.[0]?.department).toBe('Engineering')
 
-    const departmentsRes = await client.companies
+    const departmentsRes = await client.api.companies
       .companyId(companyId)
       .departments.get()
     expect(Array.isArray(departmentsRes.data)).toBe(true)
 
     // Test multiple parameters with branching paths
-    const employeeProfileRes = await client.companies
+    const employeeProfileRes = await client.api.companies
       .companyId(companyId)
       .employees.employeeId(employeeId)
       .profile.get()
     expect(employeeProfileRes.data?.companyId).toBe(companyId)
     expect(employeeProfileRes.data?.employeeId).toBe(employeeId)
 
-    const employeeProjectsRes = await client.companies
+    const employeeProjectsRes = await client.api.companies
       .companyId(companyId)
       .employees.employeeId(employeeId)
       .projects.get()
     expect(Array.isArray(employeeProjectsRes.data)).toBe(true)
 
-    const departmentTeamsRes = await client.companies
+    const departmentTeamsRes = await client.api.companies
       .companyId(companyId)
       .departments.departmentId(departmentId)
       .teams.get()
     expect(Array.isArray(departmentTeamsRes.data)).toBe(true)
 
     // Test three-parameter paths
-    const tasksRes = await client.companies
+    const tasksRes = await client.api.companies
       .companyId(companyId)
       .employees.employeeId(employeeId)
       .projects.projectId(projectId)
@@ -1319,7 +1321,7 @@ describe('Multiple endpoints under same parameter path', () => {
     expect(Array.isArray(tasksRes.data)).toBe(true)
     expect(tasksRes.data?.[0]?.status).toBe('in-progress')
 
-    const createTaskRes = await client.companies
+    const createTaskRes = await client.api.companies
       .companyId(companyId)
       .employees.employeeId(employeeId)
       .projects.projectId(projectId)
@@ -1329,7 +1331,7 @@ describe('Multiple endpoints under same parameter path', () => {
     expect(createTaskRes.data?.title).toBe('New Task')
 
     // Test different parameter patterns
-    const cityRes = await client.regions
+    const cityRes = await client.api.regions
       .regionId('reg1')
       .countries.countryId('us')
       .cities.cityId('sf')
@@ -1337,7 +1339,7 @@ describe('Multiple endpoints under same parameter path', () => {
     expect(cityRes.data?.name).toBe('San Francisco')
     expect(cityRes.data?.population).toBe(875000)
 
-    const regionStatsRes = await client.regions.regionId('reg1').stats.get()
+    const regionStatsRes = await client.api.regions.regionId('reg1').stats.get()
     expect(regionStatsRes.data?.countries).toBe(5)
     expect(regionStatsRes.data?.totalPopulation).toBe(50000000)
   })
@@ -1401,27 +1403,27 @@ describe('Multiple endpoints under same parameter path', () => {
     })
 
     // Test root endpoint "/"
-    const rootRes = await client.get()
+    const rootRes = await client.api.get()
     expect(rootRes.data?.message).toBe('Welcome to the API')
     expect(rootRes.data?.service).toBe('mock-dash')
 
     // Test other root-level endpoints
-    const healthRes = await client.health.get()
+    const healthRes = await client.api.health.get()
     expect(healthRes.data?.status).toBe('ok')
 
-    const versionRes = await client.version.get()
+    const versionRes = await client.api.version.get()
     expect(versionRes.data?.version).toBe('1.0.0')
 
     // Test parameter endpoints work alongside root endpoint
-    const userRes = await client.users.id('123').get()
+    const userRes = await client.api.users.id('123').get()
     expect(userRes.data?.id).toBe('123')
     expect(userRes.data?.name).toBe('John Doe')
 
-    const userProfileRes = await client.users.id('123').profile.get()
+    const userProfileRes = await client.api.users.id('123').profile.get()
     expect(userProfileRes.data?.userId).toBe('123')
     expect(userProfileRes.data?.bio).toBe('Software developer')
 
-    const userPostRes = await client.users
+    const userPostRes = await client.api.users
       .userId('456')
       .posts.postId('post1')
       .get()
@@ -1494,28 +1496,30 @@ describe('Multiple endpoints under same parameter path', () => {
     })
 
     // Test different HTTP methods on root path
-    const rootGetRes = await client.get()
+    const rootGetRes = await client.api.get()
     expect(rootGetRes.data?.info).toBe('API Root')
 
-    const rootPostRes = await client.post({
+    const rootPostRes = await client.api.post({
       json: { data: 'test data' },
     })
     expect(rootPostRes.data?.id).toBe('new-resource')
     expect(rootPostRes.data?.created).toBe('2023-01-01T12:00:00Z')
 
     // Test other root-level endpoints
-    const statsRes = await client.stats.get()
+    const statsRes = await client.api.stats.get()
     expect(statsRes.data?.requests).toBe(1000)
 
-    const docsRes = await client.docs.get()
+    const docsRes = await client.api.docs.get()
     expect(docsRes.data?.docs).toBe('API Documentation')
 
     // Test that parameter paths work correctly alongside root
-    const resourceRes = await client.resources.id('res123').get()
+    const resourceRes = await client.api.resources.id('res123').get()
     expect(resourceRes.data?.id).toBe('res123')
     expect(resourceRes.data?.type).toBe('resource')
 
-    const resourceDetailsRes = await client.resources.id('res123').details.get()
+    const resourceDetailsRes = await client.api.resources
+      .id('res123')
+      .details.get()
     expect(resourceDetailsRes.data?.resourceId).toBe('res123')
     expect(resourceDetailsRes.data?.details.size).toBe(1024)
   })

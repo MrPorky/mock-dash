@@ -6,6 +6,7 @@ import { toCamelCase } from '../utils/to-camel-case'
 import type { CreateApiClientArgs, FetchOptions } from './client-base'
 import type { Client } from './client-type'
 import { callHttpEndpoint } from './http-call'
+import type { InferClient } from './infer-type'
 import { InterceptorManager } from './interceptor'
 import { callStreamEndpoint } from './stream-call'
 import { callWebSocketEndpoint } from './ws-call'
@@ -145,7 +146,9 @@ function buildApiClientFromTree(
 
 export function createApiClient<ApiSchema extends Record<string, unknown>>(
   args: CreateApiClientArgs<ApiSchema>,
-): Client<ApiSchema> & {
+): {
+  api: Client<ApiSchema>
+  infer: InferClient<ApiSchema>
   interceptors: {
     request: InterceptorManager<FetchOptions>
     response: InterceptorManager<Response>
@@ -168,12 +171,16 @@ export function createApiClient<ApiSchema extends Record<string, unknown>>(
   )
 
   const pathTree = buildPathTree(endpoints)
-  const apiRoot = buildApiClientFromTree(
+  const api = buildApiClientFromTree(
     pathTree,
     requestOptions,
     interceptors,
     {},
   ) as Client<ApiSchema>
 
-  return { ...apiRoot, interceptors }
+  return {
+    api,
+    interceptors,
+    infer: {} as InferClient<ApiSchema>,
+  }
 }

@@ -23,7 +23,7 @@ function RouteComponent() {
   const handleGetUsers = async () => {
     setLoading(true)
     try {
-      const response = await apiClient.users.get({
+      const response = await apiClient.api.users.get({
         query: { page: 1, limit: 10 },
       })
       if (response.data) {
@@ -40,7 +40,7 @@ function RouteComponent() {
     if (!name || !email) return
     setLoading(true)
     try {
-      const response = await apiClient.users.post({
+      const response = await apiClient.api.users.post({
         json: { name, email },
       })
       if (response.data) {
@@ -59,7 +59,7 @@ function RouteComponent() {
     if (!selectedUserId || !name || !email) return
     setLoading(true)
     try {
-      const response = await apiClient.users.id(selectedUserId).put({
+      const response = await apiClient.api.users.id(selectedUserId).put({
         json: { name, email },
       })
 
@@ -82,7 +82,7 @@ function RouteComponent() {
     if (!selectedUserId) return
     setLoading(true)
     try {
-      const response = await apiClient.users.id(selectedUserId).patch({
+      const response = await apiClient.api.users.id(selectedUserId).patch({
         param: { id: selectedUserId },
         json: { name: name || undefined, email: email || undefined },
       })
@@ -104,7 +104,7 @@ function RouteComponent() {
   const handleDeleteUser = async (userId: string) => {
     setLoading(true)
     try {
-      await apiClient.users.id(userId).delete()
+      await apiClient.api.users.id(userId).delete()
       setUsers(users.filter((u) => u.id !== userId))
     } catch (error) {
       console.error('Error deleting user:', error)

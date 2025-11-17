@@ -36,7 +36,7 @@ function RouteComponent() {
   > | null>(null)
 
   const connectChatSocket = async () => {
-    const { controller, data, error } = await apiClient.ws.chat.get.$ws()
+    const { controller, data, error } = await apiClient.api.ws.chat.get.$ws()
 
     if (error) {
       console.error('WebSocket connection error:', error)
@@ -61,7 +61,7 @@ function RouteComponent() {
   }
 
   const connectMetricsSocket = async () => {
-    const { controller, data, error } = await apiClient.ws.metrics.get.$ws()
+    const { controller, data, error } = await apiClient.api.ws.metrics.get.$ws()
 
     if (error) {
       console.error('WebSocket connection error:', error)

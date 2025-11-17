@@ -94,6 +94,7 @@ describe('extractFromFormData', () => {
         name: z.string(),
         middleName: z.string().nullable(),
         description: z.string().nullable(),
+        undefined: z.string().nullable(),
       })
 
       const formData = new FormData()
@@ -109,6 +110,7 @@ describe('extractFromFormData', () => {
           name: 'Test User',
           middleName: null,
           description: 'Some description',
+          undefined: null,
         })
       }
     })

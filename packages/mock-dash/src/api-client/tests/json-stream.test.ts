@@ -34,7 +34,7 @@ describe('JSON Stream (NDJSON)', () => {
       name: string
     }[] = []
     const errors: Error[] = []
-    const result = await client.stream.users.get.$stream()
+    const result = await client.api.stream.users.get.$stream()
 
     expect(result).toHaveProperty('data')
     if (result.data) {
@@ -69,7 +69,7 @@ describe('JSON Stream (NDJSON)', () => {
       value: number
     }[] = []
     const errors: Error[] = []
-    const result = await client.stream.numbers.get.$stream()
+    const result = await client.api.stream.numbers.get.$stream()
     if (result.data) {
       for await (const chunk of result.data) {
         if (chunk.type === 'json') received.push(chunk.data)
@@ -104,7 +104,7 @@ describe('JSON Stream (NDJSON)', () => {
     const received: {
       seq: number
     }[] = []
-    const result = await client.stream.slow.get.$stream({
+    const result = await client.api.stream.slow.get.$stream({
       signal: controller.signal,
     })
     if (result.data) {

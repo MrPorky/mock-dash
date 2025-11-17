@@ -14,7 +14,7 @@ let selectedUserId = $state('')
 async function handleGetUsers() {
   loading = true
   try {
-    const response = await apiClient.users.get({
+    const response = await apiClient.api.users.get({
       query: { page: 1, limit: 10 },
     })
     if (response.data) {
@@ -31,7 +31,7 @@ async function handleCreateUser() {
   if (!name || !email) return
   loading = true
   try {
-    const response = await apiClient.users.post({
+    const response = await apiClient.api.users.post({
       json: { name, email },
     })
     if (response.data) {
@@ -50,7 +50,7 @@ async function handleUpdateUser() {
   if (!selectedUserId || !name || !email) return
   loading = true
   try {
-    const response = await apiClient.users.id(selectedUserId).put({
+    const response = await apiClient.api.users.id(selectedUserId).put({
       json: { name, email },
     })
 
@@ -71,7 +71,7 @@ async function handlePatchUser() {
   if (!selectedUserId) return
   loading = true
   try {
-    const response = await apiClient.users.id(selectedUserId).patch({
+    const response = await apiClient.api.users.id(selectedUserId).patch({
       json: { name: name || undefined, email: email || undefined },
     })
     if (response.data) {
@@ -90,7 +90,7 @@ async function handlePatchUser() {
 async function handleDeleteUser(userId: string) {
   loading = true
   try {
-    await apiClient.users.id(userId).delete()
+    await apiClient.api.users.id(userId).delete()
     users = users.filter((u) => u.id !== userId)
   } catch (error) {
     console.error('Error deleting user:', error)

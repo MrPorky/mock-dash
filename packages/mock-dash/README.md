@@ -100,7 +100,7 @@ const client = createApiClient({
 })
 
 // 3. Use the client with full type safety
-const response = await client.users.id('123').get()
+const response = await client.api.users.id('123').get()
 if (response.data) {
   console.log(response.data.name) // TypeScript knows this is a string
 }
@@ -306,21 +306,21 @@ const client = createApiClient({
 })
 
 // Simple GET request
-const users = await client.users.get({ query: { limit: 10 } })
+const users = await client.api.users.get({ query: { limit: 10 } })
 
 // GET with path parameters
-const user = await client.users.id('123').get()
+const user = await client.api.users.id('123').get()
 
 // POST with JSON body
-const newUser = await client.users.post({
+const newUser = await client.api.users.post({
   json: { name: 'John', email: 'john@example.com' },
 })
 
 // Nested paths
-const userPosts = await client.users.id('123').posts.get()
+const userPosts = await client.api.users.id('123').posts.get()
 
 // Complex nested paths with multiple parameters
-const comment = await client.users
+const comment = await client.api.users
   .userId('123')
   .posts.postId('456')
   .comments.commentId('789')
@@ -332,7 +332,7 @@ For scenarios where you want to throw errors directly instead of handling them i
 
 ```typescript
 try {
-  const user = await client.users.id('123').get.orThrow()
+  const user = await client.api.users.id('123').get.orThrow()
   console.log(user.name)
 } catch (error) {
   // Handle errors directly
@@ -342,52 +342,78 @@ try {
 
 #### Form Data Parsing
 
-For endpoints that accept JSON input, MockDash provides a `safeParseForm` utility method to validate and parse FormData into the expected schema format:
+For endpoints that accept JSON input, MockDash provides a `safeParseForm` utility method to validate and parse FormData into the expected schema format, including support for nested objects and arrays:
 
 ```typescript
-// Define an endpoint that accepts JSON input
-const createUser = definePost('/users', {
+// Define an endpoint that accepts JSON input with nested structures
+const createProject = definePost('/projects', {
   input: {
     json: z.object({
       name: z.string(),
-      email: z.string().email(),
-      age: z.coerce.number(), // Will be coerced from string
+      description: z.string().optional(),
+      settings: z.object({
+        isPublic: z.boolean(),
+        tags: z.array(z.string()),
+      }),
+      members: z.array(z.object({
+        name: z.string(),
+        email: z.string().email(),
+        role: z.string(),
+      })),
     }),
   },
-  response: userSchema,
+  response: projectSchema,
 })
 
-// Parse FormData on the client side
+// Parse FormData with nested objects and arrays
 const formData = new FormData()
-formData.append('name', 'John Doe')
-formData.append('email', 'john@example.com')
-formData.append('age', '25') // String that will be coerced to number
+formData.append('name', 'My Project')
+formData.append('description', 'A sample project')
+
+// Nested object using dot notation
+formData.append('settings.isPublic', 'true')
+formData.append('settings.tags', 'frontend')
+formData.append('settings.tags', 'typescript')
+
+// Array of objects using indexed notation
+formData.append('members[0].name', 'Alice Johnson')
+formData.append('members[0].email', 'alice@example.com')
+formData.append('members[0].role', 'admin')
+formData.append('members[1].name', 'Bob Wilson')
+formData.append('members[1].email', 'bob@example.com')
+formData.append('members[1].role', 'developer')
 
 // Validate and parse the form data
-const parseResult = client.users.post.safeParseForm(formData)
+const parseResult = client.api.projects.post.safeParseForm(formData)
 
 if (parseResult.success) {
   // parseResult.data is fully typed and validated
-  console.log(parseResult.data.name) // "John Doe"
-  console.log(parseResult.data.age)  // 25 (number)
+  console.log(parseResult.data.name) // "My Project"
+  console.log(parseResult.data.settings.isPublic) // true (boolean)
+  console.log(parseResult.data.settings.tags) // ["frontend", "typescript"]
+  console.log(parseResult.data.members[0].name) // "Alice Johnson"
   
   // Use the parsed data in your API call
-  const response = await client.users.post({ json: parseResult.data })
+  const response = await client.api.projects.post({ json: parseResult.data })
 } else {
   // Handle validation errors
   console.error('Form validation failed:', parseResult.error)
 }
 
-// Disable automatic type coercion if needed
-const strictParseResult = client.users.post.safeParseForm(formData, false)
+// Disable automatic type coercion (optional)
+const parseResultNoCoerce = client.api.projects.post.safeParseForm(formData, false)
 ```
 
 The `safeParseForm` method:
 - Only available on endpoints with `json` input schemas (not available for streams or WebSockets)
+- Supports nested objects using dot notation (`object.field`)
+- Supports arrays of objects using indexed notation (`array[0].field`)
+- Supports arrays of primitives with repeated field names
 - Automatically coerces string form values to appropriate types (unless `autoCoerce` is false)
 - Returns a result object with `success` boolean and either `data` or `error`
 - Provides full TypeScript type safety for the parsed data
 - Uses the same validation schema as the endpoint's JSON input
+- Handles optional fields, nullable fields, and default values
 
 #### Error Handling
 
@@ -396,7 +422,7 @@ MockDash provides structured error types for comprehensive error handling:
 ```typescript
 import { isApiError, isNetworkError, isValidationError } from 'mock-dash'
 
-const response = await client.users.id('123').get()
+const response = await client.api.users.id('123').get()
 
 if (response.error) {
   if (isApiError(response.error)) {
@@ -414,6 +440,40 @@ if (response.error) {
   console.log('User:', response.data)
 }
 ```
+
+#### Type Inference
+
+The API client provides a powerful `infer` property that allows you to extract TypeScript types from your API schema without making actual API calls. This is especially useful for typing variables and function parameters in your application:
+
+**Type Inference Patterns:**
+
+```typescript
+// HTTP endpoint types
+client.infer.path.to.endpoint.method.response     // Response body type
+client.infer.path.to.endpoint.method.json         // JSON input type
+client.infer.path.to.endpoint.method.query        // Query parameters type
+client.infer.path.to.endpoint.method.form         // Form data type
+client.infer.path.to.endpoint.method.params       // Path parameters type
+client.infer.path.to.endpoint.method.parseError   // Validation error from safeParseForm
+
+// Streaming endpoint types
+client.infer.path.to.stream.$stream.response       // Stream item type
+
+// SSE endpoint types
+client.infer.path.to.sse.$stream.response.eventName  // Specific event type
+
+// WebSocket endpoint types
+client.infer.path.to.ws.$ws.serverToClient         // Server messages union type
+client.infer.path.to.ws.$ws.clientToServer         // Client messages union type
+```
+
+The `infer` property follows the same path structure as your API calls but provides compile-time type information instead of runtime functionality. This enables:
+
+- **Type-safe function signatures** using inferred types as parameters and return types
+- **Consistent data structures** across your application
+- **IntelliSense support** in your IDE with full autocomplete
+- **Compile-time validation** of data shapes and structures
+- **Refactoring safety** when API schemas change
 
 #### Interceptors
 
@@ -436,7 +496,7 @@ client.interceptors.response.use((context, response) => {
 })
 
 // Local interceptors for specific requests
-await client.users.get({
+await client.api.users.get({
   transformRequest: (context, options) => ({
     ...options,
     headers: { ...options.headers, 'X-Custom': 'value' },

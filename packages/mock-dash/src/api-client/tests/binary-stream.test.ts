@@ -23,13 +23,13 @@ describe('Binary Stream', () => {
       baseURL: 'http://localhost',
       fetch: app.fetch,
     })
-    const result = await client.download.file.get.$stream()
+    const result = await client.api.download.file.get.$stream()
+
     expect(result).toHaveProperty('data')
     const collected: number[] = []
     if (result.data) {
       for await (const chunk of result.data) {
-        if (chunk.type === 'binary')
-          collected.push(...Array.from(chunk.data as Uint8Array))
+        if (chunk.type === 'binary') collected.push(...Array.from(chunk.data))
       }
     }
     expect(collected).toEqual([1, 2, 3, 4])
@@ -52,7 +52,7 @@ describe('Binary Stream', () => {
       baseURL: 'http://localhost',
       fetch: app.fetch,
     })
-    const result = await client.download.image.get.$stream()
+    const result = await client.api.download.image.get.$stream()
     const collected: number[] = []
     if (result.data) {
       for await (const chunk of result.data) {

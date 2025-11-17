@@ -39,7 +39,7 @@ describe('POST endpoints', () => {
       baseURL: 'http://localhost',
       fetch: app.fetch,
     })
-    const res = await client.users.post({
+    const res = await client.api.users.post({
       json: { name: 'John Doe', email: 'john@example.com' },
     })
     expect(res).toHaveProperty('data')
@@ -68,7 +68,7 @@ describe('POST endpoints', () => {
       baseURL: 'http://localhost',
       fetch: app.fetch,
     })
-    const res = await client.users
+    const res = await client.api.users
       .id('123')
       .avatar.post({ form: { file: 'file-data', description: 'User avatar' } })
     expect(res).toHaveProperty('data')

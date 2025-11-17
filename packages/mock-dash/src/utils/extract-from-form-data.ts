@@ -71,6 +71,8 @@ function extractNestedObjectFields(
         } else {
           output[key] = value === '' ? undefined : value
         }
+      } else if (fieldSchema instanceof z.ZodNullable) {
+        output[key] = null
       }
     }
   }

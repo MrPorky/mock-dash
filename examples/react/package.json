@@ -12,15 +12,15 @@
   },
   "dependencies": {
     "@examples/shared": "workspace:*",
-    "@tanstack/react-router": "^1.135.2",
+    "@tanstack/react-router": "^1.136.8",
     "mock-dash": "workspace:*",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"
   },
   "devDependencies": {
     "@hono/vite-dev-server": "^0.23.0",
-    "@tanstack/router-plugin": "^1.135.2",
-    "@types/react": "^19.2.4",
+    "@tanstack/router-plugin": "^1.136.8",
+    "@types/react": "^19.2.5",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.1.1",
     "babel-plugin-react-compiler": "19.1.0-rc.3",

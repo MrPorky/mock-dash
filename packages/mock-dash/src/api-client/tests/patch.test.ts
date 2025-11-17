@@ -50,7 +50,7 @@ describe('PATCH endpoints', () => {
       fetch: app.fetch,
     })
 
-    const res = await client.users
+    const res = await client.api.users
       .id('123')
       .patch({ json: { name: 'Updated Name' } })
     expect(res).toHaveProperty('data')

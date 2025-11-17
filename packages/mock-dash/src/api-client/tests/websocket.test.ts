@@ -147,7 +147,7 @@ describe('WebSocket endpoints', () => {
       baseURL: 'http://localhost',
     })
 
-    const result = await client.chat.get.$ws({ query: { userId: '123' } })
+    const result = await client.api.chat.get.$ws({ query: { userId: '123' } })
 
     expect(result).toHaveProperty('data')
     expect(result).toHaveProperty('controller')
@@ -203,7 +203,7 @@ describe('WebSocket endpoints', () => {
       baseURL: 'http://localhost',
     })
 
-    const result = await client.users.userId('user123').updates.get.$ws()
+    const result = await client.api.users.userId('user123').updates.get.$ws()
 
     expect(result).toHaveProperty('data')
     expect(result).toHaveProperty('controller')
@@ -227,7 +227,7 @@ describe('WebSocket endpoints', () => {
       baseURL: 'http://localhost',
     })
 
-    const result = await client.chat.get.$ws()
+    const result = await client.api.chat.get.$ws()
 
     if (result.controller) {
       // Wait for connection to open
@@ -256,7 +256,7 @@ describe('WebSocket endpoints', () => {
       baseURL: 'http://localhost',
     })
 
-    const result = await client.updates.get.$ws()
+    const result = await client.api.updates.get.$ws()
 
     if (result.data) {
       const received: { value: string }[] = []
@@ -293,7 +293,7 @@ describe('WebSocket endpoints', () => {
       baseURL: 'http://localhost',
     })
 
-    const result = await client.updates.get.$ws()
+    const result = await client.api.updates.get.$ws()
 
     if (result.data) {
       const errors: Error[] = []
@@ -336,7 +336,7 @@ describe('WebSocket endpoints', () => {
       baseURL: 'http://localhost',
     })
 
-    const result = await client.updates.get.$ws()
+    const result = await client.api.updates.get.$ws()
 
     expect(result).toHaveProperty('error')
     if (result.error) {
@@ -356,7 +356,7 @@ describe('WebSocket endpoints', () => {
       baseURL: 'http://localhost',
     })
 
-    const result = await client.updates.get.$ws()
+    const result = await client.api.updates.get.$ws()
 
     if (result.controller && result.data) {
       // Wait for connection to open
@@ -389,7 +389,7 @@ describe('WebSocket endpoints', () => {
       baseURL: 'http://localhost',
     })
 
-    const result = await client.updates.get.$ws({
+    const result = await client.api.updates.get.$ws({
       query: { token: 'abc123', room: 'general' },
     })
 
@@ -412,7 +412,7 @@ describe('WebSocket endpoints', () => {
       baseURL: 'http://localhost:3000',
     })
 
-    const result = await client.updates.get.$ws()
+    const result = await client.api.updates.get.$ws()
 
     if (result.controller) {
       const ws = MockWebSocket.lastInstance
@@ -432,7 +432,7 @@ describe('WebSocket endpoints', () => {
       baseURL: 'https://example.com',
     })
 
-    const result = await client.updates.get.$ws()
+    const result = await client.api.updates.get.$ws()
 
     if (result.controller) {
       const ws = MockWebSocket.lastInstance
@@ -460,7 +460,7 @@ describe('WebSocket endpoints', () => {
       baseURL: 'http://localhost',
     })
 
-    const result = await client.updates.get.$ws()
+    const result = await client.api.updates.get.$ws()
 
     if (result.data) {
       const errors: Error[] = []
@@ -499,7 +499,7 @@ describe('WebSocket endpoints', () => {
       baseURL: 'http://localhost',
     })
 
-    const result = await client.updates.get.$ws()
+    const result = await client.api.updates.get.$ws()
 
     if (result.controller) {
       expect(result.controller.readyState).toBeDefined()
@@ -519,7 +519,7 @@ describe('WebSocket endpoints', () => {
       baseURL: 'http://localhost',
     })
 
-    const result = await client.updates.get.$ws()
+    const result = await client.api.updates.get.$ws()
 
     if (result.controller) {
       // Wait for connection to open
@@ -546,7 +546,7 @@ describe('WebSocket endpoints', () => {
       baseURL: 'http://localhost',
     })
 
-    const result = await client.updates.get.$ws()
+    const result = await client.api.updates.get.$ws()
 
     if (result.data) {
       const binaryMessages: (ArrayBuffer | Blob | SharedArrayBuffer)[] = []
@@ -587,7 +587,7 @@ describe('WebSocket endpoints', () => {
       baseURL: 'http://localhost',
     })
 
-    const result = await client.updates.get.$ws()
+    const result = await client.api.updates.get.$ws()
 
     if (result.data) {
       const binaryMessages: (ArrayBuffer | Blob | SharedArrayBuffer)[] = []
@@ -625,7 +625,7 @@ describe('WebSocket endpoints', () => {
       baseURL: 'http://localhost',
     })
 
-    const result = await client.updates.get.$ws()
+    const result = await client.api.updates.get.$ws()
 
     if (result.data) {
       const binaryMessages: (ArrayBuffer | Blob | SharedArrayBuffer)[] = []
@@ -670,7 +670,7 @@ describe('WebSocket endpoints', () => {
       baseURL: 'http://localhost',
     })
 
-    const result = await client.updates.get.$ws()
+    const result = await client.api.updates.get.$ws()
 
     if (result.data) {
       const binaryMessages: (ArrayBuffer | Blob | SharedArrayBuffer)[] = []
@@ -717,7 +717,7 @@ describe('WebSocket endpoints', () => {
       baseURL: 'http://localhost',
     })
 
-    const result = await client.updates.get.$ws()
+    const result = await client.api.updates.get.$ws()
 
     if (result.data) {
       const jsonMessages: { text: string }[] = []
@@ -770,7 +770,7 @@ describe('WebSocket endpoints', () => {
       baseURL: 'http://localhost',
     })
 
-    const result = await client.updates.get.$ws({
+    const result = await client.api.updates.get.$ws({
       query: { tags: ['important', 'urgent'] },
     })
 
@@ -803,7 +803,7 @@ describe('WebSocket endpoints', () => {
       baseURL: 'http://localhost',
     })
 
-    const result = await client.updates.get.$ws({
+    const result = await client.api.updates.get.$ws({
       query: {
         filter: {
           status: 'active',
@@ -832,7 +832,7 @@ describe('WebSocket endpoints', () => {
       baseURL: 'http://localhost',
     })
 
-    const result = await client.chat.get.$ws()
+    const result = await client.api.chat.get.$ws()
 
     if (result.controller) {
       // Wait for connection to open
@@ -863,7 +863,7 @@ describe('WebSocket endpoints', () => {
       baseURL: 'http://localhost',
     })
 
-    const result = await client.chat.get.$ws()
+    const result = await client.api.chat.get.$ws()
 
     if (result.controller) {
       // Wait for connection to open
@@ -894,7 +894,7 @@ describe('WebSocket endpoints', () => {
       baseURL: 'http://localhost',
     })
 
-    const result = await client.updates.get.$ws()
+    const result = await client.api.updates.get.$ws()
 
     if (result.data) {
       const errors: Error[] = []
@@ -935,7 +935,7 @@ describe('WebSocket endpoints', () => {
       baseURL: 'http://localhost',
     })
 
-    const result = await client.updates.get.$ws()
+    const result = await client.api.updates.get.$ws()
 
     if (result.data) {
       const errors: Error[] = []
@@ -982,7 +982,7 @@ describe('WebSocket endpoints', () => {
       baseURL: 'http://localhost',
     })
 
-    const result = await client.updates.get.$ws()
+    const result = await client.api.updates.get.$ws()
 
     expect(result).toHaveProperty('error')
     if (result.error) {

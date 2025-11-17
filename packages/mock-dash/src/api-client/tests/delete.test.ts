@@ -16,7 +16,7 @@ describe('DELETE endpoints', () => {
       baseURL: 'http://localhost',
       fetch: app.fetch,
     })
-    const res = await client.users.id('123').delete()
+    const res = await client.api.users.id('123').delete()
     expect(res).toHaveProperty('data')
     // @ts-expect-error - data is void
     if (res.data) expect(res.data).toBeUndefined()
@@ -36,7 +36,7 @@ describe('DELETE endpoints', () => {
       baseURL: 'http://localhost',
       fetch: app.fetch,
     })
-    const res = await client.users.id('123').confirm.delete()
+    const res = await client.api.users.id('123').confirm.delete()
     expect(res).toHaveProperty('data')
     if (res.data) expect(res.data.deleted).toBe(true)
   })

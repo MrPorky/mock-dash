@@ -20,7 +20,7 @@ function RouteComponent() {
     setLoading(true)
     setSseEvents([])
     try {
-      const { data, error } = await apiClient.events.get.$stream()
+      const { data, error } = await apiClient.api.events.get.$stream()
 
       if (error) throw new Error('Failed to start SSE stream')
 
@@ -40,7 +40,7 @@ function RouteComponent() {
     setLoading(true)
     setJsonStream([])
     try {
-      const { data, error } = await apiClient.stream.json.get.$stream()
+      const { data, error } = await apiClient.api.stream.json.get.$stream()
       if (error) throw new Error('Failed to start JSON stream')
 
       for await (const chunk of data) {

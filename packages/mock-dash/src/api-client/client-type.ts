@@ -2,7 +2,9 @@ import type { Endpoint } from '../endpoint/endpoint'
 import type { HttpEndpoint } from '../endpoint/http-endpoint'
 import type { StreamEndpoint } from '../endpoint/stream-endpoint'
 import type { WebSocketEndpoint } from '../endpoint/ws-endpoint'
+import type { ToCamelCase } from '../utils/to-camel-case'
 import type { Combine } from '../utils/types'
+import type { ExtractEndpoints, GetNextSegments } from './common-types'
 import type { HttpEndpointCallSignature } from './http-call'
 import type { StreamEndpointCallSignature } from './stream-call'
 import type { WebSocketEndpointCallSignature } from './ws-call'
@@ -30,22 +32,6 @@ type EndpointCall<T extends Endpoint> = T extends Endpoint<
     }
   : 'error dose not inherit from Endpoint'
 
-type ToCamelCase<S extends string> =
-  S extends `${infer P1}-${infer P2}${infer REST}`
-    ? `${P1}${Capitalize<ToCamelCase<`${P2}${REST}`>>}`
-    : S
-
-type GetNextSegments<
-  P extends string,
-  E_Union extends Endpoint,
-> = E_Union extends any
-  ? E_Union['path'] extends `${P}/${infer SEGMENT}`
-    ? SEGMENT extends `${infer FIRST_PART}/${string}`
-      ? FIRST_PART
-      : SEGMENT
-    : never
-  : never
-
 type ApiClientRecursiveNode<
   P extends string,
   E_Union extends Endpoint,
@@ -72,10 +58,6 @@ type ApiClientRecursive<T extends Endpoint[]> = ApiClientRecursiveNode<
   '',
   T[number]
 >
-
-type ExtractEndpoints<T> = {
-  [K in keyof T]: T[K] extends Endpoint ? T[K] : never
-}[keyof T][]
 
 export type Client<T extends Record<string, unknown>> = ApiClientRecursive<
   ExtractEndpoints<T>

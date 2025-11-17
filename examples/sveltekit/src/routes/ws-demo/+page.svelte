@@ -33,7 +33,7 @@ let metricsSocketRef: WebSocketController<
 > | null = null
 
 async function connectChatSocket() {
-  const { controller, data, error } = await apiClient.ws.chat.get.$ws()
+  const { controller, data, error } = await apiClient.api.ws.chat.get.$ws()
 
   if (error) {
     console.error('WebSocket connection error:', error)
@@ -58,7 +58,7 @@ async function connectChatSocket() {
 }
 
 async function connectMetricsSocket() {
-  const { controller, data, error } = await apiClient.ws.metrics.get.$ws()
+  const { controller, data, error } = await apiClient.api.ws.metrics.get.$ws()
 
   if (error) {
     console.error('WebSocket connection error:', error)
