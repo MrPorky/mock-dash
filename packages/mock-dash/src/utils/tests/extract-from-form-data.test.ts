@@ -909,6 +909,299 @@ describe('extractFromFormData', () => {
     })
   })
 
+  describe('optional parent handling', () => {
+    it('should not add default values for fields in optional nested objects when parent is missing', () => {
+      const schema = z.object({
+        name: z.string(),
+        address: z
+          .object({
+            street: z.string(),
+            city: z.string(),
+            zipCode: z.string().optional(),
+          })
+          .optional(),
+      })
+
+      const formData = new FormData()
+      formData.append('name', 'Test User')
+      // No address fields provided
+
+      const result = extractFromFormData(formData, schema)
+
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.data).toEqual({
+          name: 'Test User',
+        })
+      }
+    })
+
+    it('should add default values for required fields when optional parent has some data', () => {
+      const schema = z.object({
+        name: z.string(),
+        address: z
+          .object({
+            street: z.string(),
+            city: z.string(),
+            zipCode: z.string().optional(),
+          })
+          .optional(),
+      })
+
+      const formData = new FormData()
+      formData.append('name', 'Test User')
+      formData.append('address.street', '123 Main St')
+      // city is missing but should get empty string since address has some data
+
+      const result = extractFromFormData(formData, schema)
+
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.data).toEqual({
+          name: 'Test User',
+          address: {
+            street: '123 Main St',
+            city: '',
+          },
+        })
+      }
+    })
+
+    it('should handle nested optional objects correctly', () => {
+      const schema = z.object({
+        user: z.object({
+          name: z.string(),
+          preferences: z
+            .object({
+              theme: z.string(),
+              notifications: z
+                .object({
+                  email: z.boolean().optional(),
+                  push: z.boolean(),
+                })
+                .optional(),
+            })
+            .optional(),
+        }),
+      })
+
+      const formData = new FormData()
+      formData.append('user.name', 'John')
+      formData.append('user.preferences.theme', 'dark')
+      // notifications object is optional and not provided
+
+      const result = extractFromFormData(formData, schema)
+
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.data).toEqual({
+          user: {
+            name: 'John',
+            preferences: {
+              theme: 'dark',
+            },
+          },
+        })
+      }
+    })
+
+    it('should handle optional arrays within optional objects', () => {
+      const schema = z.object({
+        project: z.object({
+          name: z.string(),
+          metadata: z
+            .object({
+              tags: z.array(z.string()).optional(),
+              priority: z.string(),
+            })
+            .optional(),
+        }),
+      })
+
+      const formData = new FormData()
+      formData.append('project.name', 'Test Project')
+      // metadata is optional and not provided
+
+      const result = extractFromFormData(formData, schema)
+
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.data).toEqual({
+          project: {
+            name: 'Test Project',
+          },
+        })
+      }
+    })
+
+    it('should properly handle optional arrays with empty values', () => {
+      const schema = z.object({
+        name: z.string(),
+        tags: z.array(z.string()).optional(),
+        categories: z.array(z.string()).optional(),
+      })
+
+      const formData = new FormData()
+      formData.append('name', 'Test Item')
+      formData.append('tags', 'tag1')
+      // categories not provided
+
+      const result = extractFromFormData(formData, schema)
+
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.data).toEqual({
+          name: 'Test Item',
+          tags: ['tag1'],
+        })
+      }
+    })
+
+    it('should handle deeply nested optional structures', () => {
+      const schema = z.object({
+        config: z.object({
+          server: z
+            .object({
+              host: z.string(),
+              advanced: z
+                .object({
+                  timeout: z.number().optional(),
+                  retries: z.number(),
+                })
+                .optional(),
+            })
+            .optional(),
+        }),
+      })
+
+      const formData = new FormData()
+      // Only providing the top-level required field, nested optional objects should not appear
+      formData.append('config.server.host', 'localhost')
+
+      const result = extractFromFormData(formData, schema)
+
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.data).toEqual({
+          config: {
+            server: {
+              host: 'localhost',
+            },
+          },
+        })
+      }
+    })
+  })
+
+  describe('field type handling improvements', () => {
+    it('should handle different field types with missing values correctly', () => {
+      const schema = z.object({
+        name: z.string(),
+        description: z.string().optional(),
+        count: z.number().optional(),
+        isActive: z.boolean().optional(),
+        tags: z.array(z.string()).optional(),
+        metadata: z
+          .object({
+            created: z.string(),
+            updated: z.string().optional(),
+          })
+          .optional(),
+      })
+
+      const formData = new FormData()
+      formData.append('name', 'Test Item')
+      // All other fields are missing and optional
+
+      const result = extractFromFormData(formData, schema)
+
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.data).toEqual({
+          name: 'Test Item',
+        })
+      }
+    })
+
+    it('should add empty strings for required string fields in non-optional parents', () => {
+      const schema = z.object({
+        user: z.object({
+          name: z.string(),
+          email: z.string(),
+          phone: z.string().optional(),
+        }),
+      })
+
+      const formData = new FormData()
+      formData.append('user.name', 'John')
+      // email is required but missing, should get empty string
+
+      const result = extractFromFormData(formData, schema)
+
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.data).toEqual({
+          user: {
+            name: 'John',
+            email: '',
+          },
+        })
+      }
+    })
+
+    it('should handle nullable fields with missing values in non-optional parents', () => {
+      const schema = z.object({
+        user: z.object({
+          name: z.string(),
+          middleName: z.string().nullable(),
+          lastName: z.string().nullable().optional(),
+        }),
+      })
+
+      const formData = new FormData()
+      formData.append('user.name', 'John')
+      // middleName is nullable but not optional, should get null
+      // lastName is both nullable and optional, should not appear
+
+      const result = extractFromFormData(formData, schema)
+
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.data).toEqual({
+          user: {
+            name: 'John',
+            middleName: null,
+          },
+        })
+      }
+    })
+
+    it('should handle optional fields with undefined values in non-optional parents', () => {
+      const schema = z.object({
+        settings: z.object({
+          theme: z.string(),
+          language: z.string().optional(),
+          timezone: z.string().optional(),
+        }),
+      })
+
+      const formData = new FormData()
+      formData.append('settings.theme', 'dark')
+      // language and timezone are optional and missing, should not appear
+
+      const result = extractFromFormData(formData, schema)
+
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.data).toEqual({
+          settings: {
+            theme: 'dark',
+          },
+        })
+      }
+    })
+  })
+
   describe('compatibility with existing behavior', () => {
     it('should maintain backward compatibility for flat objects', () => {
       const schema = z.object({
@@ -953,6 +1246,28 @@ describe('extractFromFormData', () => {
           name: 'Test User',
           email: null,
           tags: [],
+        })
+      }
+    })
+
+    it('should maintain existing behavior for required fields in root object', () => {
+      const schema = z.object({
+        name: z.string(),
+        email: z.string(),
+        age: z.number().optional(),
+      })
+
+      const formData = new FormData()
+      formData.append('name', 'Test User')
+      // email is required but missing, should still get empty string
+
+      const result = extractFromFormData(formData, schema)
+
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.data).toEqual({
+          name: 'Test User',
+          email: '',
         })
       }
     })

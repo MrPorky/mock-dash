@@ -27,14 +27,27 @@ function extractNestedObjectFields(
     const fieldSchema = schema.shape[key] as z.ZodType
     const baseType = getBaseType(fieldSchema)
     const fullKey = prefix ? `${prefix}.${key}` : key
+    const isOptionalField = fieldSchema instanceof z.ZodOptional
 
     if (baseType instanceof z.ZodObject) {
+      if (isOptionalField) {
+        const hasChildKeys = Array.from(formData.keys()).some((formKey) =>
+          formKey.startsWith(fullKey),
+        )
+
+        if (!hasChildKeys) {
+          output[key] = undefined
+          continue
+        }
+      }
+
       // Handle nested objects recursively
       const nestedOutput = extractNestedObjectFields(
         formData,
         baseType,
         fullKey,
       )
+
       if (Object.keys(nestedOutput).length > 0) {
         output[key] = nestedOutput
       }
@@ -73,6 +86,13 @@ function extractNestedObjectFields(
         }
       } else if (fieldSchema instanceof z.ZodNullable) {
         output[key] = null
+      } else if (fieldSchema instanceof z.ZodOptional) {
+        output[key] = undefined
+      } else if (
+        fieldSchema instanceof z.ZodString ||
+        fieldSchema instanceof z.ZodStringFormat
+      ) {
+        output[key] = ''
       }
     }
   }
