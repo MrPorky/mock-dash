@@ -75,16 +75,13 @@ function extractNestedObjectFields(
       }
     } else {
       const value = formData.get(fullKey)
-      if (value !== null) {
-        if (
-          fieldSchema instanceof z.ZodNullable ||
-          baseType instanceof z.ZodNull
-        ) {
-          output[key] = value === '' ? null : value
-        } else {
-          output[key] = value === '' ? undefined : value
-        }
-      } else if (fieldSchema instanceof z.ZodNullable) {
+
+      if (value !== null && value !== '') {
+        output[key] = value
+      } else if (
+        fieldSchema instanceof z.ZodNullable ||
+        baseType instanceof z.ZodNull
+      ) {
         output[key] = null
       } else if (fieldSchema instanceof z.ZodOptional) {
         output[key] = undefined

@@ -1271,5 +1271,26 @@ describe('extractFromFormData', () => {
         })
       }
     })
+
+    it('test', () => {
+      const schema = z.object({
+        name: z.string(),
+        email: z.coerce.string(),
+      })
+
+      const formData = new FormData()
+      formData.append('name', 'Test User')
+      formData.append('email', '')
+
+      const result = extractFromFormData(formData, schema)
+
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.data).toEqual({
+          name: 'Test User',
+          email: '',
+        })
+      }
+    })
   })
 })
