@@ -32,7 +32,7 @@ export type HttpEndpointCallSignature<
         | {
             success: false
             data?: undefined
-            error: $ZodErrorTree<R>
+            error: $ZodErrorTree<z.infer<I['json']>>
           }
     : never
   // Call signature

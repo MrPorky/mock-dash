@@ -29,7 +29,9 @@ type InferObjects<T extends Endpoint> = T extends Endpoint<
       } & (T extends HttpEndpoint<infer _P, infer R, infer _M, infer _I, any>
         ? {
             response: z.infer<R>
-            parseError: $ZodErrorTree<R>
+            parseError: I extends { json: any }
+              ? $ZodErrorTree<z.infer<I['json']>>
+              : undefined
           }
         : T extends WebSocketEndpoint<
               infer _P,
