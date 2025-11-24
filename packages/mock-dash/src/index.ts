@@ -18,6 +18,7 @@ import {
 } from './endpoint/stream-response'
 import { WebSocketEndpoint } from './endpoint/ws-endpoint'
 import { defineWebSocket } from './endpoint/ws-response'
+import type { AliasOptionFromApiSchema } from './utils/alias'
 import {
   ApiError,
   isApiError,
@@ -55,4 +56,4 @@ export {
   WebSocketEndpoint,
 }
 
-export type { EndpointOptions, WebSocketController }
+export type { AliasOptionFromApiSchema, EndpointOptions, WebSocketController }
