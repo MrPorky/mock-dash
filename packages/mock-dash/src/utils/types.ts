@@ -24,6 +24,7 @@ export type RemoveNever<T> = {
 }
 
 export type EmptyObjectIsNever<T> = keyof T extends never ? never : T
+export type EmptyObjectIs<T, R> = keyof T extends never ? R : T
 
 export type Combine<
   T,
@@ -43,3 +44,7 @@ export type Combine<
   : never
 
 export type MaybePromise<T> = T | Promise<T>
+
+export type Prettify<T> = {
+  [K in keyof T]: T[K]
+} & {}

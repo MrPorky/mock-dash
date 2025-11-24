@@ -1,5 +1,5 @@
 import z from 'zod'
-import type { EndpointConfig, EndpointOptions } from './endpoint'
+import type { EndpointConfig, EndpointOptions, EndpointPath } from './endpoint'
 import { HttpEndpoint } from './http-endpoint'
 import type { EndpointInput, ParamFromPath } from './input'
 import { StreamEndpoint } from './stream-endpoint'
@@ -9,7 +9,7 @@ import { WebSocketResponse } from './ws-response'
 
 export function defineGet<
   I extends EndpointInput<'get'>,
-  P extends string,
+  P extends EndpointPath,
   T extends ParamFromPath<P>,
   R extends WebSocketResponse,
   O extends EndpointOptions = EndpointOptions,
@@ -19,7 +19,7 @@ export function defineGet<
 ): WebSocketEndpoint<P, R, 'get', I, O>
 export function defineGet<
   I extends EndpointInput<'get'>,
-  P extends string,
+  P extends EndpointPath,
   T extends ParamFromPath<P>,
   R extends StreamResponse,
   O extends EndpointOptions = EndpointOptions,
@@ -29,7 +29,7 @@ export function defineGet<
 ): StreamEndpoint<P, R, 'get', I, O>
 export function defineGet<
   I extends EndpointInput<'get'>,
-  P extends string,
+  P extends EndpointPath,
   T extends ParamFromPath<P>,
   R extends z.ZodType,
   O extends EndpointOptions = EndpointOptions,
@@ -40,7 +40,7 @@ export function defineGet<
 export function defineGet<
   I extends EndpointInput<'get'>,
   R extends z.ZodType | StreamResponse | WebSocketResponse,
-  P extends string,
+  P extends EndpointPath,
   T extends ParamFromPath<P>,
   O extends EndpointOptions = EndpointOptions,
 >(path: P, { input, response, options }: EndpointConfig<R, I, P, T, O>) {
@@ -57,7 +57,7 @@ export function defineGet<
 
 export function defineDelete<
   I extends EndpointInput<'delete'>,
-  P extends string,
+  P extends EndpointPath,
   T extends ParamFromPath<P>,
   O extends EndpointOptions = EndpointOptions,
 >(
@@ -66,7 +66,7 @@ export function defineDelete<
 ): StreamEndpoint<P, StreamResponse, 'delete', I>
 export function defineDelete<
   I extends EndpointInput<'delete'>,
-  P extends string,
+  P extends EndpointPath,
   T extends ParamFromPath<P>,
   R extends z.ZodType,
   O extends EndpointOptions = EndpointOptions,
@@ -76,7 +76,7 @@ export function defineDelete<
 ): HttpEndpoint<P, R, 'delete', I, O>
 export function defineDelete<
   I extends EndpointInput<'delete'>,
-  P extends string,
+  P extends EndpointPath,
   T extends ParamFromPath<P>,
   R extends z.ZodType | StreamResponse,
   O extends EndpointOptions = EndpointOptions,
@@ -92,7 +92,7 @@ export function defineDelete<
 
 export function definePost<
   I extends EndpointInput<'post'>,
-  P extends string,
+  P extends EndpointPath,
   T extends ParamFromPath<P>,
   R extends StreamResponse,
   O extends EndpointOptions = EndpointOptions,
@@ -102,7 +102,7 @@ export function definePost<
 ): StreamEndpoint<P, R, 'post', I, O>
 export function definePost<
   I extends EndpointInput<'post'>,
-  P extends string,
+  P extends EndpointPath,
   T extends ParamFromPath<P>,
   R extends z.ZodType,
   O extends EndpointOptions = EndpointOptions,
@@ -113,7 +113,7 @@ export function definePost<
 export function definePost<
   I extends EndpointInput<'post'>,
   R extends z.ZodType | StreamResponse,
-  P extends string,
+  P extends EndpointPath,
   T extends ParamFromPath<P>,
   O extends EndpointOptions = EndpointOptions,
 >(path: P, { input, response, options }: EndpointConfig<R, I, P, T, O>) {
@@ -128,7 +128,7 @@ export function definePost<
 
 export function definePut<
   I extends EndpointInput<'put'>,
-  P extends string,
+  P extends EndpointPath,
   T extends ParamFromPath<P>,
   R extends StreamResponse,
   O extends EndpointOptions = EndpointOptions,
@@ -138,7 +138,7 @@ export function definePut<
 ): StreamEndpoint<P, R, 'put', I, O>
 export function definePut<
   I extends EndpointInput<'put'>,
-  P extends string,
+  P extends EndpointPath,
   T extends ParamFromPath<P>,
   R extends z.ZodType,
   O extends EndpointOptions = EndpointOptions,
@@ -149,7 +149,7 @@ export function definePut<
 export function definePut<
   I extends EndpointInput<'put'>,
   R extends z.ZodType | StreamResponse,
-  P extends string,
+  P extends EndpointPath,
   T extends ParamFromPath<P>,
   O extends EndpointOptions = EndpointOptions,
 >(path: P, { input, response, options }: EndpointConfig<R, I, P, T, O>) {
@@ -164,7 +164,7 @@ export function definePut<
 
 export function definePatch<
   I extends EndpointInput<'patch'>,
-  P extends string,
+  P extends EndpointPath,
   T extends ParamFromPath<P>,
   R extends StreamResponse,
   O extends EndpointOptions = EndpointOptions,
@@ -174,7 +174,7 @@ export function definePatch<
 ): StreamEndpoint<P, R, 'patch', I, O>
 export function definePatch<
   I extends EndpointInput<'patch'>,
-  P extends string,
+  P extends EndpointPath,
   T extends ParamFromPath<P>,
   R extends z.ZodType,
   O extends EndpointOptions = EndpointOptions,
@@ -185,7 +185,7 @@ export function definePatch<
 export function definePatch<
   I extends EndpointInput<'patch'>,
   R extends z.ZodType | StreamResponse,
-  P extends string,
+  P extends EndpointPath,
   T extends ParamFromPath<P>,
   O extends EndpointOptions = EndpointOptions,
 >(path: P, { input, response, options }: EndpointConfig<R, I, P, T, O>) {

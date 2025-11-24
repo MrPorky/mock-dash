@@ -16,24 +16,31 @@ import {
   isWebSocketEndpoint,
   type WebSocketEndpoint,
 } from '../endpoint/ws-endpoint'
+import type { AliasOptionFromApiSchema } from '../utils/alias'
 import { buildEndpointPath } from '../utils/build-endpoint-path'
 import { createMock } from '../utils/create-mock'
 import { MockError } from '../utils/errors'
 import { isBinaryArrayBuffer } from '../utils/type-guards'
 import type { EndpointInputContext } from './mock'
 
-export interface MockGenerationOptions {
+export type MockGenerationOptions<
+  T extends Record<string, unknown> = Record<string, unknown>,
+> = {
   readonly base?: string
   readonly addMiddleware?: (app: Hono) => void
   readonly zodToMock?: <Z extends z.ZodType>(response: Z) => z.infer<Z>
   readonly createNodeWebSocket?: typeof createNodeWebSocket
   readonly upgradeWebSocket?: UpgradeWebSocket
-}
+  readonly alias?: Record<never, string>
+} & AliasOptionFromApiSchema<T>
 
 export function createMockServer<T extends Record<string, unknown>>(
   apiSchema: T,
-  options: MockGenerationOptions = {},
+  ...args: Partial<MockGenerationOptions<T>> extends MockGenerationOptions<T>
+    ? [options?: MockGenerationOptions<T>]
+    : [options: MockGenerationOptions<T>]
 ) {
+  const options = args[0] || ({} as MockGenerationOptions<T>)
   const app = new Hono().basePath(options.base ?? '')
   const { injectWebSocket, upgradeWebSocket: nodeUpgradeWebSocket } =
     options.createNodeWebSocket ? options.createNodeWebSocket({ app }) : {}
@@ -50,7 +57,7 @@ export function createMockServer<T extends Record<string, unknown>>(
     }
 
     const method = endpoint.method
-    const path = buildEndpointPath(endpoint.path, endpoint.options?.alias)
+    const path = buildEndpointPath(endpoint.path, options.alias)
 
     const inputValidators = endpoint.input
       ? Object.entries(endpoint.input).map(([target, zodType]) =>
@@ -71,7 +78,6 @@ export function createMockServer<T extends Record<string, unknown>>(
         }
 
         const fakerContext: EndpointInputContext<any> = {
-          // @ts-expect-error TS cannot infer the type here
           inputs,
           endpoint,
           honoContext: c,

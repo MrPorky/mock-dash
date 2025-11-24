@@ -14,9 +14,6 @@ describe('Alias functionality in createMockServer', () => {
       const apiSchema = {
         getUser: defineGet('/{api}/users/:id', {
           response: z.object({ id: z.string(), name: z.string() }),
-          options: {
-            alias: { api: '/api/v1' },
-          },
         }),
       }
 
@@ -25,7 +22,11 @@ describe('Alias functionality in createMockServer', () => {
         name: 'John Doe',
       }))
 
-      const { app } = createMockServer(apiSchema)
+      const { app } = createMockServer(apiSchema, {
+        alias: {
+          api: '/api/v1',
+        },
+      })
 
       const res = await app.request('/api/v1/users/123')
       expect(res.status).toBe(200)
@@ -42,12 +43,6 @@ describe('Alias functionality in createMockServer', () => {
             service: z.string(),
             version: z.string(),
           }),
-          options: {
-            alias: {
-              service: '/api',
-              version: 'v2',
-            },
-          },
         }),
       }
 
@@ -57,7 +52,12 @@ describe('Alias functionality in createMockServer', () => {
         version: 'v2',
       }))
 
-      const { app } = createMockServer(apiSchema)
+      const { app } = createMockServer(apiSchema, {
+        alias: {
+          service: '/api',
+          version: 'v2',
+        },
+      })
 
       const res = await app.request('/api/v2/resources/456')
       expect(res.status).toBe(200)
@@ -75,9 +75,6 @@ describe('Alias functionality in createMockServer', () => {
             service: z.string(),
             version: z.string(),
           }),
-          options: {
-            alias: {},
-          },
         }),
       }
 
@@ -87,7 +84,12 @@ describe('Alias functionality in createMockServer', () => {
         version: 'v2',
       }))
 
-      const { app } = createMockServer(apiSchema)
+      const { app } = createMockServer(apiSchema, {
+        alias: {
+          service: '',
+          version: '',
+        },
+      })
 
       // When aliases are empty, placeholders should be removed
       const res = await app.request('/resources/456')
@@ -106,9 +108,6 @@ describe('Alias functionality in createMockServer', () => {
             postId: z.string(),
             title: z.string(),
           }),
-          options: {
-            alias: { api: '/api/v1' },
-          },
         }),
       }
 
@@ -118,7 +117,9 @@ describe('Alias functionality in createMockServer', () => {
         title: 'Sample Post',
       }))
 
-      const { app } = createMockServer(apiSchema)
+      const { app } = createMockServer(apiSchema, {
+        alias: { api: '/api/v1' },
+      })
 
       const res = await app.request('/api/v1/users/123/posts/456')
       expect(res.status).toBe(200)
@@ -138,9 +139,6 @@ describe('Alias functionality in createMockServer', () => {
             },
           },
           response: z.array(z.object({ id: z.string(), name: z.string() })),
-          options: {
-            alias: { api: '/api/v1' },
-          },
         }),
       }
 
@@ -148,7 +146,9 @@ describe('Alias functionality in createMockServer', () => {
         { id: '1', name: `Found: ${ctx.inputs.query.q}` },
       ])
 
-      const { app } = createMockServer(apiSchema)
+      const { app } = createMockServer(apiSchema, {
+        alias: { api: '/api/v1' },
+      })
 
       const res = await app.request('/api/v1/users/search?q=john&limit=10')
       expect(res.status).toBe(200)
@@ -168,9 +168,6 @@ describe('Alias functionality in createMockServer', () => {
             name: z.string(),
             email: z.string(),
           }),
-          options: {
-            alias: { api: '/api/v1' },
-          },
         }),
       }
 
@@ -180,7 +177,9 @@ describe('Alias functionality in createMockServer', () => {
         email: ctx.inputs.json.email,
       }))
 
-      const { app } = createMockServer(apiSchema)
+      const { app } = createMockServer(apiSchema, {
+        alias: { api: '/api/v1' },
+      })
 
       const res = await app.request('/api/v1/users', {
         method: 'POST',
@@ -199,15 +198,14 @@ describe('Alias functionality in createMockServer', () => {
       const apiSchema = {
         getHealth: defineGet('/{root}/health', {
           response: z.object({ status: z.string() }),
-          options: {
-            alias: { root: '/' },
-          },
         }),
       }
 
       apiSchema.getHealth.defineMock(() => ({ status: 'ok' }))
 
-      const { app } = createMockServer(apiSchema)
+      const { app } = createMockServer(apiSchema, {
+        alias: { root: '/' },
+      })
 
       const res = await app.request('/health')
       expect(res.status).toBe(200)
@@ -219,9 +217,6 @@ describe('Alias functionality in createMockServer', () => {
       const apiSchema = {
         getUser: defineGet('/{api}/users/:id', {
           response: z.object({ id: z.string(), name: z.string() }),
-          options: {
-            alias: { api: '///api///v1//' },
-          },
         }),
       }
 
@@ -230,7 +225,11 @@ describe('Alias functionality in createMockServer', () => {
         name: 'John Doe',
       }))
 
-      const { app } = createMockServer(apiSchema)
+      const { app } = createMockServer(apiSchema, {
+        alias: {
+          api: '///api///v1//',
+        },
+      })
 
       const res = await app.request('/api/v1/users/123')
       expect(res.status).toBe(200)
@@ -243,7 +242,6 @@ describe('Alias functionality in createMockServer', () => {
       const apiSchema = {
         getUser: defineGet('/{api}/users/:id', {
           response: z.object({ id: z.string(), name: z.string() }),
-          options: { alias: { api: '/api/v1' } },
         }),
         updateUser: definePut('/{api}/users/:id', {
           input: {
@@ -254,14 +252,12 @@ describe('Alias functionality in createMockServer', () => {
             name: z.string(),
             updated: z.boolean(),
           }),
-          options: { alias: { api: '/api/v1' } },
         }),
         deleteUser: defineDelete('/{api}/users/:id', {
           response: z.object({
             id: z.string(),
             deleted: z.boolean(),
           }),
-          options: { alias: { api: '/api/v1' } },
         }),
       }
 
@@ -281,7 +277,9 @@ describe('Alias functionality in createMockServer', () => {
         deleted: true,
       }))
 
-      const { app } = createMockServer(apiSchema)
+      const { app } = createMockServer(apiSchema, {
+        alias: { api: '/api/v1' },
+      })
 
       // Test GET with alias
       const getRes = await app.request('/api/v1/users/123')
@@ -313,9 +311,6 @@ describe('Alias functionality in createMockServer', () => {
       const apiSchema = {
         getUser: defineGet('/{version}/users/:id', {
           response: z.object({ id: z.string(), name: z.string() }),
-          options: {
-            alias: { version: 'v2' },
-          },
         }),
       }
 
@@ -324,7 +319,10 @@ describe('Alias functionality in createMockServer', () => {
         name: 'Base Path User',
       }))
 
-      const { app } = createMockServer(apiSchema, { base: '/api' })
+      const { app } = createMockServer(apiSchema, {
+        base: '/api',
+        alias: { version: 'v2' },
+      })
 
       const res = await app.request('/api/v2/users/123')
       expect(res.status).toBe(200)
@@ -346,9 +344,6 @@ describe('Alias functionality in createMockServer', () => {
             success: z.boolean(),
             filename: z.string(),
           }),
-          options: {
-            alias: { api: '/api/v1' },
-          },
         }),
       }
 
@@ -357,7 +352,9 @@ describe('Alias functionality in createMockServer', () => {
         filename: ctx.inputs.form.filename,
       }))
 
-      const { app } = createMockServer(apiSchema)
+      const { app } = createMockServer(apiSchema, {
+        alias: { api: '/api/v1' },
+      })
 
       const formData = new FormData()
       formData.append('filename', 'test.txt')
@@ -382,11 +379,8 @@ describe('Alias functionality in createMockServer', () => {
           response: z.object({
             id: z.string(),
             name: z.string(),
-            email: z.string().email(),
+            email: z.email(),
           }),
-          options: {
-            alias: { api: '/api/v1' },
-          },
         }),
       }
 
@@ -400,6 +394,9 @@ describe('Alias functionality in createMockServer', () => {
             } as z.infer<typeof schema>
           }
           return '' as any
+        },
+        alias: {
+          api: '/api/v1',
         },
       })
 
@@ -417,14 +414,12 @@ describe('Alias functionality in createMockServer', () => {
       const apiSchema = {
         getUser: defineGet('/{api}/users/:id', {
           response: z.object({ id: z.string(), name: z.string() }),
-          options: {
-            alias: { api: '/api/v1' },
-          },
         }),
       }
 
-      const { app } = createMockServer(apiSchema)
-
+      const { app } = createMockServer(apiSchema, {
+        alias: { api: '/api/v1' },
+      })
       const res = await app.request('/api/v1/users/123')
       expect(res.status).toBe(500)
       expect(await res.text()).toContain('No mock defined')
@@ -439,9 +434,6 @@ describe('Alias functionality in createMockServer', () => {
         }),
         getUserWithAlias: defineGet('/{api}/users/:id', {
           response: z.object({ id: z.string(), name: z.string() }),
-          options: {
-            alias: { api: '/api/v1' },
-          },
         }),
       }
 
@@ -455,7 +447,9 @@ describe('Alias functionality in createMockServer', () => {
         name: 'Alias User',
       }))
 
-      const { app } = createMockServer(apiSchema)
+      const { app } = createMockServer(apiSchema, {
+        alias: { api: '/api/v1' },
+      })
 
       // Test endpoint without alias
       const res1 = await app.request('/users/123')
@@ -474,22 +468,18 @@ describe('Alias functionality in createMockServer', () => {
       const apiSchema = {
         v1Endpoint: defineGet('/{api}/v1/users', {
           response: z.array(z.object({ id: z.string(), name: z.string() })),
-          options: {
-            alias: { api: '/api' },
-          },
         }),
         v2Endpoint: defineGet('/{service}/v2/users', {
           response: z.array(z.object({ id: z.string(), name: z.string() })),
-          options: {
-            alias: { service: '/api' },
-          },
         }),
       }
 
       apiSchema.v1Endpoint.defineMock(() => [{ id: '1', name: 'V1 User' }])
       apiSchema.v2Endpoint.defineMock(() => [{ id: '2', name: 'V2 User' }])
 
-      const { app } = createMockServer(apiSchema)
+      const { app } = createMockServer(apiSchema, {
+        alias: { api: '/api', service: '/api' },
+      })
 
       const res1 = await app.request('/api/v1/users')
       const res2 = await app.request('/api/v2/users')
@@ -513,15 +503,14 @@ describe('Alias functionality in createMockServer', () => {
             },
           },
           response: z.array(z.object({ id: z.string(), name: z.string() })),
-          options: {
-            alias: { api: '/api/v1' },
-          },
         }),
       }
 
       apiSchema.searchUsers.defineMock(() => [{ id: '1', name: 'Found User' }])
 
-      const { app } = createMockServer(apiSchema)
+      const { app } = createMockServer(apiSchema, {
+        alias: { api: '/api/v1' },
+      })
 
       // Valid request
       const validRes = await app.request('/api/v1/users/search?q=john')
@@ -536,15 +525,14 @@ describe('Alias functionality in createMockServer', () => {
       const apiSchema = {
         getText: defineGet('/{api}/text', {
           response: z.string(),
-          options: {
-            alias: { api: '/api/v1' },
-          },
         }),
       }
 
       apiSchema.getText.defineMock(() => 'Hello from aliased endpoint!')
 
-      const { app } = createMockServer(apiSchema)
+      const { app } = createMockServer(apiSchema, {
+        alias: { api: '/api/v1' },
+      })
 
       const res = await app.request('/api/v1/text')
       expect(res.status).toBe(200)
@@ -555,15 +543,14 @@ describe('Alias functionality in createMockServer', () => {
       const apiSchema = {
         ping: definePost('/{api}/ping', {
           response: z.void(),
-          options: {
-            alias: { api: '/api/v1' },
-          },
         }),
       }
 
       apiSchema.ping.defineMock(() => undefined)
 
-      const { app } = createMockServer(apiSchema)
+      const { app } = createMockServer(apiSchema, {
+        alias: { api: '/api/v1' },
+      })
 
       const res = await app.request('/api/v1/ping', { method: 'POST' })
       expect(res.status).toBe(200)
@@ -574,15 +561,14 @@ describe('Alias functionality in createMockServer', () => {
       const apiSchema = {
         ping: definePost('/{api}/ping', {
           response: z.void(),
-          options: {
-            alias: {},
-          },
         }),
       }
 
       apiSchema.ping.defineMock(() => undefined)
 
-      const { app } = createMockServer(apiSchema)
+      const { app } = createMockServer(apiSchema, {
+        alias: { api: '' },
+      })
 
       const res = await app.request('/ping', { method: 'POST' })
       expect(res.status).toBe(200)
@@ -593,9 +579,6 @@ describe('Alias functionality in createMockServer', () => {
       const apiSchema = {
         ping: definePost('/{api}/ping', {
           response: z.void(),
-          options: {
-            alias: {},
-          },
         }),
       }
 
@@ -603,6 +586,9 @@ describe('Alias functionality in createMockServer', () => {
 
       const { app } = createMockServer(apiSchema, {
         base: '/api',
+        alias: {
+          api: '',
+        },
       })
 
       const res = await app.request('/api/ping', { method: 'POST' })
@@ -614,9 +600,6 @@ describe('Alias functionality in createMockServer', () => {
       const apiSchema = {
         getUser: defineGet('/{api}/users/:id', {
           response: z.object({ id: z.string(), name: z.string() }),
-          options: {
-            alias: { api: '/api/v1' },
-          },
         }),
       }
 
@@ -635,6 +618,9 @@ describe('Alias functionality in createMockServer', () => {
             middlewarePath = c.req.path
             await next()
           })
+        },
+        alias: {
+          api: '/api/v1',
         },
       })
 
@@ -656,9 +642,6 @@ describe('Alias functionality in createMockServer', () => {
             name: z.string(),
             paramType: z.string(),
           }),
-          options: {
-            alias: { api: '/api/v1' },
-          },
         }),
       }
 
@@ -668,7 +651,9 @@ describe('Alias functionality in createMockServer', () => {
         paramType: typeof ctx.inputs.param.id,
       }))
 
-      const { app } = createMockServer(apiSchema)
+      const { app } = createMockServer(apiSchema, {
+        alias: { api: '/api/v1' },
+      })
 
       const res = await app.request('/api/v1/users/123')
       expect(res.status).toBe(200)

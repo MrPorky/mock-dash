@@ -1,4 +1,5 @@
 import type { EndpointInput, InferInput } from '../endpoint/input'
+import type { AliasOptionFromApiSchema } from '../utils/alias'
 import type { EmptyObjectIsNever } from '../utils/types'
 import type { InterceptorCallback } from './interceptor'
 
@@ -29,4 +30,6 @@ export type CreateApiClientArgs<
   transformRequest?: InterceptorCallback<FetchOptions>
   transformResponse?: InterceptorCallback<Response>
   fetch?: (input: Request) => Response | Promise<Response>
-} & FetchOptions
+  alias?: Record<never, string>
+} & AliasOptionFromApiSchema<T> &
+  FetchOptions

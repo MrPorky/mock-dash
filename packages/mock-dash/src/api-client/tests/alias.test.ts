@@ -14,9 +14,6 @@ describe('Alias functionality in createApiClient', () => {
       const apiSchema = {
         getUser: defineGet('/{api}/users/:id', {
           response: z.object({ id: z.string(), name: z.string() }),
-          options: {
-            alias: { api: '/api/v1' },
-          },
         }),
       }
 
@@ -29,6 +26,9 @@ describe('Alias functionality in createApiClient', () => {
         apiSchema,
         baseURL: 'http://localhost',
         fetch: app.fetch,
+        alias: {
+          api: '/api/v1',
+        },
       })
 
       const res = await client.api.api.users.id('123').get()
@@ -47,12 +47,6 @@ describe('Alias functionality in createApiClient', () => {
             service: z.string(),
             version: z.string(),
           }),
-          options: {
-            alias: {
-              service: '/api',
-              version: 'v2',
-            },
-          },
         }),
       }
 
@@ -65,6 +59,10 @@ describe('Alias functionality in createApiClient', () => {
         apiSchema,
         baseURL: 'http://localhost',
         fetch: app.fetch,
+        alias: {
+          service: '/api',
+          version: 'v2',
+        },
       })
 
       const res = await client.api.service.version.resources.id('456').get()
@@ -84,9 +82,6 @@ describe('Alias functionality in createApiClient', () => {
             service: z.string(),
             version: z.string(),
           }),
-          options: {
-            alias: {},
-          },
         }),
       }
 
@@ -99,6 +94,10 @@ describe('Alias functionality in createApiClient', () => {
         apiSchema,
         baseURL: 'http://localhost',
         fetch: app.fetch,
+        alias: {
+          service: '',
+          version: '',
+        },
       })
 
       const res = await client.api.service.version.resources.id('456').get()
@@ -118,9 +117,6 @@ describe('Alias functionality in createApiClient', () => {
             postId: z.string(),
             title: z.string(),
           }),
-          options: {
-            alias: { api: '/api/v1' },
-          },
         }),
       }
 
@@ -133,6 +129,9 @@ describe('Alias functionality in createApiClient', () => {
         apiSchema,
         baseURL: 'http://localhost',
         fetch: app.fetch,
+        alias: {
+          api: '/api/v1',
+        },
       })
 
       const res = await client.api.api.users
@@ -157,9 +156,6 @@ describe('Alias functionality in createApiClient', () => {
             },
           },
           response: z.array(z.object({ id: z.string(), name: z.string() })),
-          options: {
-            alias: { api: '/api/v1' },
-          },
         }),
       }
 
@@ -171,6 +167,9 @@ describe('Alias functionality in createApiClient', () => {
         apiSchema,
         baseURL: 'http://localhost',
         fetch: app.fetch,
+        alias: {
+          api: '/api/v1',
+        },
       })
 
       const res = await client.api.api.users.search.get({
@@ -194,9 +193,6 @@ describe('Alias functionality in createApiClient', () => {
             name: z.string(),
             email: z.string(),
           }),
-          options: {
-            alias: { api: '/api/v1' },
-          },
         }),
       }
 
@@ -213,6 +209,9 @@ describe('Alias functionality in createApiClient', () => {
         apiSchema,
         baseURL: 'http://localhost',
         fetch: app.fetch,
+        alias: {
+          api: '/api/v1',
+        },
       })
 
       const res = await client.api.api.users.post({
@@ -231,9 +230,6 @@ describe('Alias functionality in createApiClient', () => {
       const apiSchema = {
         getHealth: defineGet('/{root}/health', {
           response: z.object({ status: z.string() }),
-          options: {
-            alias: { root: '/' },
-          },
         }),
       }
 
@@ -243,6 +239,9 @@ describe('Alias functionality in createApiClient', () => {
         apiSchema,
         baseURL: 'http://localhost',
         fetch: app.fetch,
+        alias: {
+          root: '/',
+        },
       })
 
       const res = await client.api.root.health.get()
@@ -256,9 +255,6 @@ describe('Alias functionality in createApiClient', () => {
       const apiSchema = {
         getUser: defineGet('/{api}/users/:id', {
           response: z.object({ id: z.string(), name: z.string() }),
-          options: {
-            alias: { api: '///api///v1//' },
-          },
         }),
       }
 
@@ -271,6 +267,9 @@ describe('Alias functionality in createApiClient', () => {
         apiSchema,
         baseURL: 'http://localhost',
         fetch: app.fetch,
+        alias: {
+          api: '///api///v1//',
+        },
       })
 
       const res = await client.api.api.users.id('123').get()
@@ -285,7 +284,6 @@ describe('Alias functionality in createApiClient', () => {
       const apiSchema = {
         getUser: defineGet('/{api}/users/:id', {
           response: z.object({ id: z.string(), name: z.string() }),
-          options: { alias: { api: '/api/v1' } },
         }),
         updateUser: definePut('/{api}/users/:id', {
           input: {
@@ -296,7 +294,6 @@ describe('Alias functionality in createApiClient', () => {
             name: z.string(),
             updated: z.boolean(),
           }),
-          options: { alias: { api: '/api/v1' } },
         }),
       }
 
@@ -315,6 +312,9 @@ describe('Alias functionality in createApiClient', () => {
         apiSchema,
         baseURL: 'http://localhost',
         fetch: app.fetch,
+        alias: {
+          api: '/api/v1',
+        },
       })
 
       // Test GET with alias
@@ -369,9 +369,6 @@ describe('Alias functionality in createApiClient', () => {
       const apiSchema = {
         getApiData: defineGet('/{api-version}/user-accounts/:user-id', {
           response: z.object({ userId: z.string(), accountType: z.string() }),
-          options: {
-            alias: { 'api-version': '/api/v1' },
-          },
         }),
       }
 
@@ -384,6 +381,9 @@ describe('Alias functionality in createApiClient', () => {
         apiSchema,
         baseURL: 'http://localhost',
         fetch: app.fetch,
+        alias: {
+          'api-version': '/api/v1',
+        },
       })
 
       // Access using camelCase conversion of kebab-case alias
@@ -404,9 +404,6 @@ describe('Alias functionality in createApiClient', () => {
               userId: z.string(),
               profileSettings: z.object({ theme: z.string() }),
             }),
-            options: {
-              alias: { 'api-service': '/api-service' },
-            },
           },
         ),
       }
@@ -426,6 +423,9 @@ describe('Alias functionality in createApiClient', () => {
         apiSchema,
         baseURL: 'http://localhost',
         fetch: app.fetch,
+        alias: {
+          'api-service': '/api-service',
+        },
       })
 
       const res = await client.api.apiService.userData
@@ -454,9 +454,6 @@ describe('Alias functionality in createApiClient', () => {
               userName: z.string(),
               status: z.string(),
             }),
-            options: {
-              alias: { 'service-api': '/api/v2' },
-            },
           },
         ),
       }
@@ -477,6 +474,9 @@ describe('Alias functionality in createApiClient', () => {
         apiSchema,
         baseURL: 'http://localhost',
         fetch: app.fetch,
+        alias: {
+          'service-api': '/api/v2',
+        },
       })
 
       const res = await client.api.serviceApi.userManagement.createAccount.post(
@@ -553,9 +553,6 @@ describe('Alias functionality in createApiClient', () => {
         }),
         getUserWithAlias: defineGet('/{api}/users/:id', {
           response: z.object({ id: z.string(), name: z.string() }),
-          options: {
-            alias: { api: '/api/v1' },
-          },
         }),
       }
 
@@ -573,6 +570,9 @@ describe('Alias functionality in createApiClient', () => {
         apiSchema,
         baseURL: 'http://localhost',
         fetch: app.fetch,
+        alias: {
+          api: '/api/v1',
+        },
       })
 
       // Test endpoint without alias
@@ -585,15 +585,9 @@ describe('Alias functionality in createApiClient', () => {
       const apiSchema = {
         v1Endpoint: defineGet('/{api}/v1/users', {
           response: z.array(z.object({ id: z.string(), name: z.string() })),
-          options: {
-            alias: { api: '/api' },
-          },
         }),
         v2Endpoint: defineGet('/{service}/v2/users', {
           response: z.array(z.object({ id: z.string(), name: z.string() })),
-          options: {
-            alias: { service: '/api' },
-          },
         }),
       }
 
@@ -605,6 +599,10 @@ describe('Alias functionality in createApiClient', () => {
         apiSchema,
         baseURL: 'http://localhost',
         fetch: app.fetch,
+        alias: {
+          api: '/api',
+          service: '/api',
+        },
       })
 
       const res1 = await client.api.api.v1.users.get()

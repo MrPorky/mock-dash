@@ -1,5 +1,5 @@
 import type z from 'zod'
-import type { RemoveNever } from '../utils/types'
+import type { Prettify, RemoveNever } from '../utils/types'
 import type { HttpMethod } from './endpoint'
 
 type ZodStringValues =
@@ -21,20 +21,18 @@ type ZodFormValue =
 type PathParamToObject<
   V,
   R extends string,
-  K extends string = never,
-> = R extends `${string}:${infer P}`
-  ? P extends `${infer PARAM}/${infer TR}`
-    ? PathParamToObject<V, TR, K | PARAM>
-    : { [Key in K | P]: V }
-  : never
+> = R extends `${string}:${infer Rest}`
+  ? Rest extends `${infer ParamName}/${infer Tail}`
+    ? { [K in ParamName]: V } & PathParamToObject<V, Tail>
+    : { [K in Rest]: V }
+  : object
 
-export type ParamFromPath<P extends string> = Partial<
-  PathParamToObject<OptionalStringValues, P>
+export type ParamFromPath<P extends string> = Prettify<
+  Partial<PathParamToObject<OptionalStringValues, P>>
 >
 
-export type ParsedPathParameters<P extends string> = PathParamToObject<
-  string,
-  P
+export type ParsedPathParameters<P extends string> = Prettify<
+  PathParamToObject<string, P>
 >
 
 type Query = Record<string, z.ZodType>

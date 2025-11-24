@@ -54,7 +54,7 @@ export async function _prepareFetch<T extends Endpoint<any>>(
 
   let fullUrl = buildEndpointPath(
     endpoint.path,
-    endpoint.options?.alias,
+    requestOptions.alias,
     requestOptions.baseURL,
   )
 

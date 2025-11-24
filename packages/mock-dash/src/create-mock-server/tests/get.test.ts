@@ -121,9 +121,8 @@ describe('generateMockApi - GET endpoints', () => {
 
   it('should handle GET request with path alias option', async () => {
     const apiSchema = {
-      getUser: defineGet('{api}/users/:id', {
+      getUser: defineGet('/{api}/users/:id', {
         response: z.object({ id: z.string(), name: z.string() }),
-        options: { alias: { api: '/api/v1' } },
       }),
     }
 
@@ -132,7 +131,9 @@ describe('generateMockApi - GET endpoints', () => {
       name: 'User',
     }))
 
-    const { app } = createMockServer(apiSchema)
+    const { app } = createMockServer(apiSchema, {
+      alias: { api: '/api/v1' },
+    })
 
     const res = await app.request('/api/v1/users/123')
     expect(res.status).toBe(200)

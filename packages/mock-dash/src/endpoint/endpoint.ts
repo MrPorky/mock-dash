@@ -3,10 +3,12 @@ import type { EndpointInput, EndpointInputType, ParamFromPath } from './input'
 
 export type HttpMethod = 'get' | 'post' | 'patch' | 'put' | 'delete'
 
+export type EndpointPath = '/' | `/${string}`
+
 export type EndpointConfig<
   R,
   I extends EndpointInput,
-  P extends string,
+  P extends EndpointPath,
   T extends ParamFromPath<P>,
   O extends EndpointOptions,
 > = {
@@ -17,9 +19,7 @@ export type EndpointConfig<
   options?: O
 }
 
-export type EndpointOptions = {
-  alias?: Record<string, string>
-} & Record<string, unknown>
+export type EndpointOptions = Record<string, unknown>
 
 export abstract class Endpoint<
   R = unknown,
