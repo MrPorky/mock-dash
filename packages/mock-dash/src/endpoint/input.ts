@@ -16,7 +16,8 @@ type OptionalStringValues = ZodStringValues | z.ZodOptional<ZodStringValues>
 
 type ZodFormValue =
   | (ZodStringValues | z.ZodFile)
-  | z.ZodOptional<ZodStringValues | z.ZodFile>
+  | z.ZodDefault<ZodStringValues>
+  | z.ZodOptional<ZodStringValues | z.ZodDefault<ZodStringValues> | z.ZodFile>
 
 type PathParamToObject<
   V,

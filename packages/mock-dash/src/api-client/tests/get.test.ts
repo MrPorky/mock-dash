@@ -172,13 +172,14 @@ describe('GET endpoints', () => {
           query: {
             q: z.string(),
             filters: z.array(z.string()).optional(),
-            page: z.coerce.number().optional(),
+            page: z.number().optional(),
             nested: z
               .object({
                 category: z.string(),
                 subcategory: z.string().optional(),
               })
               .optional(),
+            default: z.string().default('default value').optional(),
           },
         },
         response: z.object({ results: z.array(z.string()), count: z.number() }),
@@ -191,13 +192,14 @@ describe('GET endpoints', () => {
         z.object({
           q: z.string(),
           filters: z.array(z.string()).optional(),
-          page: z.coerce.number().optional(),
+          page: z.number().optional(),
           nested: z
             .object({
               category: z.string(),
               subcategory: z.string().optional(),
             })
             .optional(),
+          default: z.string().default('default value').optional(),
         }),
       ),
       (c) => c.json({ results: ['item1', 'item2'], count: 2 }),
@@ -223,6 +225,7 @@ describe('GET endpoints', () => {
     expect(url.searchParams.get('page')).toBe('2')
     expect(url.searchParams.get('nested[category]')).toBe('electronics')
     expect(url.searchParams.get('nested[subcategory]')).toBe('phones')
+    expect(url.searchParams.get('default')).toBe('default value')
   })
 
   it('should perform nested path parameter resolution', async () => {

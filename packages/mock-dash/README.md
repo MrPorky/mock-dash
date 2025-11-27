@@ -22,6 +22,7 @@
     - [Streams](#streams)
     - [WebSockets](#websockets)
     - [Options](#options)
+    - [Default Values](#default-values)
   - [Generate Type-Safe Client](#generate-type-safe-client)
     - [Client Methods](#client-methods)
     - [Form Data Parsing](#form-data-parsing)
@@ -289,6 +290,31 @@ const secureEndpoint = defineGet('/admin/users', {
     requiresAuth: true,
   },
 })
+```
+
+#### Default Values
+
+You can use Zod's `.default()` modifier to specify default values for input fields (query parameters, JSON body, or form data). These defaults are automatically applied by the client when the field is omitted.
+
+```typescript
+const searchUsers = defineGet('/users', {
+  input: {
+    query: {
+      // Default to page 1 if not provided
+      page: z.coerce.number().default(1),
+      // Default to 10 items per page
+      limit: z.coerce.number().default(10),
+    },
+  },
+  response: userListSchema,
+})
+
+// Client usage:
+// resulting URL: /users?page=1&limit=10
+await client.api.users.get()
+
+// resulting URL: /users?page=2&limit=10
+await client.api.users.get({ query: { page: 2 } })
 ```
 
 ### Generate Type-Safe Client

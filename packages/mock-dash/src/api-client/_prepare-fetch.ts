@@ -5,7 +5,8 @@ import {
   isSSEResponse,
 } from '../endpoint/stream-response'
 import { buildEndpointPath } from '../utils/build-endpoint-path'
-import { ApiError, type Errors, NetworkError } from '../utils/errors'
+import { z } from 'zod'
+import { ApiError, type Errors, NetworkError, ValidationError } from '../utils/errors'
 import { buildFormData, serializeQueryParams } from '../utils/request-utils'
 import type {
   CreateApiClientArgs,
@@ -63,9 +64,65 @@ export async function _prepareFetch<T extends Endpoint<any>>(
     fullUrl = fullUrl.replace(`:${key}`, String(value)) // Ensure value is a string
   }
 
+  // Validate and apply defaults
+  let queryParams = restInputArgs?.query
+  let jsonBody = restInputArgs?.json
+  let formBody = restInputArgs?.form
+
+  if (endpoint.input) {
+    if (endpoint.input.query) {
+      const querySchema = z.object(endpoint.input.query)
+      const result = querySchema.safeParse(queryParams || {})
+      if (!result.success) {
+        return {
+          fullUrl,
+          error: new ValidationError(
+            'Invalid query parameters',
+            result.error,
+            'request',
+            {
+              url: fullUrl,
+              method: endpoint.method.toUpperCase(),
+            },
+          ),
+        }
+      }
+      queryParams = result.data
+    }
+
+    if (endpoint.input.json) {
+      const result = endpoint.input.json.safeParse(jsonBody || {})
+      if (!result.success) {
+        return {
+          fullUrl,
+          error: new ValidationError('Invalid JSON body', result.error, 'request', {
+            url: fullUrl,
+            method: endpoint.method.toUpperCase(),
+          }),
+        }
+      }
+      jsonBody = result.data
+    }
+
+    if (endpoint.input.form) {
+      const formSchema = z.object(endpoint.input.form)
+      const result = formSchema.safeParse(formBody || {})
+      if (!result.success) {
+        return {
+          fullUrl,
+          error: new ValidationError('Invalid form body', result.error, 'request', {
+            url: fullUrl,
+            method: endpoint.method.toUpperCase(),
+          }),
+        }
+      }
+      formBody = result.data
+    }
+  }
+
   // Handle query parameters
-  if (restInputArgs?.query) {
-    const queryString = serializeQueryParams(restInputArgs.query)
+  if (queryParams) {
+    const queryString = serializeQueryParams(queryParams)
     if (queryString) {
       fullUrl += `?${queryString}`
     }
@@ -97,13 +154,13 @@ export async function _prepareFetch<T extends Endpoint<any>>(
   }
 
   // Handle request body
-  if (endpoint.method !== 'get' && restInputArgs) {
-    if (restInputArgs.json) {
-      options.body = JSON.stringify(restInputArgs.json)
-    } else if (restInputArgs.form) {
+  if (endpoint.method !== 'get') {
+    if (jsonBody) {
+      options.body = JSON.stringify(jsonBody)
+    } else if (formBody) {
       // Remove Content-Type to let browser set it for FormData
       delete (headers as Record<string, string>)['Content-Type']
-      options.body = buildFormData(restInputArgs.form)
+      options.body = buildFormData(formBody)
     }
   }
 

@@ -74,4 +74,84 @@ describe('POST endpoints', () => {
     expect(res).toHaveProperty('data')
     if (res.data) expect(res.data.avatarUrl).toBeDefined()
   })
+
+  it('should apply defaults for JSON body', async () => {
+    const apiSchema = {
+      createDefaultUser: definePost('/users/default', {
+        input: {
+          json: z.object({
+            name: z.string(),
+            role: z.string().default('user').optional(),
+          }),
+        },
+        response: z.object({
+          name: z.string(),
+          role: z.string(),
+        }),
+      }),
+    }
+    const app = new Hono().post(
+      '/users/default',
+      zValidator(
+        'json',
+        z.object({
+          name: z.string(),
+          role: z.string(),
+        }),
+      ),
+      (c) => {
+        const body = c.req.valid('json')
+        return c.json(body)
+      },
+    )
+    const client = createApiClient({
+      apiSchema,
+      baseURL: 'http://localhost',
+      fetch: app.fetch,
+    })
+    const res = await client.api.users.default.post({
+      json: { name: 'Jane Doe' },
+    })
+    expect(res.data).toEqual({ name: 'Jane Doe', role: 'user' })
+  })
+
+  it('should apply defaults for Form body', async () => {
+    const apiSchema = {
+      submitForm: definePost('/form', {
+        input: {
+          form: {
+            field: z.string(),
+            optionalField: z.string().default('default-value').optional(),
+          },
+        },
+        response: z.object({
+          field: z.string(),
+          optionalField: z.string(),
+        }),
+      }),
+    }
+    const app = new Hono().post(
+      '/form',
+      zValidator(
+        'form',
+        z.object({
+          field: z.string(),
+          optionalField: z.string(),
+        }),
+      ),
+      (c) => {
+        const body = c.req.valid('form')
+        return c.json(body)
+      },
+    )
+    const client = createApiClient({
+      apiSchema,
+      baseURL: 'http://localhost',
+      fetch: app.fetch,
+    })
+    const res = await client.api.form.post({
+      form: { field: 'value' },
+    })
+    expect(res.data).toEqual({ field: 'value', optionalField: 'default-value' })
+  })
 })
