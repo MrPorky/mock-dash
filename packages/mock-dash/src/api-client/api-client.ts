@@ -1,8 +1,11 @@
-import { Endpoint } from '../endpoint/endpoint'
+import { Endpoint, type EndpointPath } from '../endpoint/endpoint'
 import { isHttpEndpoint } from '../endpoint/http-endpoint'
+import type { ParsedPathParameters } from '../endpoint/input'
 import { isStreamEndpoint } from '../endpoint/stream-endpoint'
 import { isWebSocketEndpoint } from '../endpoint/ws-endpoint'
+import { buildEndpointPath } from '../utils/build-endpoint-path'
 import { toCamelCase } from '../utils/to-camel-case'
+import type { EmptyObjectIsNever, RemoveNever } from '../utils/types'
 import type { CreateApiClientArgs, FetchOptions } from './client-base'
 import type { Client } from './client-type'
 import { callHttpEndpoint } from './http-call'
@@ -153,6 +156,14 @@ export function createApiClient<ApiSchema extends Record<string, unknown>>(
     request: InterceptorManager<FetchOptions>
     response: InterceptorManager<Response>
   }
+  createEndpointUri: <P extends EndpointPath>(
+    path: P,
+    ...args: EmptyObjectIsNever<
+      RemoveNever<ParsedPathParameters<P>>
+    > extends never
+      ? []
+      : [ParsedPathParameters<P>]
+  ) => string
 } {
   const { apiSchema, transformRequest, transformResponse, ...requestOptions } =
     args
@@ -182,5 +193,20 @@ export function createApiClient<ApiSchema extends Record<string, unknown>>(
     api,
     interceptors,
     infer: {} as InferClient<ApiSchema>,
+    createEndpointUri: (path, ...args) => {
+      const param = (args[0] || {}) as Record<string, string>
+
+      let url = buildEndpointPath(
+        path,
+        requestOptions.alias,
+        requestOptions.baseURL,
+      )
+
+      for (const [key, value] of Object.entries(param)) {
+        url = url.replace(`:${key}`, String(value)) // Ensure value is a string
+      }
+
+      return url
+    },
   }
 }

@@ -23,7 +23,9 @@ type InferObjects<T extends Endpoint> = T extends Endpoint<
   ? {
       [K in M]: {
         json: I extends { json: any } ? z.infer<I['json']> : undefined
-        query: I extends { query: any } ? z.infer<I['query']> : undefined
+        query: I extends { query: any }
+          ? z.infer<z.ZodObject<I['query']>>
+          : undefined
         form: I extends { form: any } ? z.infer<I['form']> : undefined
         params: ParsedPathParameters<P>
       } & (T extends HttpEndpoint<infer _P, infer R, infer _M, infer _I, any>

@@ -353,6 +353,41 @@ const comment = await client.api.users
   .get()
 ```
 
+#### Creating Endpoint URIs
+
+Use `createEndpointUri` to generate full URLs for your endpoints with automatic path parameter replacement. This is useful for sharing links, debugging, or constructing URLs manually:
+
+```typescript
+const client = createApiClient({
+  apiSchema,
+  baseURL: 'https://api.example.com',
+  alias: { api: '/api/v1' },
+})
+
+// Generate a full URL with path parameters
+const userUrl = client.createEndpointUri('/users/:id', { id: '123' })
+// Returns: 'https://api.example.com/users/123'
+
+// Works with multiple path parameters
+const commentUrl = client.createEndpointUri(
+  '/users/:userId/posts/:postId/comments/:commentId',
+  { userId: '1', postId: '42', commentId: '789' }
+)
+// Returns: 'https://api.example.com/users/1/posts/42/comments/789'
+
+// Works with path aliases
+const aliasedUrl = client.createEndpointUri('/{api}/products/:id', { id: '456' })
+// Returns: 'https://api.example.com/api/v1/products/456'
+
+// Endpoints without parameters don't require the second argument
+const listUrl = client.createEndpointUri('/users')
+// Returns: 'https://api.example.com/users'
+```
+
+The method is fully type-safe: TypeScript will require the parameters object only when the path contains parameters (`:param`), and will infer the exact parameter names from the path string.
+
+Note: This method generates complete URLs with all path parameters replaced. For making actual API calls, use the normal client methods which provide additional type safety and request options.
+
 #### orThrow Methods
 For scenarios where you want to throw errors directly instead of handling them in the response object, use the `orThrow` method:
 
