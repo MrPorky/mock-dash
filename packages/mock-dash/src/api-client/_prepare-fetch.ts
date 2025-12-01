@@ -1,3 +1,4 @@
+import { z } from 'zod'
 import type { Endpoint } from '../endpoint/endpoint'
 import {
   isBinaryStreamResponse,
@@ -5,8 +6,12 @@ import {
   isSSEResponse,
 } from '../endpoint/stream-response'
 import { buildEndpointPath } from '../utils/build-endpoint-path'
-import { z } from 'zod'
-import { ApiError, type Errors, NetworkError, ValidationError } from '../utils/errors'
+import {
+  ApiError,
+  type Errors,
+  NetworkError,
+  ValidationError,
+} from '../utils/errors'
 import { buildFormData, serializeQueryParams } from '../utils/request-utils'
 import type {
   CreateApiClientArgs,
@@ -46,11 +51,13 @@ export async function _prepareFetch<T extends Endpoint<any>>(
 > {
   const {
     headers: customHeaders,
-    signal,
     transformRequest: localTransformRequest,
     transformResponse: localTransformResponse,
     fetch: localFetch,
-    ...restInputArgs
+    form,
+    json,
+    query,
+    ...restInputData
   } = inputData || {}
 
   let fullUrl = buildEndpointPath(
@@ -65,9 +72,9 @@ export async function _prepareFetch<T extends Endpoint<any>>(
   }
 
   // Validate and apply defaults
-  let queryParams = restInputArgs?.query
-  let jsonBody = restInputArgs?.json
-  let formBody = restInputArgs?.form
+  let queryParams = query
+  let jsonBody = json
+  let formBody = form
 
   if (endpoint.input) {
     if (endpoint.input.query) {
@@ -95,10 +102,15 @@ export async function _prepareFetch<T extends Endpoint<any>>(
       if (!result.success) {
         return {
           fullUrl,
-          error: new ValidationError('Invalid JSON body', result.error, 'request', {
-            url: fullUrl,
-            method: endpoint.method.toUpperCase(),
-          }),
+          error: new ValidationError(
+            'Invalid JSON body',
+            result.error,
+            'request',
+            {
+              url: fullUrl,
+              method: endpoint.method.toUpperCase(),
+            },
+          ),
         }
       }
       jsonBody = result.data
@@ -110,10 +122,15 @@ export async function _prepareFetch<T extends Endpoint<any>>(
       if (!result.success) {
         return {
           fullUrl,
-          error: new ValidationError('Invalid form body', result.error, 'request', {
-            url: fullUrl,
-            method: endpoint.method.toUpperCase(),
-          }),
+          error: new ValidationError(
+            'Invalid form body',
+            result.error,
+            'request',
+            {
+              url: fullUrl,
+              method: endpoint.method.toUpperCase(),
+            },
+          ),
         }
       }
       formBody = result.data
@@ -148,9 +165,9 @@ export async function _prepareFetch<T extends Endpoint<any>>(
 
   let options: RequestInit = {
     ...requestOptions,
+    ...restInputData,
     method: endpoint.method.toUpperCase(),
     headers,
-    signal,
   }
 
   // Handle request body

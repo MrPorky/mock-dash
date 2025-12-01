@@ -12,7 +12,8 @@ export type EndpointArgsType<
   transformRequest?: InterceptorCallback<RequestInit>
   transformResponse?: InterceptorCallback<Response>
   fetch?: (input: Request) => Response | Promise<Response>
-} & AdditionalArgs
+} & AdditionalArgs &
+  FetchOptions
 
 export type EndpointArgs<
   I extends EndpointInput,
