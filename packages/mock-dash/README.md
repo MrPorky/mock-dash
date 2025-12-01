@@ -25,8 +25,11 @@
     - [Default Values](#default-values)
   - [Generate Type-Safe Client](#generate-type-safe-client)
     - [Client Methods](#client-methods)
+    - [Creating Endpoint URIs](#creating-endpoint-uris)
+    - [orThrow Methods](#orthrow-methods)
     - [Form Data Parsing](#form-data-parsing)
     - [Error Handling](#error-handling)
+    - [Type Inference](#type-inference)
     - [Interceptors](#interceptors)
   - [Create Mock Server](#create-mock-server)
     - [Define Mock Responses](#define-mock-responses)
@@ -36,6 +39,7 @@
   - [CLI Tool](#cli-tool)
     - [Generate specs from OpenAPI](#generate-specs-from-openapi)
 - [Contributing](#contributing)
+  - [Development Setup](#development-setup)
 - [License](#license)
 
 ## Why MockDash?
