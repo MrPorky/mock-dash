@@ -19,7 +19,7 @@ export type HttpEndpointCallSignature<
   I extends EndpointInputType,
 > = {
   // Form data parsing signature
-  safeParseForm: I extends { json: z.ZodObject }
+  safeParseForm: I extends { json: z.ZodType }
     ? (
         formData: FormData,
         autoCoerce?: boolean,

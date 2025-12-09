@@ -2,10 +2,11 @@ import { describe, expect, it } from 'vitest'
 import z from 'zod'
 import { definePost } from '../../endpoint/define-endpoint'
 import type { HttpEndpoint } from '../../endpoint/http-endpoint'
+import type { EndpointCallSignatureResolver } from '../client-type'
 import { callHttpEndpoint } from '../http-call'
 
 describe('safeParseForm', () => {
-  const createEndpointWithJsonInput = (jsonSchema: z.ZodObject<any>) => {
+  const createEndpointWithJsonInput = <T extends z.ZodType>(jsonSchema: T) => {
     return definePost('/test', {
       input: { json: jsonSchema },
       response: z.object({ success: z.boolean() }),
@@ -14,7 +15,7 @@ describe('safeParseForm', () => {
 
   const createHttpCall = <T extends HttpEndpoint<any, any, any, any>>(
     endpoint: T,
-  ) => {
+  ): EndpointCallSignatureResolver<T> => {
     return callHttpEndpoint(
       {},
       endpoint,
@@ -23,7 +24,7 @@ describe('safeParseForm', () => {
         request: { use: () => {}, eject: () => {} } as any,
         response: { use: () => {}, eject: () => {} } as any,
       },
-    )
+    ) as EndpointCallSignatureResolver<T>
   }
 
   describe('with valid JSON input schema', () => {

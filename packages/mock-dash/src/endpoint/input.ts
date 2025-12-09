@@ -37,7 +37,7 @@ export type ParsedPathParameters<P extends string> = Prettify<
 >
 
 type Query = Record<string, z.ZodType>
-type Json = z.ZodObject
+type Json = z.ZodType
 type Form = Record<string, ZodFormValue | z.ZodArray<ZodFormValue>>
 
 type EndpointInputSlim = {

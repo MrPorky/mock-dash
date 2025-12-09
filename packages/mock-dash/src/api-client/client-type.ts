@@ -9,6 +9,19 @@ import type { HttpEndpointCallSignature } from './http-call'
 import type { StreamEndpointCallSignature } from './stream-call'
 import type { WebSocketEndpointCallSignature } from './ws-call'
 
+export type EndpointCallSignatureResolver<T extends Endpoint> =
+  T extends HttpEndpoint<infer _P, infer R, infer _M, infer I, any>
+    ? HttpEndpointCallSignature<R, I>
+    : T extends WebSocketEndpoint<infer _P, infer R, infer _M, infer I, any>
+      ? {
+          $ws: WebSocketEndpointCallSignature<R, I>
+        }
+      : T extends StreamEndpoint<infer _P, infer R, infer _M, infer I, any>
+        ? {
+            $stream: StreamEndpointCallSignature<R, I>
+          }
+        : 'not yet implemented or unknown endpoint type'
+
 type EndpointCall<T extends Endpoint> = T extends Endpoint<
   infer _R,
   infer _P,
@@ -16,19 +29,7 @@ type EndpointCall<T extends Endpoint> = T extends Endpoint<
   infer _I
 >
   ? {
-      [K in M]: T extends HttpEndpoint<
-        infer _P,
-        infer R,
-        infer _M,
-        infer I,
-        any
-      >
-        ? HttpEndpointCallSignature<R, I>
-        : T extends WebSocketEndpoint<infer _P, infer R, infer _M, infer I, any>
-          ? { $ws: WebSocketEndpointCallSignature<R, I> }
-          : T extends StreamEndpoint<infer _P, infer R, infer _M, infer I, any>
-            ? { $stream: StreamEndpointCallSignature<R, I> }
-            : 'not yet implemented or unknown endpoint type'
+      [K in M]: EndpointCallSignatureResolver<T>
     }
   : 'error dose not inherit from Endpoint'
 
