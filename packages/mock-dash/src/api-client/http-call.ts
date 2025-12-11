@@ -82,7 +82,12 @@ export function callHttpEndpoint(
 
       if (contentType?.includes('text/')) {
         jsonResponse = await response.text()
-      } else if (response.status === 204) {
+      } else if (
+        response.status === 204 ||
+        endpoint.response instanceof z.ZodVoid ||
+        endpoint.response instanceof z.ZodNever ||
+        endpoint.response instanceof z.ZodUndefined
+      ) {
         // No content response
         jsonResponse = undefined
       } else {

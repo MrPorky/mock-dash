@@ -154,4 +154,41 @@ describe('POST endpoints', () => {
     })
     expect(res.data).toEqual({ field: 'value', optionalField: 'default-value' })
   })
+
+  it('should handle void response', async () => {
+    const apiSchema = {
+      submitForm: definePost('/json', {
+        input: {
+          json: z.object({
+            field: z.string(),
+            optionalField: z.string().default('default-value').optional(),
+          }),
+        },
+        response: z.void(),
+      }),
+    }
+    const app = new Hono().post(
+      '/json',
+      zValidator(
+        'json',
+        z.object({
+          field: z.string(),
+          optionalField: z.string(),
+        }),
+      ),
+      (c) => {
+        return c.body(null, 200)
+      },
+    )
+    const client = createApiClient({
+      apiSchema,
+      baseURL: 'http://localhost',
+      fetch: app.fetch,
+    })
+    const res = await client.api.json.post({
+      json: { field: 'value' },
+    })
+    expect(res.error).toBeUndefined()
+    expect(res.data).toBeUndefined()
+  })
 })
