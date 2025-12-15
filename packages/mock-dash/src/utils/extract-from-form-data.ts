@@ -24,74 +24,11 @@ function extractNestedObjectFields(
   const output: Record<string, unknown> = {}
 
   for (const key in schema.shape) {
-    const fieldSchema = schema.shape[key] as z.ZodType
-    const baseType = getBaseType(fieldSchema)
-    const fullKey = prefix ? `${prefix}.${key}` : key
-    const isOptionalField = fieldSchema instanceof z.ZodOptional
-
-    if (baseType instanceof z.ZodObject) {
-      if (isOptionalField) {
-        const hasChildKeys = Array.from(formData.keys()).some((formKey) =>
-          formKey.startsWith(fullKey),
-        )
-
-        if (!hasChildKeys) {
-          output[key] = undefined
-          continue
-        }
-      }
-
-      // Handle nested objects recursively
-      const nestedOutput = extractNestedObjectFields(
-        formData,
-        baseType,
-        fullKey,
-      )
-
-      if (Object.keys(nestedOutput).length > 0) {
-        output[key] = nestedOutput
-      }
-    } else if (baseType instanceof z.ZodArray) {
-      const arrayElementType = getBaseType(baseType.element)
-
-      if (arrayElementType instanceof z.ZodObject) {
-        // Handle arrays of objects with indexed notation like array[0].field
-        const arrayItems = extractArrayOfObjects(
-          formData,
-          arrayElementType,
-          fullKey,
-        )
-        if (fieldSchema instanceof z.ZodOptional && arrayItems.length === 0) {
-          output[key] = undefined
-        } else {
-          output[key] = arrayItems
-        }
-      } else {
-        // Handle arrays of primitives
-        const values = formData.getAll(fullKey)
-        if (fieldSchema instanceof z.ZodOptional && values.length === 0)
-          output[key] = undefined
-        else output[key] = values
-      }
-    } else {
-      const value = formData.get(fullKey)
-
-      if (value !== null && value !== '') {
-        output[key] = value
-      } else if (
-        fieldSchema instanceof z.ZodNullable ||
-        baseType instanceof z.ZodNull
-      ) {
-        output[key] = null
-      } else if (fieldSchema instanceof z.ZodOptional) {
-        output[key] = undefined
-      } else if (
-        fieldSchema instanceof z.ZodString ||
-        fieldSchema instanceof z.ZodStringFormat
-      ) {
-        output[key] = ''
-      }
-    }
+    output[key] = extractFromDataFromZodType(
+      formData,
+      schema.shape[key],
+      prefix ? `${prefix}.${key}` : key,
+    )
   }
 
   return output
@@ -132,15 +69,79 @@ function escapeRegExp(string: string): string {
   return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
 
-export const extractFromFormData = <T extends z.ZodObject>(
+function extractFromDataFromZodType(
+  formData: FormData,
+  fieldSchema: z.ZodType,
+  prefix = '',
+) {
+  const baseType = getBaseType(fieldSchema)
+  const isOptionalField = fieldSchema instanceof z.ZodOptional
+
+  if (baseType instanceof z.ZodObject) {
+    if (isOptionalField) {
+      const hasChildKeys = Array.from(formData.keys()).some((formKey) =>
+        formKey.startsWith(prefix),
+      )
+
+      if (!hasChildKeys) {
+        return undefined
+      }
+    }
+
+    // Handle nested objects recursively
+    const nestedOutput = extractNestedObjectFields(formData, baseType, prefix)
+
+    if (Object.keys(nestedOutput).length > 0) {
+      return nestedOutput
+    }
+  } else if (baseType instanceof z.ZodArray) {
+    const arrayElementType = getBaseType(baseType.element)
+
+    if (arrayElementType instanceof z.ZodObject) {
+      // Handle arrays of objects with indexed notation like array[0].field
+      const arrayItems = extractArrayOfObjects(
+        formData,
+        arrayElementType,
+        prefix,
+      )
+      if (fieldSchema instanceof z.ZodOptional && arrayItems.length === 0) {
+        return undefined
+      } else {
+        return arrayItems
+      }
+    } else {
+      // Handle arrays of primitives
+      const values = formData.getAll(prefix)
+      if (fieldSchema instanceof z.ZodOptional && values.length === 0)
+        return undefined
+      else return values
+    }
+  } else {
+    const value = formData.get(prefix)
+
+    if (value !== null && value !== '') {
+      return value
+    } else if (
+      fieldSchema instanceof z.ZodNullable ||
+      baseType instanceof z.ZodNull
+    ) {
+      return null
+    } else if (fieldSchema instanceof z.ZodOptional) {
+      return undefined
+    } else if (
+      fieldSchema instanceof z.ZodString ||
+      fieldSchema instanceof z.ZodStringFormat
+    ) {
+      return ''
+    }
+  }
+}
+
+export const extractFromFormData = <T extends z.ZodType>(
   formData: FormData,
   schema: T,
 ): z.ZodSafeParseResult<z.infer<T>> => {
-  const output: Record<string, unknown> = {}
-
-  // First, try to extract fields using the nested approach
-  const nestedOutput = extractNestedObjectFields(formData, schema)
-  Object.assign(output, nestedOutput)
+  const output = extractFromDataFromZodType(formData, schema)
 
   return schema.safeParse(output)
 }

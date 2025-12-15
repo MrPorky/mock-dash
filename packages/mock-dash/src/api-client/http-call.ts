@@ -143,7 +143,7 @@ export function callHttpEndpoint(
     return result.data
   }
 
-  if (endpoint.input?.json instanceof z.ZodObject) {
+  if (endpoint.input?.json) {
     let schema = endpoint.input.json
 
     return Object.assign(fn, {

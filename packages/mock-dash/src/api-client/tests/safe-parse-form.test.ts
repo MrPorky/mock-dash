@@ -49,6 +49,34 @@ describe('safeParseForm', () => {
       }
     })
 
+    it('should parse simple array form data successfully', () => {
+      const schema = z.array(
+        z.object({
+          name: z.string(),
+          age: z.number(),
+        }),
+      )
+      const endpoint = createEndpointWithJsonInput(schema)
+      const httpCall = createHttpCall(endpoint)
+
+      const formData = new FormData()
+      formData.append('[0].name', 'John Doe')
+      formData.append('[0].age', '25')
+      formData.append('[1].name', 'Jane Smith')
+      formData.append('[1].age', '30')
+
+      const result = httpCall.safeParseForm(formData)
+
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.data).toEqual([
+          { name: 'John Doe', age: 25 },
+          { name: 'Jane Smith', age: 30 },
+        ])
+        expect(result.error).toBeUndefined()
+      }
+    })
+
     it('should parse form data with optional fields', () => {
       const schema = z.object({
         name: z.string(),
