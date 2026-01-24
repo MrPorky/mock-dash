@@ -12,8 +12,8 @@
   },
   "dependencies": {
     "@examples/shared": "workspace:*",
-    "@tanstack/react-router": "1.156.0",
-    "@tanstack/router-plugin": "1.156.0",
+    "@tanstack/react-router": "1.157.1",
+    "@tanstack/router-plugin": "1.157.1",
     "mock-dash": "workspace:*",
     "react": "^19.2.3",
     "react-dom": "^19.2.3"
