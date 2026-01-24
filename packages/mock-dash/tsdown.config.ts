@@ -8,6 +8,7 @@ export default defineConfig([
     dts: true,
     sourcemap: true,
     clean: true,
+    inlineOnly: false,
   },
   {
     name: 'cli',
