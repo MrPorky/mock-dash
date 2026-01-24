@@ -1,6 +1,6 @@
 import type { createNodeWebSocket } from '@hono/node-ws'
 import { zValidator } from '@hono/zod-validator'
-import { Hono, type ValidationTargets } from 'hono'
+import { Hono, type MiddlewareHandler, type ValidationTargets } from 'hono'
 import { type SSEMessage, stream, streamSSE } from 'hono/streaming'
 import type { SendOptions, UpgradeWebSocket, WSContext } from 'hono/ws'
 import z from 'zod'
@@ -59,14 +59,21 @@ export function createMockServer<T extends Record<string, unknown>>(
     const method = endpoint.method
     const path = buildEndpointPath(endpoint.path, options.alias)
 
-    const inputValidators = endpoint.input
-      ? Object.entries(endpoint.input).map(([target, zodType]) =>
-          zValidator(
-            target as keyof ValidationTargets,
-            zodType instanceof z.ZodType ? zodType : z.object(zodType),
-          ),
-        )
-      : []
+    const inputValidators = (
+      endpoint.input
+        ? Object.entries(endpoint.input).map(([target, zodType]) =>
+            zValidator(
+              target as keyof ValidationTargets,
+              zodType instanceof z.ZodType ? zodType : z.object(zodType),
+            ),
+          )
+        : []
+    ) as [
+      MiddlewareHandler,
+      MiddlewareHandler,
+      MiddlewareHandler,
+      MiddlewareHandler,
+    ]
 
     app[method](path, ...inputValidators, async (c, next) => {
       try {
@@ -175,7 +182,6 @@ export function createMockServer<T extends Record<string, unknown>>(
             }
           })
 
-          // @ts-expect-error Cannot infer types here
           return upgradedWebSocketHandler(c, next)
         }
 

@@ -183,7 +183,10 @@ function handleSubmit(e: Event) {
       {#each users as user (user.id)}
         <div
           class="list-item {selectedUserId === user.id ? 'selected' : ''}"
+          role="button"
+          tabindex="0"
           onclick={() => selectUser(user)}
+          onkeydown={(e) => e.key === 'Enter' && selectUser(user)}
         >
           <div
             style="display: flex; justify-content: space-between; align-items: center;"

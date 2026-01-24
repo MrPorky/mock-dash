@@ -12,20 +12,20 @@
   },
   "dependencies": {
     "@examples/shared": "workspace:*",
-    "@tanstack/react-router": "^1.136.8",
+    "@tanstack/react-router": "1.157.1",
+    "@tanstack/router-plugin": "1.157.1",
     "mock-dash": "workspace:*",
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0"
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3"
   },
   "devDependencies": {
-    "@hono/vite-dev-server": "^0.23.0",
-    "@tanstack/router-plugin": "^1.136.8",
-    "@types/react": "^19.2.5",
+    "@hono/vite-dev-server": "^0.24.1",
+    "@types/react": "^19.2.9",
     "@types/react-dom": "^19.2.3",
-    "@vitejs/plugin-react": "^5.1.1",
+    "@vitejs/plugin-react": "^5.1.2",
     "babel-plugin-react-compiler": "19.1.0-rc.3",
-    "globals": "^16.5.0",
+    "globals": "^17.1.0",
     "typescript-plugin-css-modules": "^5.2.0",
-    "vite-tsconfig-paths": "^5.1.4"
+    "vite-tsconfig-paths": "^6.0.5"
   }
 }

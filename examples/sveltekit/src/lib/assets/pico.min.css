@@ -1109,8 +1109,8 @@ button:is([aria-current]:not([aria-current="false"])) {
 button:focus,
 button:is([aria-current]:not([aria-current="false"])):focus {
   --pico-box-shadow:
-    var(--pico-button-hover-box-shadow, 0 0 0 rgba(0, 0, 0, 0)), 0 0 0
-    var(--pico-outline-width) var(--pico-primary-focus);
+    var(--pico-button-hover-box-shadow, 0 0 0 rgba(0, 0, 0, 0)),
+    0 0 0 var(--pico-outline-width) var(--pico-primary-focus);
 }
 [type="button"],
 [type="reset"],
@@ -1158,8 +1158,8 @@ button:is([aria-current]:not([aria-current="false"])):focus {
 [type="reset"]:focus,
 [type="reset"]:is([aria-current]:not([aria-current="false"])):focus {
   --pico-box-shadow:
-    var(--pico-button-hover-box-shadow, 0 0 0 rgba(0, 0, 0, 0)), 0 0 0
-    var(--pico-outline-width) var(--pico-secondary-focus);
+    var(--pico-button-hover-box-shadow, 0 0 0 rgba(0, 0, 0, 0)),
+    0 0 0 var(--pico-outline-width) var(--pico-secondary-focus);
 }
 :is(button, [type="submit"], [type="button"], [role="button"]).contrast {
   --pico-background-color: var(--pico-contrast-background);
@@ -1181,8 +1181,8 @@ button:is([aria-current]:not([aria-current="false"])):focus {
     [aria-current]:not([aria-current="false"])
   ):focus {
   --pico-box-shadow:
-    var(--pico-button-hover-box-shadow, 0 0 0 rgba(0, 0, 0, 0)), 0 0 0
-    var(--pico-outline-width) var(--pico-contrast-focus);
+    var(--pico-button-hover-box-shadow, 0 0 0 rgba(0, 0, 0, 0)),
+    0 0 0 var(--pico-outline-width) var(--pico-contrast-focus);
 }
 :is(button, [type="submit"], [type="button"], [role="button"]).outline,
 [type="reset"].outline {
@@ -1954,8 +1954,8 @@ input:not(
 }
 [type="file"]:focus::file-selector-button {
   --pico-box-shadow:
-    var(--pico-button-hover-box-shadow, 0 0 0 rgba(0, 0, 0, 0)), 0 0 0
-    var(--pico-outline-width) var(--pico-secondary-focus);
+    var(--pico-button-hover-box-shadow, 0 0 0 rgba(0, 0, 0, 0)),
+    0 0 0 var(--pico-outline-width) var(--pico-secondary-focus);
 }
 [type="range"] {
   -webkit-appearance: none;
