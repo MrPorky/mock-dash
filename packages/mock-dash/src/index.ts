@@ -30,6 +30,20 @@ import {
   ValidationError,
 } from './utils/errors'
 
+// Re-export Hono types that are used in the public API
+// This prevents TS4023 errors when consumers export apiSchema
+export type {
+  Context,
+  Env,
+  Hono,
+  Input,
+  MiddlewareHandler,
+  TypedResponse,
+  ValidationTargets,
+} from 'hono'
+export type { SSEMessage, SSEStreamingApi } from 'hono/streaming'
+export type { SendOptions, WSContext, WSEvents } from 'hono/ws'
+
 export {
   createApiClient,
   createMockServer,

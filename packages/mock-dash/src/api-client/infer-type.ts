@@ -14,55 +14,57 @@ import type { ToCamelCase } from '../utils/to-camel-case'
 import type { Combine } from '../utils/types'
 import type { ExtractEndpoints, GetNextSegments } from './common-types'
 
-type InferObjects<T extends Endpoint> = T extends Endpoint<
-  infer _R,
-  infer P,
-  infer M,
-  infer I
->
-  ? {
-      [K in M]: {
-        json: I extends { json: any } ? z.infer<I['json']> : undefined
-        query: I extends { query: any }
-          ? z.infer<z.ZodObject<I['query']>>
-          : undefined
-        form: I extends { form: any } ? z.infer<I['form']> : undefined
-        params: ParsedPathParameters<P>
-      } & (T extends HttpEndpoint<infer _P, infer R, infer _M, infer _I, any>
-        ? {
-            response: z.infer<R>
-            parseError: I extends { json: any }
-              ? $ZodErrorTree<z.infer<I['json']>>
-              : undefined
-          }
-        : T extends WebSocketEndpoint<
-              infer _P,
-              infer R,
-              infer _M,
-              infer _I,
-              any
-            >
+type InferObjects<T extends Endpoint> =
+  T extends Endpoint<infer _R, infer P, infer M, infer I>
+    ? {
+        [K in M]: {
+          json: I extends { json: any } ? z.infer<I['json']> : undefined
+          query: I extends { query: any }
+            ? z.infer<z.ZodObject<I['query']>>
+            : undefined
+          form: I extends { form: any } ? z.infer<I['form']> : undefined
+          params: ParsedPathParameters<P>
+        } & (T extends HttpEndpoint<infer _P, infer R, infer _M, infer _I, any>
           ? {
-              $ws: {
-                clientToServer: z.infer<z.ZodUnion<R['clientToServer']>>
-                serverToClient: z.infer<z.ZodUnion<R['serverToClient']>>
-              }
+              response: z.infer<R>
+              parseError: I extends { json: any }
+                ? $ZodErrorTree<z.infer<I['json']>>
+                : undefined
             }
-          : T extends StreamEndpoint<infer _P, infer R, infer _M, infer _I, any>
+          : T extends WebSocketEndpoint<
+                infer _P,
+                infer R,
+                infer _M,
+                infer _I,
+                any
+              >
             ? {
-                $stream: {
-                  response: R extends SSEResponse
-                    ? z.infer<z.ZodObject<R['events']>>
-                    : R extends JSONStreamResponse
-                      ? z.infer<R['itemSchema']>
-                      : R extends BinaryStreamResponse
-                        ? Uint8Array
-                        : 'unknown response type'
+                $ws: {
+                  clientToServer: z.infer<z.ZodUnion<R['clientToServer']>>
+                  serverToClient: z.infer<z.ZodUnion<R['serverToClient']>>
                 }
               }
-            : 'not yet implemented or unknown endpoint type')
-    }
-  : 'error dose not inherit from Endpoint'
+            : T extends StreamEndpoint<
+                  infer _P,
+                  infer R,
+                  infer _M,
+                  infer _I,
+                  any
+                >
+              ? {
+                  $stream: {
+                    response: R extends SSEResponse
+                      ? z.infer<z.ZodObject<R['events']>>
+                      : R extends JSONStreamResponse
+                        ? z.infer<R['itemSchema']>
+                        : R extends BinaryStreamResponse
+                          ? Uint8Array
+                          : 'unknown response type'
+                  }
+                }
+              : 'not yet implemented or unknown endpoint type')
+      }
+    : 'error dose not inherit from Endpoint'
 
 type ApiClientRecursiveNode<
   P extends string,

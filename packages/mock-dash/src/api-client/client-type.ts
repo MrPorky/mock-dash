@@ -22,16 +22,12 @@ export type EndpointCallSignatureResolver<T extends Endpoint> =
           }
         : 'not yet implemented or unknown endpoint type'
 
-type EndpointCall<T extends Endpoint> = T extends Endpoint<
-  infer _R,
-  infer _P,
-  infer M,
-  infer _I
->
-  ? {
-      [K in M]: EndpointCallSignatureResolver<T>
-    }
-  : 'error dose not inherit from Endpoint'
+type EndpointCall<T extends Endpoint> =
+  T extends Endpoint<infer _R, infer _P, infer M, infer _I>
+    ? {
+        [K in M]: EndpointCallSignatureResolver<T>
+      }
+    : 'error dose not inherit from Endpoint'
 
 type ApiClientRecursiveNode<
   P extends string,

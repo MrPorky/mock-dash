@@ -78,13 +78,12 @@ type StreamMockFallback<E extends Endpoint> = (
   },
 ) => Promise<void>
 
-type StreamMock<E extends Endpoint> = E['response'] extends SSEResponse<
-  infer Ev
->
-  ? SSEMock<E, Ev>
-  : E['response'] extends JSONStreamResponse<infer Ev>
-    ? JSONStreamMock<E, Ev>
-    : StreamMockFallback<E>
+type StreamMock<E extends Endpoint> =
+  E['response'] extends SSEResponse<infer Ev>
+    ? SSEMock<E, Ev>
+    : E['response'] extends JSONStreamResponse<infer Ev>
+      ? JSONStreamMock<E, Ev>
+      : StreamMockFallback<E>
 
 export class StreamEndpoint<
   P extends string = string,

@@ -49,18 +49,17 @@ type BinaryChunk = {
 }
 
 // Union of all possible yielded items from the stream generator
-export type StreamChunk<R extends StreamResponse> = R extends SSEResponse<
-  infer E
->
-  ? // E is { eventName: ZodType }. We infer the data type for each event.
-    {
-      [K in keyof E]: SSEEvent<K, z.infer<E[K]>>
-    }[keyof E]
-  : R extends JSONStreamResponse<infer I>
-    ? JSONStreamItem<z.infer<I>>
-    : R extends BinaryStreamResponse
-      ? BinaryChunk
-      : never
+export type StreamChunk<R extends StreamResponse> =
+  R extends SSEResponse<infer E>
+    ? // E is { eventName: ZodType }. We infer the data type for each event.
+      {
+        [K in keyof E]: SSEEvent<K, z.infer<E[K]>>
+      }[keyof E]
+    : R extends JSONStreamResponse<infer I>
+      ? JSONStreamItem<z.infer<I>>
+      : R extends BinaryStreamResponse
+        ? BinaryChunk
+        : never
 
 // Error type for stream parsing
 export type StreamParseError = {

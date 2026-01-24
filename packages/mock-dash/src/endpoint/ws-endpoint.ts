@@ -18,20 +18,18 @@ type WebsocketContext<T extends Array<z.ZodType>> = Omit<
   send(source: z.infer<z.ZodUnion<T>>, options?: SendOptions): void
 }
 
-type WebsocketBody<R extends WebSocketResponse> = R extends WebSocketResponse<
-  infer S,
-  infer C
->
-  ? {
-      onOpen?: (evt: Event, ws: WebsocketContext<S>) => void
-      onMessage?: (
-        evt: MessageEvent<z.infer<z.ZodUnion<C>>>,
-        ws: WebsocketContext<S>,
-      ) => void
-      onClose?: (evt: CloseEvent, ws: WebsocketContext<S>) => void
-      onError?: (evt: Event, ws: WebsocketContext<S>) => void
-    }
-  : never
+type WebsocketBody<R extends WebSocketResponse> =
+  R extends WebSocketResponse<infer S, infer C>
+    ? {
+        onOpen?: (evt: Event, ws: WebsocketContext<S>) => void
+        onMessage?: (
+          evt: MessageEvent<z.infer<z.ZodUnion<C>>>,
+          ws: WebsocketContext<S>,
+        ) => void
+        onClose?: (evt: CloseEvent, ws: WebsocketContext<S>) => void
+        onError?: (evt: Event, ws: WebsocketContext<S>) => void
+      }
+    : never
 
 type WebSocketMock<E extends Endpoint, R extends WebSocketResponse> =
   | ((c: EndpointInputContext<E>) => WebsocketBody<R>)
