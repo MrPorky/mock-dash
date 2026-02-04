@@ -14,6 +14,20 @@ import type {
 } from './client-base'
 import type { InterceptorManager } from './interceptor'
 
+// The successful return type from an HTTP endpoint call
+export type HttpSuccessResult<R extends z.ZodType> = {
+  data: z.infer<R>
+  response: Response
+  error?: never
+}
+
+// The error return type from an HTTP endpoint call (e.g., 404, 500)
+export type HttpErrorResult = {
+  data?: never
+  error: Errors
+  response?: Response
+}
+
 export type HttpEndpointCallSignature<
   R extends z.ZodType,
   I extends EndpointInputType,
@@ -36,12 +50,7 @@ export type HttpEndpointCallSignature<
           }
     : never
   // Call signature
-  (
-    ...args: EndpointArgs<I>
-  ): Promise<
-    | { data: z.infer<R>; response: Response; error?: never }
-    | { data?: never; error: Errors; response?: Response }
-  >
+  (...args: EndpointArgs<I>): Promise<HttpSuccessResult<R> | HttpErrorResult>
   // Throwing version
   orThrow: (...args: EndpointArgs<I>) => Promise<z.infer<R>>
 }
