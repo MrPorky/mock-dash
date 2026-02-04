@@ -43,6 +43,7 @@
     "build": "tsdown",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
+    "lint": "biome check --write",
     "check": "tsc --noEmit",
     "check:watch": "tsc --noEmit --watch",
     "prepublishOnly": "pnpm run build"
