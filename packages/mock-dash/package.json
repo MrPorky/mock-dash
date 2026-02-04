@@ -5,6 +5,10 @@
   "description": "A TypeScript library for generating type-safe API clients and mock servers from Zod schemas",
   "author": "Eskil Ganslandt",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MrPorky/mock-dash.git"
+  },
   "homepage": "https://github.com/MrPorky/mock-dash",
   "bugs": "https://github.com/MrPorky/mock-dash/issues",
   "keywords": [
