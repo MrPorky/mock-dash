@@ -33,8 +33,6 @@ jobs:
       - name: Build core package
         run: pnpm -F mock-dash build
 
-      - name: Publish core package to NPM
+      - name: Publish core package to NPM with OIDC
         working-directory: packages/mock-dash
-        run: pnpm publish --no-git-checks --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: pnpm publish --no-git-checks --access public --provenance
