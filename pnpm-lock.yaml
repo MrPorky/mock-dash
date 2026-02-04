@@ -103,6 +103,9 @@ importers:
 
   examples/shared:
     dependencies:
+      hono:
+        specifier: ^4.11.7
+        version: 4.11.7
       mock-dash:
         specifier: workspace:*
         version: link:../../packages/mock-dash

@@ -22,6 +22,7 @@
     "dev": "tsx src/server/index.ts"
   },
   "dependencies": {
+    "hono": "^4.11.7",
     "mock-dash": "workspace:*"
   },
   "devDependencies": {
