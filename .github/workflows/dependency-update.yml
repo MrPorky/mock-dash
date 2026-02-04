@@ -3,7 +3,7 @@ name: Dependency Update
 on:
   schedule:
     # Run every Monday at 9 AM UTC
-    - cron: '0 9 * * 1'
+    - cron: "0 9 * * 1"
   workflow_dispatch:
 
 jobs:
@@ -21,7 +21,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: lts/*
-          
+
       - name: Install pnpm
         run: npm install -g pnpm
 
@@ -31,14 +31,14 @@ jobs:
           pnpm install
 
       - name: Run tests (core package)
-        run: pnpm -F mock-dash test:run || true
+        run: pnpm -F mock-dash test || true
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: 'chore: update dependencies'
-          title: 'chore: update dependencies'
+          commit-message: "chore: update dependencies"
+          title: "chore: update dependencies"
           body: |
             Automated dependency update
 

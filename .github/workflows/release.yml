@@ -24,7 +24,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: lts/*
-          
+
       - name: Install pnpm
         run: npm install -g pnpm
 
@@ -46,7 +46,7 @@ jobs:
 
       - name: Run tests (core package)
         if: steps.tag-exists.outputs.exists == 'false'
-        run: pnpm -F mock-dash test:run
+        run: pnpm -F mock-dash test
 
       - name: Run linting (core package)
         if: steps.tag-exists.outputs.exists == 'false'

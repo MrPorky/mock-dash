@@ -18,7 +18,7 @@ Thank you for your interest in contributing to MockDash! This guide will help yo
    ```
 3. Run tests to ensure everything works:
    ```bash
-   pnpm test:run
+   pnpm test
    ```
 
 ## Development Workflow
@@ -32,7 +32,7 @@ pnpm build            # Production build
 
 # Testing
 pnpm test             # Run tests in watch mode
-pnpm test:run         # Single test run
+pnpm test         # Single test run
 pnpm test:coverage    # Generate coverage reports
 
 # Code Quality
@@ -105,7 +105,7 @@ src/
 ## Pull Request Process
 
 1. **Before submitting:**
-   - Ensure all tests pass (`pnpm test:run`)
+   - Ensure all tests pass (`pnpm test`)
    - Run linting (`pnpm lint`)
    - Build successfully (`pnpm build`)
    - Update documentation if needed
