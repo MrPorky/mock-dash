@@ -81,4 +81,24 @@ describe('buildEndpointPath', () => {
       buildEndpointPath('{api}///users', { api: '/api' }, 'https://a.b///'),
     ).toBe('https://a.b/api/users')
   })
+
+  it('handles https alias', () => {
+    expect(
+      buildEndpointPath(
+        '{api}/users',
+        { api: 'https://localhost:9000/api' },
+        'https://a.b///',
+      ),
+    ).toBe('https://localhost:9000/api/users')
+  })
+
+  it('handles http alias', () => {
+    expect(
+      buildEndpointPath(
+        '{api}/users',
+        { api: 'http://localhost:9000/api' },
+        'https://a.b///',
+      ),
+    ).toBe('http://localhost:9000/api/users')
+  })
 })

@@ -23,10 +23,24 @@ export function buildEndpointPath(
       const placeholder = `/{${key[1]}}`
       if (rawPath.includes(placeholder)) {
         const value = alias?.[key[1]] ? alias[key[1]] : ''
-        const normalized = normalizePrefix(value)
-        rawPath = rawPath.replace(placeholder, normalized)
+        // If the alias value is a full URL, use it directly without normalizing
+        if (/^https?:\/\//i.test(value)) {
+          rawPath = rawPath.replace(placeholder, value)
+        } else {
+          const normalized = normalizePrefix(value)
+          rawPath = rawPath.replace(placeholder, normalized)
+        }
       }
     }
+  }
+
+  // If alias replacement produced a full URL, normalize its path and return (ignore basePath)
+  const urlAliasMatch = rawPath.match(/^(https?:\/\/[^/]+)(\/.*)?$/i)
+  if (urlAliasMatch) {
+    const urlOrigin = urlAliasMatch[1]
+    const urlPath =
+      (urlAliasMatch[2] ?? '/').replace(/\/+/g, '/').replace(/\/$/, '') || '/'
+    return urlOrigin + (urlPath === '/' ? '' : urlPath)
   }
 
   // Clean up any double slashes that might have been introduced

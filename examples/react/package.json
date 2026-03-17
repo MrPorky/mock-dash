@@ -20,12 +20,12 @@
   },
   "devDependencies": {
     "@hono/vite-dev-server": "^0.24.1",
-    "@types/react": "^19.2.10",
+    "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
-    "@vitejs/plugin-react": "^5.1.2",
+    "@vitejs/plugin-react": "^5.2.0",
     "babel-plugin-react-compiler": "19.1.0-rc.3",
-    "globals": "^17.2.0",
+    "globals": "^17.4.0",
     "typescript-plugin-css-modules": "^5.2.0",
-    "vite-tsconfig-paths": "^6.0.5"
+    "vite-tsconfig-paths": "^6.1.1"
   }
 }
