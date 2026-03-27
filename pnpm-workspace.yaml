@@ -1,3 +1,25 @@
 packages:
-  - examples/*
+  - apps/*
   - packages/*
+  - tools/*
+
+catalog:
+  "@types/node": ^24
+  hono: ^4.12.9
+  typescript: ^5
+  vite: npm:@voidzero-dev/vite-plus-core@latest
+  vite-plus: ^0.1.14
+  vitest: npm:@voidzero-dev/vite-plus-test@latest
+  zod: ^4.3.6
+
+catalogMode: prefer
+overrides:
+  vite: "catalog:"
+  vitest: "catalog:"
+peerDependencyRules:
+  allowAny:
+    - vite
+    - vitest
+  allowedVersions:
+    vite: "*"
+    vitest: "*"
