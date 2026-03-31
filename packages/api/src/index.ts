@@ -1,4 +1,4 @@
-// Endpoint definition functions
+// Endpoint definition functions (re-exported from @mock-dash/core)
 export {
   defineGet,
   definePost,
@@ -9,7 +9,7 @@ export {
   defineJSONStream,
   defineSSE,
   defineWebSocket,
-} from "./define.ts";
+} from "@mock-dash/core";
 
 // Error classes
 export { ApiError, NetworkError, ValidationError } from "./errors.ts";
@@ -19,15 +19,8 @@ export { createApiClient } from "./client.ts";
 
 // Types (re-export for consumers)
 export type {
-  ApiSchema,
   ClientConfig,
-  EndpointDef,
-  HttpMethod,
   WebSocketController,
-  BinaryStreamDef,
-  JSONStreamDef,
-  SSEDef,
-  WebSocketDef,
   ApiClient,
   InterceptorContext,
   RequestOptions,
@@ -35,3 +28,19 @@ export type {
   RequestInterceptorFn,
   ResponseInterceptorFn,
 } from "./types.ts";
+
+export type {
+  ApiSchema,
+  BinaryStreamDef,
+  EndpointDef,
+  EndpointInput,
+  ExtractParams,
+  HasParams,
+  HttpMethod,
+  InferOutput,
+  JSONStreamDef,
+  SSEDef,
+  SSEEventMap,
+  StreamDef,
+  WebSocketDef,
+} from "@mock-dash/core";

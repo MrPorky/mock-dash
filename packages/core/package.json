@@ -1,7 +1,7 @@
 {
-  "name": "@mock-dash/api",
+  "name": "@mock-dash/core",
   "version": "0.0.0",
-  "description": "A starter for creating a TypeScript package.",
+  "description": "Shared schema definitions for mock-dash.",
   "homepage": "https://github.com/author/library#readme",
   "bugs": {
     "url": "https://github.com/author/library/issues"
@@ -17,7 +17,11 @@
   ],
   "type": "module",
   "exports": {
-    ".": "./dist/index.mjs",
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./src/index.ts",
+      "default": "./dist/index.mjs"
+    },
     "./package.json": "./package.json"
   },
   "publishConfig": {
@@ -26,21 +30,15 @@
   "scripts": {
     "build": "vp pack",
     "dev": "vp pack --watch",
-    "test": "vp test",
     "check": "vp check",
     "prepublishOnly": "vp run build"
   },
   "dependencies": {
-    "@mock-dash/core": "workspace:*",
     "@standard-schema/spec": "catalog:"
   },
   "devDependencies": {
-    "@types/node": "^25.5.0",
-    "@typescript/native-preview": "7.0.0-dev.20260316.1",
-    "bumpp": "^11.0.1",
-    "hono": "catalog:",
-    "typescript": "^5.9.3",
-    "vite-plus": "^0.1.11",
-    "zod": "catalog:"
+    "@types/node": "catalog:",
+    "typescript": "catalog:",
+    "vite-plus": "catalog:"
   }
 }
