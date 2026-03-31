@@ -17,20 +17,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - uses: voidzero-dev/setup-vp@v1
         with:
-          node-version: lts/*
-
-      - name: Install pnpm
-        run: npm install -g pnpm
+          node-version: "24"
+          cache: true
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: vp install
 
       - name: Run security audit
-        run: pnpm audit --audit-level moderate
+        run: vp pm audit --audit-level moderate
 
       - name: Run license check
-        run: |
-          npx license-checker --summary --excludePrivatePackages
+        run: vp dlx license-checker --summary --excludePrivatePackages
         continue-on-error: true

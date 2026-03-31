@@ -9,6 +9,7 @@
     "prepare": "vp config"
   },
   "devDependencies": {
+    "@standard-schema/spec": "catalog:",
     "hono": "catalog:",
     "vite-plus": "catalog:",
     "zod": "catalog:"

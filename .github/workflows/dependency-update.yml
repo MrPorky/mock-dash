@@ -18,20 +18,18 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: actions/setup-node@v4
+      - uses: voidzero-dev/setup-vp@v1
         with:
-          node-version: lts/*
-
-      - name: Install pnpm
-        run: npm install -g pnpm
+          node-version: "24"
+          cache: true
 
       - name: Update dependencies
         run: |
-          pnpm update --latest
-          pnpm install
+          vp update --latest
+          vp install
 
-      - name: Run tests (core package)
-        run: pnpm -F mock-dash test || true
+      - name: Run tests
+        run: vp run test -r || true
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v6
@@ -43,7 +41,7 @@ jobs:
             Automated dependency update
 
             - Updated all dependencies to latest versions
-            - Tests were run to verify compatibility
+            - Package tests were run to verify compatibility
 
             Please review the changes before merging.
           branch: dependency-updates

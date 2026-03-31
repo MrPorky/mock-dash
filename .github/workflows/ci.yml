@@ -8,41 +8,38 @@ on:
 
 jobs:
   test:
-    name: Test on Node ${{ matrix.node-version }}
+    name: ${{ matrix.package.name }} on Node ${{ matrix.node-version }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
         node-version: [22, 24, 25]
+        package:
+          - name: "@mock-dash/api"
+            path: packages/api
+          - name: "@mock-dash/adb"
+            path: packages/db
+          - name: "@mock-dash/server"
+            path: packages/server
 
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - uses: voidzero-dev/setup-vp@v1
         with:
           node-version: ${{ matrix.node-version }}
-
-      - name: Install pnpm
-        run: npm install -g pnpm
+          cache: true
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build
-        run: pnpm build
+        run: vp install
 
       - name: Run check
-        run: pnpm check
+        working-directory: ${{ matrix.package.path }}
+        run: vp check
 
       - name: Run tests with coverage
-        run: pnpm test:coverage
+        working-directory: ${{ matrix.package.path }}
+        run: vp test --coverage
 
-      - name: Run linting
-        run: pnpm lint
-
-      - name: Upload coverage to Codecov
-        if: matrix.node-version == 20
-        uses: codecov/codecov-action@v4
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          files: ./packages/mock-dash/coverage/lcov.info
-          fail_ci_if_error: false
+      - name: Build package
+        working-directory: ${{ matrix.package.path }}
+        run: vp pack

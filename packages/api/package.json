@@ -1,5 +1,5 @@
 {
-  "name": "api",
+  "name": "@mock-dash/api",
   "version": "0.0.0",
   "description": "A starter for creating a TypeScript package.",
   "homepage": "https://github.com/author/library#readme",
@@ -30,11 +30,16 @@
     "check": "vp check",
     "prepublishOnly": "vp run build"
   },
+  "dependencies": {
+    "@standard-schema/spec": "catalog:"
+  },
   "devDependencies": {
     "@types/node": "^25.5.0",
     "@typescript/native-preview": "7.0.0-dev.20260316.1",
     "bumpp": "^11.0.1",
+    "hono": "catalog:",
     "typescript": "^5.9.3",
-    "vite-plus": "^0.1.11"
+    "vite-plus": "^0.1.11",
+    "zod": "catalog:"
   }
 }

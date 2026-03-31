@@ -4,12 +4,24 @@ on:
   push:
     branches: [main]
     paths:
-      - packages/mock-dash/package.json
+      - packages/api/package.json
+      - packages/db/package.json
+      - packages/server/package.json
   workflow_dispatch:
 
 jobs:
   release:
+    name: Release ${{ matrix.package.name }}
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        package:
+          - name: "@mock-dash/api"
+            path: packages/api
+          - name: "@mock-dash/adb"
+            path: packages/db
+          - name: "@mock-dash/server"
+            path: packages/server
     permissions:
       contents: write
       issues: write
@@ -21,46 +33,49 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.MY_GITHUB_TOKEN }}
 
-      - uses: actions/setup-node@v4
+      - uses: voidzero-dev/setup-vp@v1
         with:
-          node-version: lts/*
-
-      - name: Install pnpm
-        run: npm install -g pnpm
+          node-version: "24"
+          cache: true
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: vp install
 
-      - name: Get core package version
-        id: package-version
-        run: echo "version=$(node -p "require('./packages/mock-dash/package.json').version")" >> $GITHUB_OUTPUT
+      - name: Get package metadata
+        id: package-meta
+        run: |
+          echo "version=$(node --input-type=module -e \"import pkg from './${{ matrix.package.path }}/package.json' with { type: 'json' }; console.log(pkg.version);\")" >> $GITHUB_OUTPUT
+          echo "tag=${{ matrix.package.name }}@$(node --input-type=module -e \"import pkg from './${{ matrix.package.path }}/package.json' with { type: 'json' }; console.log(pkg.version);\")" >> $GITHUB_OUTPUT
 
       - name: Check if tag exists
         id: tag-exists
         run: |
-          if git rev-parse "v${{ steps.package-version.outputs.version }}" >/dev/null 2>&1; then
+          if git rev-parse "${{ steps.package-meta.outputs.tag }}" >/dev/null 2>&1; then
             echo "exists=true" >> $GITHUB_OUTPUT
           else
             echo "exists=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: Run tests (core package)
+      - name: Run check
         if: steps.tag-exists.outputs.exists == 'false'
-        run: pnpm -F mock-dash test
+        working-directory: ${{ matrix.package.path }}
+        run: vp check
 
-      - name: Run linting (core package)
+      - name: Run tests
         if: steps.tag-exists.outputs.exists == 'false'
-        run: pnpm -F mock-dash lint
+        working-directory: ${{ matrix.package.path }}
+        run: vp test
 
-      - name: Build core package
+      - name: Build package
         if: steps.tag-exists.outputs.exists == 'false'
-        run: pnpm -F mock-dash build
+        working-directory: ${{ matrix.package.path }}
+        run: vp pack
 
       - name: Create Release
         if: steps.tag-exists.outputs.exists == 'false'
         run: |
-          gh release create "v${{ steps.package-version.outputs.version }}" \
-            --title "Release v${{ steps.package-version.outputs.version }}" \
+          gh release create "${{ steps.package-meta.outputs.tag }}" \
+            --title "${{ steps.package-meta.outputs.tag }}" \
             --generate-notes
         env:
           GITHUB_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}

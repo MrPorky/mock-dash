@@ -6,33 +6,44 @@ on:
 
 jobs:
   publish:
+    name: Publish ${{ matrix.package.name }}
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        package:
+          - name: "@mock-dash/api"
+            path: packages/api
+          - name: "@mock-dash/adb"
+            path: packages/db
+          - name: "@mock-dash/server"
+            path: packages/server
     permissions:
       contents: read
       id-token: write
+    if: startsWith(github.event.release.tag_name, matrix.package.name)
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - uses: voidzero-dev/setup-vp@v1
         with:
-          node-version: lts/*
-          registry-url: "https://registry.npmjs.org"
-
-      - name: Install pnpm
-        run: npm install -g pnpm
+          node-version: "24"
+          cache: true
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: vp install
 
-      - name: Run tests (core package)
-        run: pnpm -F mock-dash test
+      - name: Run check
+        working-directory: ${{ matrix.package.path }}
+        run: vp check
 
-      - name: Run linting (core package)
-        run: pnpm -F mock-dash lint
+      - name: Run tests
+        working-directory: ${{ matrix.package.path }}
+        run: vp test
 
-      - name: Build core package
-        run: pnpm -F mock-dash build
+      - name: Build package
+        working-directory: ${{ matrix.package.path }}
+        run: vp pack
 
-      - name: Publish core package to NPM with OIDC
-        working-directory: packages/mock-dash
-        run: pnpm publish --no-git-checks --access public --provenance
+      - name: Publish package to NPM with OIDC
+        working-directory: ${{ matrix.package.path }}
+        run: vp pm publish --no-git-checks --access public --provenance

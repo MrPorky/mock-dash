@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vite-plus/test";
-import { Collection, defineCollection } from "../src/index.ts";
+import { type Collection, defineCollection } from "../src/index.ts";
 import { z } from "zod";
 
 describe("mock-dash/db Query Builder", () => {
@@ -176,6 +176,9 @@ describe("mock-dash/db Query Builder", () => {
         // All 4 users should be returned. Dave will have a null roleData.
         expect(result).toHaveLength(4);
         const dave = result.find((u) => u.name === "Dave");
+        if (!dave) {
+          throw new Error("Expected Dave record");
+        }
         expect(dave.roleData).toBeNull();
       });
 
@@ -195,6 +198,9 @@ describe("mock-dash/db Query Builder", () => {
         expect(result).toHaveLength(4);
         const guestRecord = result.find((r) => r.roleData?.name === "GUEST");
         expect(guestRecord).toBeDefined();
+        if (!guestRecord) {
+          throw new Error("Expected GUEST join record");
+        }
         expect(guestRecord.id).toBeUndefined(); // Base user fields shouldn't exist
       });
 
