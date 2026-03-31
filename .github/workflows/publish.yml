@@ -20,30 +20,36 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    if: startsWith(github.event.release.tag_name, matrix.package.name)
     steps:
       - uses: actions/checkout@v4
+        if: startsWith(github.event.release.tag_name, matrix.package.name)
 
       - uses: voidzero-dev/setup-vp@v1
+        if: startsWith(github.event.release.tag_name, matrix.package.name)
         with:
           node-version: "24"
           cache: true
 
       - name: Install dependencies
+        if: startsWith(github.event.release.tag_name, matrix.package.name)
         run: vp install
 
       - name: Run check
+        if: startsWith(github.event.release.tag_name, matrix.package.name)
         working-directory: ${{ matrix.package.path }}
         run: vp check
 
       - name: Run tests
+        if: startsWith(github.event.release.tag_name, matrix.package.name)
         working-directory: ${{ matrix.package.path }}
         run: vp test
 
       - name: Build package
+        if: startsWith(github.event.release.tag_name, matrix.package.name)
         working-directory: ${{ matrix.package.path }}
         run: vp pack
 
       - name: Publish package to NPM with OIDC
+        if: startsWith(github.event.release.tag_name, matrix.package.name)
         working-directory: ${{ matrix.package.path }}
         run: vp pm publish --no-git-checks --access public --provenance
