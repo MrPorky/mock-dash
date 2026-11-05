@@ -1,315 +1,315 @@
-import { zValidator } from "@hono/zod-validator";
-import { Hono } from "hono";
-import { describe, expect, it, vi } from "vitest";
-import z from "zod";
+import { zValidator } from '@hono/zod-validator'
+import { Hono } from 'hono'
+import { describe, expect, it, vi } from 'vitest'
+import z from 'zod'
 import {
   defineDelete,
   defineGet,
   definePatch,
   definePost,
   definePut,
-} from "../../endpoint/define-endpoint";
+} from '../../endpoint/define-endpoint'
 import {
   ApiError,
   isApiError,
   NetworkError,
   ValidationError,
-} from "../../utils/errors";
-import { createApiClient } from "../api-client";
+} from '../../utils/errors'
+import { createApiClient } from '../api-client'
 
-describe("Error response headers", () => {
+describe('Error response headers', () => {
   const apiSchema = {
-    getUser: defineGet("/users/:id", {
+    getUser: defineGet('/users/:id', {
       response: z.object({ id: z.string() }),
     }),
-  };
+  }
 
-  it("allows errors without header options", () => {
-    const validationErrors = new z.ZodError([]);
+  it('allows errors without header options', () => {
+    const validationErrors = new z.ZodError([])
 
-    expect(new ApiError("Failure", 500).headers).toBeUndefined();
+    expect(new ApiError('Failure', 500).headers).toBeUndefined()
     expect(
-      new ValidationError("Invalid input", validationErrors, "request").headers,
-    ).toBeUndefined();
-  });
+      new ValidationError('Invalid input', validationErrors, 'request').headers,
+    ).toBeUndefined()
+  })
 
-  it("copies constructor headers for both error classes", () => {
-    const headers = new Headers({ "X-Request-ID": "original" });
-    const apiError = new ApiError("Failure", 500, { headers });
+  it('copies constructor headers for both error classes', () => {
+    const headers = new Headers({ 'X-Request-ID': 'original' })
+    const apiError = new ApiError('Failure', 500, { headers })
     const validationError = new ValidationError(
-      "Invalid response",
+      'Invalid response',
       new z.ZodError([]),
-      "response",
+      'response',
       { headers },
-    );
+    )
 
-    headers.set("x-request-id", "changed");
-    expect(apiError.headers?.get("x-request-id")).toBe("original");
-    expect(validationError.headers?.get("x-request-id")).toBe("original");
-    apiError.headers?.set("x-request-id", "api-only");
-    expect(headers.get("x-request-id")).toBe("changed");
-    expect(validationError.headers?.get("x-request-id")).toBe("original");
-  });
+    headers.set('x-request-id', 'changed')
+    expect(apiError.headers?.get('x-request-id')).toBe('original')
+    expect(validationError.headers?.get('x-request-id')).toBe('original')
+    apiError.headers?.set('x-request-id', 'api-only')
+    expect(headers.get('x-request-id')).toBe('changed')
+    expect(validationError.headers?.get('x-request-id')).toBe('original')
+  })
 
   describe.each([
     {
-      failure: "HTTP",
+      failure: 'HTTP',
       status: 500,
       body: '{"message":"Server error"}',
       errorClass: ApiError,
     },
     {
-      failure: "JSON parsing",
+      failure: 'JSON parsing',
       status: 200,
-      body: "{invalid json",
+      body: '{invalid json',
       errorClass: ApiError,
     },
     {
-      failure: "response validation",
+      failure: 'response validation',
       status: 200,
       body: '{"id":123}',
       errorClass: ValidationError,
     },
-  ])("$failure failures", ({ status, body, errorClass }) => {
-    describe.each([false, true])("orThrow: %s", (orThrow) => {
-      it("preserves a copy of response headers", async () => {
+  ])('$failure failures', ({ status, body, errorClass }) => {
+    describe.each([false, true])('orThrow: %s', (orThrow) => {
+      it('preserves a copy of response headers', async () => {
         const response = new Response(body, {
           status,
           headers: {
-            "Content-Type": "application/json",
-            "X-Request-ID": "request-123",
-            "Retry-After": "30",
+            'Content-Type': 'application/json',
+            'X-Request-ID': 'request-123',
+            'Retry-After': '30',
           },
-        });
+        })
         const client = createApiClient({
           apiSchema,
-          baseURL: "http://localhost",
+          baseURL: 'http://localhost',
           fetch: vi.fn().mockResolvedValue(response),
-        });
-        const call = client.api.users.id("123").get;
+        })
+        const call = client.api.users.id('123').get
         const error = orThrow
           ? await call.orThrow().catch((error: unknown) => error)
-          : (await call()).error;
+          : (await call()).error
 
-        expect(error).toBeInstanceOf(errorClass);
-        if (!isApiError(error)) throw new Error("Expected an API error");
-        expect(error.name).toBe(errorClass.name);
-        expect(error.status).toBe(status);
-        expect(error.headers).toBeInstanceOf(Headers);
-        expect(error.headers).not.toBe(response.headers);
-        expect(error.headers?.get("x-request-id")).toBe("request-123");
-        expect(error.headers?.get("retry-after")).toBe("30");
-        response.headers.set("x-request-id", "changed-response");
-        expect(error.headers?.get("x-request-id")).toBe("request-123");
-        error.headers?.set("x-request-id", "changed-error");
-        expect(response.headers.get("x-request-id")).toBe("changed-response");
-      });
+        expect(error).toBeInstanceOf(errorClass)
+        if (!isApiError(error)) throw new Error('Expected an API error')
+        expect(error.name).toBe(errorClass.name)
+        expect(error.status).toBe(status)
+        expect(error.headers).toBeInstanceOf(Headers)
+        expect(error.headers).not.toBe(response.headers)
+        expect(error.headers?.get('x-request-id')).toBe('request-123')
+        expect(error.headers?.get('retry-after')).toBe('30')
+        response.headers.set('x-request-id', 'changed-response')
+        expect(error.headers?.get('x-request-id')).toBe('request-123')
+        error.headers?.set('x-request-id', 'changed-error')
+        expect(response.headers.get('x-request-id')).toBe('changed-response')
+      })
 
-      it("allows responses without a request ID header", async () => {
+      it('allows responses without a request ID header', async () => {
         const client = createApiClient({
           apiSchema,
-          baseURL: "http://localhost",
+          baseURL: 'http://localhost',
           fetch: vi.fn().mockResolvedValue(
             new Response(body, {
               status,
-              headers: { "Content-Type": "application/json" },
+              headers: { 'Content-Type': 'application/json' },
             }),
           ),
-        });
-        const call = client.api.users.id("123").get;
+        })
+        const call = client.api.users.id('123').get
         const error = orThrow
           ? await call.orThrow().catch((error: unknown) => error)
-          : (await call()).error;
+          : (await call()).error
 
-        expect(error).toBeInstanceOf(errorClass);
-        if (!isApiError(error)) throw new Error("Expected an API error");
-        expect(error.name).toBe(errorClass.name);
-        expect(error.headers?.get("x-request-id")).toBeNull();
-      });
+        expect(error).toBeInstanceOf(errorClass)
+        if (!isApiError(error)) throw new Error('Expected an API error')
+        expect(error.name).toBe(errorClass.name)
+        expect(error.headers?.get('x-request-id')).toBeNull()
+      })
 
-      it("keeps concurrent request IDs independent", async () => {
-        let releaseFirst = () => {};
+      it('keeps concurrent request IDs independent', async () => {
+        let releaseFirst = () => {}
         const firstCanFinish = new Promise<void>((resolve) => {
-          releaseFirst = resolve;
-        });
+          releaseFirst = resolve
+        })
         const client = createApiClient({
           apiSchema,
-          baseURL: "http://localhost",
+          baseURL: 'http://localhost',
           fetch: vi.fn(async (request: Request) => {
-            const requestId = new URL(request.url).pathname.split("/").pop();
-            if (requestId === "first") {
-              await firstCanFinish;
+            const requestId = new URL(request.url).pathname.split('/').pop()
+            if (requestId === 'first') {
+              await firstCanFinish
             } else {
-              releaseFirst();
+              releaseFirst()
             }
             return new Response(body, {
               status,
               headers: {
-                "Content-Type": "application/json",
-                "X-Request-ID": requestId ?? "",
+                'Content-Type': 'application/json',
+                'X-Request-ID': requestId ?? '',
               },
-            });
+            })
           }),
-        });
+        })
         const errors = await Promise.all(
-          ["first", "second"].map(async (requestId) => {
-            const call = client.api.users.id(requestId).get;
+          ['first', 'second'].map(async (requestId) => {
+            const call = client.api.users.id(requestId).get
             return orThrow
               ? call.orThrow().catch((error: unknown) => error)
-              : (await call()).error;
+              : (await call()).error
           }),
-        );
+        )
 
         for (const [index, error] of errors.entries()) {
-          expect(error).toBeInstanceOf(errorClass);
-          if (!isApiError(error)) throw new Error("Expected an API error");
-          expect(error.name).toBe(errorClass.name);
-          expect(error.headers?.get("x-request-id")).toBe(
-            index === 0 ? "first" : "second",
-          );
+          expect(error).toBeInstanceOf(errorClass)
+          if (!isApiError(error)) throw new Error('Expected an API error')
+          expect(error.name).toBe(errorClass.name)
+          expect(error.headers?.get('x-request-id')).toBe(
+            index === 0 ? 'first' : 'second',
+          )
         }
-      });
-    });
-  });
-});
+      })
+    })
+  })
+})
 
-describe("Unsafe API calls", () => {
-  describe("GET endpoints", () => {
-    it("should return data directly on successful GET request", async () => {
+describe('Unsafe API calls', () => {
+  describe('GET endpoints', () => {
+    it('should return data directly on successful GET request', async () => {
       const apiSchema = {
-        getUser: defineGet("/users/:id", {
+        getUser: defineGet('/users/:id', {
           response: z.object({
             id: z.string(),
             name: z.string(),
             email: z.string(),
           }),
         }),
-      };
+      }
 
-      const app = new Hono().get("/users/:id", (c) => {
-        const { id } = c.req.param();
+      const app = new Hono().get('/users/:id', (c) => {
+        const { id } = c.req.param()
         return c.json({
           id,
-          name: "John Doe",
-          email: "john@example.com",
-        });
-      });
+          name: 'John Doe',
+          email: 'john@example.com',
+        })
+      })
 
       const client = createApiClient({
         apiSchema,
-        baseURL: "http://localhost",
+        baseURL: 'http://localhost',
         fetch: app.fetch,
-      });
+      })
 
-      const userData = await client.api.users.id("123").get.orThrow();
+      const userData = await client.api.users.id('123').get.orThrow()
 
       // Should return data directly, not wrapped in result object
       expect(userData).toEqual({
-        id: "123",
-        name: "John Doe",
-        email: "john@example.com",
-      });
-      expect(userData.id).toBe("123");
-      expect(userData.name).toBe("John Doe");
-    });
+        id: '123',
+        name: 'John Doe',
+        email: 'john@example.com',
+      })
+      expect(userData.id).toBe('123')
+      expect(userData.name).toBe('John Doe')
+    })
 
-    it("should throw ApiError on HTTP error status", async () => {
+    it('should throw ApiError on HTTP error status', async () => {
       const apiSchema = {
-        getUser: defineGet("/users/:id", {
+        getUser: defineGet('/users/:id', {
           response: z.object({ id: z.string(), name: z.string() }),
         }),
-      };
+      }
 
       const mockFetch = vi.fn().mockResolvedValue(
-        new Response(JSON.stringify({ message: "User not found" }), {
+        new Response(JSON.stringify({ message: 'User not found' }), {
           status: 404,
-          headers: { "Content-Type": "application/json" },
+          headers: { 'Content-Type': 'application/json' },
         }),
-      );
+      )
 
       const client = createApiClient({
         apiSchema,
-        baseURL: "http://localhost",
+        baseURL: 'http://localhost',
         fetch: mockFetch,
-      });
+      })
 
-      await expect(client.api.users.id("999").get.orThrow()).rejects.toThrow(
+      await expect(client.api.users.id('999').get.orThrow()).rejects.toThrow(
         ApiError,
-      );
+      )
 
       try {
-        await client.api.users.id("999").get.orThrow();
+        await client.api.users.id('999').get.orThrow()
       } catch (error) {
-        expect(error).toBeInstanceOf(ApiError);
-        expect((error as ApiError).status).toBe(404);
-        expect((error as ApiError).message).toContain("404");
+        expect(error).toBeInstanceOf(ApiError)
+        expect((error as ApiError).status).toBe(404)
+        expect((error as ApiError).message).toContain('404')
       }
-    });
+    })
 
-    it("should throw ValidationError on response validation failure", async () => {
+    it('should throw ValidationError on response validation failure', async () => {
       const apiSchema = {
-        getUser: defineGet("/users/:id", {
+        getUser: defineGet('/users/:id', {
           response: z.object({
             id: z.string(),
             name: z.string(),
             age: z.number(),
           }),
         }),
-      };
+      }
 
-      const app = new Hono().get("/users/:id", (c) => {
+      const app = new Hono().get('/users/:id', (c) => {
         return c.json({
-          id: c.req.param("id"),
-          name: "John Doe",
+          id: c.req.param('id'),
+          name: 'John Doe',
           // Missing required 'age' field
-        });
-      });
+        })
+      })
 
       const client = createApiClient({
         apiSchema,
-        baseURL: "http://localhost",
+        baseURL: 'http://localhost',
         fetch: app.fetch,
-      });
+      })
 
-      await expect(client.api.users.id("123").get.orThrow()).rejects.toThrow(
+      await expect(client.api.users.id('123').get.orThrow()).rejects.toThrow(
         ValidationError,
-      );
+      )
 
       try {
-        await client.api.users.id("123").get.orThrow();
+        await client.api.users.id('123').get.orThrow()
       } catch (error) {
-        expect(error).toBeInstanceOf(ValidationError);
-        expect((error as ValidationError).validationType).toBe("response");
+        expect(error).toBeInstanceOf(ValidationError)
+        expect((error as ValidationError).validationType).toBe('response')
       }
-    });
+    })
 
-    it("should throw NetworkError on network failure", async () => {
+    it('should throw NetworkError on network failure', async () => {
       const apiSchema = {
-        getUser: defineGet("/users/:id", {
+        getUser: defineGet('/users/:id', {
           response: z.object({ id: z.string(), name: z.string() }),
         }),
-      };
+      }
 
       const mockFetch = vi
         .fn()
-        .mockRejectedValue(new TypeError("Failed to fetch"));
+        .mockRejectedValue(new TypeError('Failed to fetch'))
 
       const client = createApiClient({
         apiSchema,
-        baseURL: "http://localhost",
+        baseURL: 'http://localhost',
         fetch: mockFetch,
-      });
+      })
 
-      await expect(client.api.users.id("123").get.orThrow()).rejects.toThrow(
+      await expect(client.api.users.id('123').get.orThrow()).rejects.toThrow(
         NetworkError,
-      );
-    });
-  });
+      )
+    })
+  })
 
-  describe("POST endpoints", () => {
-    it("should return data directly on successful POST request", async () => {
+  describe('POST endpoints', () => {
+    it('should return data directly on successful POST request', async () => {
       const apiSchema = {
-        createUser: definePost("/users", {
+        createUser: definePost('/users', {
           input: {
             json: z.object({ name: z.string(), email: z.string().email() }),
           },
@@ -320,76 +320,76 @@ describe("Unsafe API calls", () => {
             createdAt: z.string(),
           }),
         }),
-      };
+      }
 
       const app = new Hono().post(
-        "/users",
+        '/users',
         zValidator(
-          "json",
+          'json',
           z.object({ name: z.string(), email: z.string().email() }),
         ),
         (c) =>
           c.json({
-            id: "new-user-id",
-            name: "Jane Doe",
-            email: "jane@example.com",
-            createdAt: "2023-01-01T00:00:00Z",
+            id: 'new-user-id',
+            name: 'Jane Doe',
+            email: 'jane@example.com',
+            createdAt: '2023-01-01T00:00:00Z',
           }),
-      );
+      )
 
       const client = createApiClient({
         apiSchema,
-        baseURL: "http://localhost",
+        baseURL: 'http://localhost',
         fetch: app.fetch,
-      });
+      })
 
       const newUser = await client.api.users.post.orThrow({
-        json: { name: "Jane Doe", email: "jane@example.com" },
-      });
+        json: { name: 'Jane Doe', email: 'jane@example.com' },
+      })
 
       expect(newUser).toEqual({
-        id: "new-user-id",
-        name: "Jane Doe",
-        email: "jane@example.com",
-        createdAt: "2023-01-01T00:00:00Z",
-      });
-    });
+        id: 'new-user-id',
+        name: 'Jane Doe',
+        email: 'jane@example.com',
+        createdAt: '2023-01-01T00:00:00Z',
+      })
+    })
 
-    it("should throw error on POST validation failure", async () => {
+    it('should throw error on POST validation failure', async () => {
       const apiSchema = {
-        createUser: definePost("/users", {
+        createUser: definePost('/users', {
           input: {
             json: z.object({ name: z.string(), email: z.string().email() }),
           },
           response: z.object({ id: z.string(), name: z.string() }),
         }),
-      };
+      }
 
       const mockFetch = vi.fn().mockResolvedValue(
-        new Response(JSON.stringify({ error: "Invalid email" }), {
+        new Response(JSON.stringify({ error: 'Invalid email' }), {
           status: 400,
-          headers: { "Content-Type": "application/json" },
+          headers: { 'Content-Type': 'application/json' },
         }),
-      );
+      )
 
       const client = createApiClient({
         apiSchema,
-        baseURL: "http://localhost",
+        baseURL: 'http://localhost',
         fetch: mockFetch,
-      });
+      })
 
       await expect(
         client.api.users.post.orThrow({
-          json: { name: "John", email: "john@example.com" },
+          json: { name: 'John', email: 'john@example.com' },
         }),
-      ).rejects.toThrow(ApiError);
-    });
-  });
+      ).rejects.toThrow(ApiError)
+    })
+  })
 
-  describe("PUT endpoints", () => {
-    it("should return data directly on successful PUT request", async () => {
+  describe('PUT endpoints', () => {
+    it('should return data directly on successful PUT request', async () => {
       const apiSchema = {
-        updateUser: definePut("/users/:id", {
+        updateUser: definePut('/users/:id', {
           input: {
             json: z.object({ name: z.string(), email: z.string().email() }),
           },
@@ -400,44 +400,44 @@ describe("Unsafe API calls", () => {
             updatedAt: z.string(),
           }),
         }),
-      };
+      }
 
       const app = new Hono().put(
-        "/users/:id",
+        '/users/:id',
         zValidator(
-          "json",
+          'json',
           z.object({ name: z.string(), email: z.string().email() }),
         ),
         (c) => {
-          const { id } = c.req.param();
+          const { id } = c.req.param()
           return c.json({
             id,
-            name: "Updated Jane",
-            email: "updated.jane@example.com",
-            updatedAt: "2023-01-01T12:00:00Z",
-          });
+            name: 'Updated Jane',
+            email: 'updated.jane@example.com',
+            updatedAt: '2023-01-01T12:00:00Z',
+          })
         },
-      );
+      )
 
       const client = createApiClient({
         apiSchema,
-        baseURL: "http://localhost",
+        baseURL: 'http://localhost',
         fetch: app.fetch,
-      });
+      })
 
-      const updatedUser = await client.api.users.id("123").put.orThrow({
-        json: { name: "Updated Jane", email: "updated.jane@example.com" },
-      });
+      const updatedUser = await client.api.users.id('123').put.orThrow({
+        json: { name: 'Updated Jane', email: 'updated.jane@example.com' },
+      })
 
-      expect(updatedUser.name).toBe("Updated Jane");
-      expect(updatedUser.updatedAt).toContain("2023-01-01");
-    });
-  });
+      expect(updatedUser.name).toBe('Updated Jane')
+      expect(updatedUser.updatedAt).toContain('2023-01-01')
+    })
+  })
 
-  describe("PATCH endpoints", () => {
-    it("should return data directly on successful PATCH request", async () => {
+  describe('PATCH endpoints', () => {
+    it('should return data directly on successful PATCH request', async () => {
       const apiSchema = {
-        patchUser: definePatch("/users/:id", {
+        patchUser: definePatch('/users/:id', {
           input: {
             json: z.object({
               name: z.string().optional(),
@@ -451,171 +451,171 @@ describe("Unsafe API calls", () => {
             updatedAt: z.string(),
           }),
         }),
-      };
+      }
 
       const app = new Hono().patch(
-        "/users/:id",
+        '/users/:id',
         zValidator(
-          "json",
+          'json',
           z.object({
             name: z.string().optional(),
             email: z.string().email().optional(),
           }),
         ),
         (c) => {
-          const { id } = c.req.param();
+          const { id } = c.req.param()
           return c.json({
             id,
-            name: "Patched Name",
-            email: "existing@example.com",
-            updatedAt: "2023-01-01T12:00:00Z",
-          });
+            name: 'Patched Name',
+            email: 'existing@example.com',
+            updatedAt: '2023-01-01T12:00:00Z',
+          })
         },
-      );
+      )
 
       const client = createApiClient({
         apiSchema,
-        baseURL: "http://localhost",
+        baseURL: 'http://localhost',
         fetch: app.fetch,
-      });
+      })
 
-      const patchedUser = await client.api.users.id("123").patch.orThrow({
-        json: { name: "Patched Name" },
-      });
+      const patchedUser = await client.api.users.id('123').patch.orThrow({
+        json: { name: 'Patched Name' },
+      })
 
-      expect(patchedUser.name).toBe("Patched Name");
-      expect(patchedUser.id).toBe("123");
-    });
-  });
+      expect(patchedUser.name).toBe('Patched Name')
+      expect(patchedUser.id).toBe('123')
+    })
+  })
 
-  describe("DELETE endpoints", () => {
-    it("should return data directly on successful DELETE request with response", async () => {
+  describe('DELETE endpoints', () => {
+    it('should return data directly on successful DELETE request with response', async () => {
       const apiSchema = {
-        deleteUserWithConfirmation: defineDelete("/users/:id/confirm", {
+        deleteUserWithConfirmation: defineDelete('/users/:id/confirm', {
           response: z.object({ deleted: z.boolean(), deletedAt: z.string() }),
         }),
-      };
+      }
 
-      const app = new Hono().delete("/users/:id/confirm", (c) =>
-        c.json({ deleted: true, deletedAt: "2023-01-01T12:00:00Z" }),
-      );
+      const app = new Hono().delete('/users/:id/confirm', (c) =>
+        c.json({ deleted: true, deletedAt: '2023-01-01T12:00:00Z' }),
+      )
 
       const client = createApiClient({
         apiSchema,
-        baseURL: "http://localhost",
+        baseURL: 'http://localhost',
         fetch: app.fetch,
-      });
+      })
 
       const deleteResult = await client.api.users
-        .id("123")
-        .confirm.delete.orThrow();
+        .id('123')
+        .confirm.delete.orThrow()
 
-      expect(deleteResult.deleted).toBe(true);
-      expect(deleteResult.deletedAt).toBe("2023-01-01T12:00:00Z");
-    });
+      expect(deleteResult.deleted).toBe(true)
+      expect(deleteResult.deletedAt).toBe('2023-01-01T12:00:00Z')
+    })
 
-    it("should handle DELETE with void response", async () => {
+    it('should handle DELETE with void response', async () => {
       const apiSchema = {
-        deleteUser: defineDelete("/users/:id", { response: z.void() }),
-      };
+        deleteUser: defineDelete('/users/:id', { response: z.void() }),
+      }
 
-      const app = new Hono().delete("/users/:id", (c) => c.body(null, 204));
+      const app = new Hono().delete('/users/:id', (c) => c.body(null, 204))
 
       const client = createApiClient({
         apiSchema,
-        baseURL: "http://localhost",
+        baseURL: 'http://localhost',
         fetch: app.fetch,
-      });
+      })
 
-      const result = await client.api.users.id("123").delete.orThrow();
+      const result = await client.api.users.id('123').delete.orThrow()
 
       // void response should return undefined
-      expect(result).toBeUndefined();
-    });
-  });
+      expect(result).toBeUndefined()
+    })
+  })
 
-  describe("Error handling comparison", () => {
-    it("should demonstrate difference between safe and unsafe calls", async () => {
+  describe('Error handling comparison', () => {
+    it('should demonstrate difference between safe and unsafe calls', async () => {
       const apiSchema = {
-        getUser: defineGet("/users/:id", {
+        getUser: defineGet('/users/:id', {
           response: z.object({ id: z.string(), name: z.string() }),
         }),
-      };
+      }
 
       const mockFetch = vi.fn().mockResolvedValue(
-        new Response(JSON.stringify({ message: "Not found" }), {
+        new Response(JSON.stringify({ message: 'Not found' }), {
           status: 404,
-          headers: { "Content-Type": "application/json" },
+          headers: { 'Content-Type': 'application/json' },
         }),
-      );
+      )
 
       const client = createApiClient({
         apiSchema,
-        baseURL: "http://localhost",
+        baseURL: 'http://localhost',
         fetch: mockFetch,
-      });
+      })
 
       // Safe call returns error in result object
-      const safeResult = await client.api.users.id("999").get();
-      expect(safeResult).toHaveProperty("error");
-      expect(safeResult.error).toBeInstanceOf(ApiError);
+      const safeResult = await client.api.users.id('999').get()
+      expect(safeResult).toHaveProperty('error')
+      expect(safeResult.error).toBeInstanceOf(ApiError)
 
       // Unsafe call throws the error
-      await expect(client.api.users.id("999").get.orThrow()).rejects.toThrow(
+      await expect(client.api.users.id('999').get.orThrow()).rejects.toThrow(
         ApiError,
-      );
-    });
-  });
+      )
+    })
+  })
 
-  describe("Type safety and usage", () => {
-    it("should provide proper TypeScript types for unsafe calls", async () => {
+  describe('Type safety and usage', () => {
+    it('should provide proper TypeScript types for unsafe calls', async () => {
       const apiSchema = {
-        getUser: defineGet("/users/:id", {
+        getUser: defineGet('/users/:id', {
           response: z.object({
             id: z.string(),
             name: z.string(),
             isActive: z.boolean(),
           }),
         }),
-      };
+      }
 
-      const app = new Hono().get("/users/:id", (c) => {
+      const app = new Hono().get('/users/:id', (c) => {
         return c.json({
-          id: c.req.param("id"),
-          name: "John Doe",
+          id: c.req.param('id'),
+          name: 'John Doe',
           isActive: true,
-        });
-      });
+        })
+      })
 
       const client = createApiClient({
         apiSchema,
-        baseURL: "http://localhost",
+        baseURL: 'http://localhost',
         fetch: app.fetch,
-      });
+      })
 
       // TypeScript should infer the correct type without the wrapper
-      const user = await client.api.users.id("123").get.orThrow();
+      const user = await client.api.users.id('123').get.orThrow()
 
       // These should be directly accessible without checking for error
-      expect(user.id).toBe("123");
-      expect(user.name).toBe("John Doe");
-      expect(user.isActive).toBe(true);
+      expect(user.id).toBe('123')
+      expect(user.name).toBe('John Doe')
+      expect(user.isActive).toBe(true)
 
       // Verify TypeScript types are what we expect
       const _typeCheck: {
-        id: string;
-        name: string;
-        isActive: boolean;
-      } = user;
+        id: string
+        name: string
+        isActive: boolean
+      } = user
 
-      expect(_typeCheck).toBeDefined();
-    });
-  });
+      expect(_typeCheck).toBeDefined()
+    })
+  })
 
-  describe("Complex scenarios", () => {
-    it("should work with query parameters", async () => {
+  describe('Complex scenarios', () => {
+    it('should work with query parameters', async () => {
       const apiSchema = {
-        searchUsers: defineGet("/users/search", {
+        searchUsers: defineGet('/users/search', {
           input: {
             query: {
               q: z.string(),
@@ -629,12 +629,12 @@ describe("Unsafe API calls", () => {
             page: z.number(),
           }),
         }),
-      };
+      }
 
       const app = new Hono().get(
-        "/users/search",
+        '/users/search',
         zValidator(
-          "query",
+          'query',
           z.object({
             q: z.string(),
             page: z.string().optional(),
@@ -644,92 +644,92 @@ describe("Unsafe API calls", () => {
         (c) =>
           c.json({
             users: [
-              { id: "1", name: "John Doe" },
-              { id: "2", name: "Jane Smith" },
+              { id: '1', name: 'John Doe' },
+              { id: '2', name: 'Jane Smith' },
             ],
             total: 2,
             page: 1,
           }),
-      );
+      )
 
       const client = createApiClient({
         apiSchema,
-        baseURL: "http://localhost",
+        baseURL: 'http://localhost',
         fetch: app.fetch,
-      });
+      })
 
       const searchResult = await client.api.users.search.get.orThrow({
-        query: { q: "john", page: "1", limit: "10" },
-      });
+        query: { q: 'john', page: '1', limit: '10' },
+      })
 
-      expect(searchResult.users).toHaveLength(2);
-      expect(searchResult.total).toBe(2);
-      expect(searchResult.page).toBe(1);
-    });
+      expect(searchResult.users).toHaveLength(2)
+      expect(searchResult.total).toBe(2)
+      expect(searchResult.page).toBe(1)
+    })
 
-    it("should work with nested path parameters", async () => {
+    it('should work with nested path parameters', async () => {
       const apiSchema = {
-        getUserPost: defineGet("/users/:userId/posts/:postId", {
+        getUserPost: defineGet('/users/:userId/posts/:postId', {
           response: z.object({
             id: z.string(),
             title: z.string(),
             userId: z.string(),
           }),
         }),
-      };
+      }
 
-      const app = new Hono().get("/users/:userId/posts/:postId", (c) => {
-        const { userId, postId } = c.req.param();
+      const app = new Hono().get('/users/:userId/posts/:postId', (c) => {
+        const { userId, postId } = c.req.param()
         return c.json({
           id: postId,
-          title: "Sample Post",
+          title: 'Sample Post',
           userId,
-        });
-      });
+        })
+      })
 
       const client = createApiClient({
         apiSchema,
-        baseURL: "http://localhost",
+        baseURL: 'http://localhost',
         fetch: app.fetch,
-      });
+      })
 
       const post = await client.api.users
-        .userId("456")
-        .posts.postId("123")
-        .get.orThrow();
+        .userId('456')
+        .posts.postId('123')
+        .get.orThrow()
 
-      expect(post.id).toBe("123");
-      expect(post.userId).toBe("456");
-      expect(post.title).toBe("Sample Post");
-    });
+      expect(post.id).toBe('123')
+      expect(post.userId).toBe('456')
+      expect(post.title).toBe('Sample Post')
+    })
 
-    it("should work with interceptors", async () => {
+    it('should work with interceptors', async () => {
       const apiSchema = {
-        getUser: defineGet("/users/:id", {
+        getUser: defineGet('/users/:id', {
           response: z.object({ id: z.string(), name: z.string() }),
         }),
-      };
+      }
 
-      const app = new Hono().get("/users/:id", (c) =>
-        c.json({ id: c.req.param("id"), name: "John Doe" }),
-      );
+      const app = new Hono().get('/users/:id', (c) =>
+        c.json({ id: c.req.param('id'), name: 'John Doe' }),
+      )
 
       const client = createApiClient({
         apiSchema,
-        baseURL: "http://localhost",
+        baseURL: 'http://localhost',
         fetch: app.fetch,
-      });
+      })
 
       // Add request interceptor
       client.interceptors.request.use((_context, options) => ({
         ...options,
-        headers: { ...options.headers, "X-Custom-Header": "test-value" },
-      }));
+        headers: { ...options.headers, 'X-Custom-Header': 'test-value' },
+      }))
 
-      const userData = await client.api.users.id("123").get.orThrow();
+      const userData = await client.api.users.id('123').get.orThrow()
 
-      expect(userData.id).toBe("123");
-      expect(userData.name).toBe("John Doe");
-    });
-  });
-});
+      expect(userData.id).toBe('123')
+      expect(userData.name).toBe('John Doe')
+    })
+  })
+})
