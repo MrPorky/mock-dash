@@ -9,8 +9,169 @@ import {
   definePost,
   definePut,
 } from '../../endpoint/define-endpoint'
-import { ApiError, NetworkError, ValidationError } from '../../utils/errors'
+import {
+  ApiError,
+  isApiError,
+  NetworkError,
+  ValidationError,
+} from '../../utils/errors'
 import { createApiClient } from '../api-client'
+
+describe('Error response headers', () => {
+  const apiSchema = {
+    getUser: defineGet('/users/:id', {
+      response: z.object({ id: z.string() }),
+    }),
+  }
+
+  it('allows errors without header options', () => {
+    const validationErrors = new z.ZodError([])
+
+    expect(new ApiError('Failure', 500).headers).toBeUndefined()
+    expect(
+      new ValidationError('Invalid input', validationErrors, 'request').headers,
+    ).toBeUndefined()
+  })
+
+  it('copies constructor headers for both error classes', () => {
+    const headers = new Headers({ 'X-Request-ID': 'original' })
+    const apiError = new ApiError('Failure', 500, { headers })
+    const validationError = new ValidationError(
+      'Invalid response',
+      new z.ZodError([]),
+      'response',
+      { headers },
+    )
+
+    headers.set('x-request-id', 'changed')
+    expect(apiError.headers?.get('x-request-id')).toBe('original')
+    expect(validationError.headers?.get('x-request-id')).toBe('original')
+    apiError.headers?.set('x-request-id', 'api-only')
+    expect(headers.get('x-request-id')).toBe('changed')
+    expect(validationError.headers?.get('x-request-id')).toBe('original')
+  })
+
+  describe.each([
+    {
+      failure: 'HTTP',
+      status: 500,
+      body: '{"message":"Server error"}',
+      errorClass: ApiError,
+    },
+    {
+      failure: 'JSON parsing',
+      status: 200,
+      body: '{invalid json',
+      errorClass: ApiError,
+    },
+    {
+      failure: 'response validation',
+      status: 200,
+      body: '{"id":123}',
+      errorClass: ValidationError,
+    },
+  ])('$failure failures', ({ status, body, errorClass }) => {
+    describe.each([false, true])('orThrow: %s', (orThrow) => {
+      it('preserves a copy of response headers', async () => {
+        const response = new Response(body, {
+          status,
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Request-ID': 'request-123',
+            'Retry-After': '30',
+          },
+        })
+        const client = createApiClient({
+          apiSchema,
+          baseURL: 'http://localhost',
+          fetch: vi.fn().mockResolvedValue(response),
+        })
+        const call = client.api.users.id('123').get
+        const error = orThrow
+          ? await call.orThrow().catch((error: unknown) => error)
+          : (await call()).error
+
+        expect(error).toBeInstanceOf(errorClass)
+        if (!isApiError(error)) throw new Error('Expected an API error')
+        expect(error.name).toBe(errorClass.name)
+        expect(error.status).toBe(status)
+        expect(error.headers).toBeInstanceOf(Headers)
+        expect(error.headers).not.toBe(response.headers)
+        expect(error.headers?.get('x-request-id')).toBe('request-123')
+        expect(error.headers?.get('retry-after')).toBe('30')
+        response.headers.set('x-request-id', 'changed-response')
+        expect(error.headers?.get('x-request-id')).toBe('request-123')
+        error.headers?.set('x-request-id', 'changed-error')
+        expect(response.headers.get('x-request-id')).toBe('changed-response')
+      })
+
+      it('allows responses without a request ID header', async () => {
+        const client = createApiClient({
+          apiSchema,
+          baseURL: 'http://localhost',
+          fetch: vi.fn().mockResolvedValue(
+            new Response(body, {
+              status,
+              headers: { 'Content-Type': 'application/json' },
+            }),
+          ),
+        })
+        const call = client.api.users.id('123').get
+        const error = orThrow
+          ? await call.orThrow().catch((error: unknown) => error)
+          : (await call()).error
+
+        expect(error).toBeInstanceOf(errorClass)
+        if (!isApiError(error)) throw new Error('Expected an API error')
+        expect(error.name).toBe(errorClass.name)
+        expect(error.headers?.get('x-request-id')).toBeNull()
+      })
+
+      it('keeps concurrent request IDs independent', async () => {
+        let releaseFirst = () => {}
+        const firstCanFinish = new Promise<void>((resolve) => {
+          releaseFirst = resolve
+        })
+        const client = createApiClient({
+          apiSchema,
+          baseURL: 'http://localhost',
+          fetch: vi.fn(async (request: Request) => {
+            const requestId = new URL(request.url).pathname.split('/').pop()
+            if (requestId === 'first') {
+              await firstCanFinish
+            } else {
+              releaseFirst()
+            }
+            return new Response(body, {
+              status,
+              headers: {
+                'Content-Type': 'application/json',
+                'X-Request-ID': requestId ?? '',
+              },
+            })
+          }),
+        })
+        const errors = await Promise.all(
+          ['first', 'second'].map(async (requestId) => {
+            const call = client.api.users.id(requestId).get
+            return orThrow
+              ? call.orThrow().catch((error: unknown) => error)
+              : (await call()).error
+          }),
+        )
+
+        for (const [index, error] of errors.entries()) {
+          expect(error).toBeInstanceOf(errorClass)
+          if (!isApiError(error)) throw new Error('Expected an API error')
+          expect(error.name).toBe(errorClass.name)
+          expect(error.headers?.get('x-request-id')).toBe(
+            index === 0 ? 'first' : 'second',
+          )
+        }
+      })
+    })
+  })
+})
 
 describe('Unsafe API calls', () => {
   describe('GET endpoints', () => {

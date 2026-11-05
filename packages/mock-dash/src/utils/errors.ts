@@ -26,11 +26,18 @@ export class ApiError extends Error {
   public readonly body?: unknown
   public readonly url?: string
   public readonly method?: string
+  public readonly headers?: Headers
 
   constructor(
     message: string,
     status: number,
-    options?: { body?: unknown; url?: string; method?: string; cause?: Error },
+    options?: {
+      body?: unknown
+      url?: string
+      method?: string
+      cause?: Error
+      headers?: Headers
+    },
   ) {
     super(message, { cause: options?.cause })
     this.name = 'ApiError'
@@ -38,6 +45,7 @@ export class ApiError extends Error {
     this.body = options?.body
     this.url = options?.url
     this.method = options?.method
+    this.headers = options?.headers ? new Headers(options.headers) : undefined
     if (Error.captureStackTrace) Error.captureStackTrace(this, ApiError)
   }
 }
@@ -61,6 +69,7 @@ export class ValidationError extends ApiError {
       url?: string
       method?: string
       cause?: Error
+      headers?: Headers
     },
   ) {
     super(message, options?.status ?? 400, {
@@ -68,6 +77,7 @@ export class ValidationError extends ApiError {
       url: options?.url,
       method: options?.method,
       cause: options?.cause,
+      headers: options?.headers,
     })
     this.name = 'ValidationError'
     this.validationErrors = validationErrors

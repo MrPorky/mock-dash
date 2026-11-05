@@ -266,6 +266,7 @@ export async function _prepareFetch<T extends Endpoint<any>>(
           body: errorBody,
           url: fullUrl,
           method: endpoint.method.toUpperCase(),
+          headers: response.headers,
         },
       ),
     }
