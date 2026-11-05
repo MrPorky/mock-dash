@@ -506,6 +506,21 @@ if (response.error) {
 }
 ```
 
+Response-backed errors expose a copied `Headers` object via `error.headers`,
+including HTTP failures, response parsing failures, and response validation
+failures. The same metadata is available on errors thrown by `.orThrow()`.
+Errors created without headers leave this property `undefined`.
+
+```typescript
+if (isApiError(response.error)) {
+  const requestId = response.error.headers?.get('x-request-id')
+  console.error('Request ID:', requestId)
+}
+```
+
+For cross-origin requests in browsers, the server must expose custom headers
+using `Access-Control-Expose-Headers` for them to be readable.
+
 #### Type Inference
 
 The API client provides a powerful `infer` property that allows you to extract TypeScript types from your API schema without making actual API calls. This is especially useful for typing variables and function parameters in your application:
