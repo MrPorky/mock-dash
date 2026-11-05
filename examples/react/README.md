@@ -25,6 +25,7 @@ The configuration is managed through `biome.json` in the workspace root. Biome o
 - **React support**: Built-in React and JSX linting rules
 
 Common Biome commands:
+
 ```bash
 # Check code (lint + format check)
 pnpm biome check .

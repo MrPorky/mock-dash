@@ -61,6 +61,7 @@ pnpm add -D hono
 ```
 
 MockDash has minimal dependencies:
+
 - **zod** (peer dependency) - For schema validation and type inference
 - **hono** (dev dependency) - For mock server generation
 - **@hono/zod-validator** - Built-in for request validation
@@ -71,7 +72,12 @@ Here's a simple example to get you started:
 
 ```typescript
 import z from 'zod'
-import { defineGet, definePost, createApiClient, createMockServer } from 'mock-dash'
+import {
+  defineGet,
+  definePost,
+  createApiClient,
+  createMockServer,
+} from 'mock-dash'
 
 // 1. Define your API schema once
 const apiSchema = {
@@ -152,7 +158,13 @@ MockDash supports all standard HTTP methods with type-safe definitions:
 
 ```typescript
 import z from 'zod'
-import { defineGet, definePost, definePut, definePatch, defineDelete } from 'mock-dash'
+import {
+  defineGet,
+  definePost,
+  definePut,
+  definePatch,
+  defineDelete,
+} from 'mock-dash'
 
 // GET endpoint with query parameters
 const getUsers = defineGet('/users', {
@@ -163,11 +175,13 @@ const getUsers = defineGet('/users', {
       search: z.string().optional(),
     },
   },
-  response: z.array(z.object({
-    id: z.string(),
-    name: z.string(),
-    email: z.string(),
-  })),
+  response: z.array(
+    z.object({
+      id: z.string(),
+      name: z.string(),
+      email: z.string(),
+    }),
+  ),
 })
 
 // POST endpoint with JSON body
@@ -239,7 +253,7 @@ const streamData = defineGet('/stream', {
       id: z.string(),
       timestamp: z.number(),
       data: z.any(),
-    })
+    }),
   ),
 })
 
@@ -260,7 +274,11 @@ const chatEndpoint = defineGet('/chat/:roomId', {
   response: defineWebSocket(
     // Server-to-client messages
     [
-      z.object({ type: z.literal('message'), text: z.string(), user: z.string() }),
+      z.object({
+        type: z.literal('message'),
+        text: z.string(),
+        user: z.string(),
+      }),
       z.object({ type: z.literal('userJoined'), user: z.string() }),
       z.object({ type: z.literal('userLeft'), user: z.string() }),
     ],
@@ -268,7 +286,7 @@ const chatEndpoint = defineGet('/chat/:roomId', {
     [
       z.object({ type: z.literal('sendMessage'), text: z.string() }),
       z.object({ type: z.literal('join'), user: z.string() }),
-    ]
+    ],
   ),
 })
 ```
@@ -375,12 +393,14 @@ const userUrl = client.createEndpointUri('/users/:id', { id: '123' })
 // Works with multiple path parameters
 const commentUrl = client.createEndpointUri(
   '/users/:userId/posts/:postId/comments/:commentId',
-  { userId: '1', postId: '42', commentId: '789' }
+  { userId: '1', postId: '42', commentId: '789' },
 )
 // Returns: 'https://api.example.com/users/1/posts/42/comments/789'
 
 // Works with path aliases
-const aliasedUrl = client.createEndpointUri('/{api}/products/:id', { id: '456' })
+const aliasedUrl = client.createEndpointUri('/{api}/products/:id', {
+  id: '456',
+})
 // Returns: 'https://api.example.com/api/v1/products/456'
 
 // Endpoints without parameters don't require the second argument
@@ -393,6 +413,7 @@ The method is fully type-safe: TypeScript will require the parameters object onl
 Note: This method generates complete URLs with all path parameters replaced. For making actual API calls, use the normal client methods which provide additional type safety and request options.
 
 #### orThrow Methods
+
 For scenarios where you want to throw errors directly instead of handling them in the response object, use the `orThrow` method:
 
 ```typescript
@@ -420,11 +441,13 @@ const createProject = definePost('/projects', {
         isPublic: z.boolean(),
         tags: z.array(z.string()),
       }),
-      members: z.array(z.object({
-        name: z.string(),
-        email: z.string().email(),
-        role: z.string(),
-      })),
+      members: z.array(
+        z.object({
+          name: z.string(),
+          email: z.string().email(),
+          role: z.string(),
+        }),
+      ),
     }),
   },
   response: projectSchema,
@@ -457,7 +480,7 @@ if (parseResult.success) {
   console.log(parseResult.data.settings.isPublic) // true (boolean)
   console.log(parseResult.data.settings.tags) // ["frontend", "typescript"]
   console.log(parseResult.data.members[0].name) // "Alice Johnson"
-  
+
   // Use the parsed data in your API call
   const response = await client.api.projects.post({ json: parseResult.data })
 } else {
@@ -466,10 +489,14 @@ if (parseResult.success) {
 }
 
 // Disable automatic type coercion (optional)
-const parseResultNoCoerce = client.api.projects.post.safeParseForm(formData, false)
+const parseResultNoCoerce = client.api.projects.post.safeParseForm(
+  formData,
+  false,
+)
 ```
 
 The `safeParseForm` method:
+
 - Only available on endpoints with `json` input schemas (not available for streams or WebSockets)
 - Supports nested objects using dot notation (`object.field`)
 - Supports arrays of objects using indexed notation (`array[0].field`)
@@ -529,22 +556,22 @@ The API client provides a powerful `infer` property that allows you to extract T
 
 ```typescript
 // HTTP endpoint types
-client.infer.path.to.endpoint.method.response     // Response body type
-client.infer.path.to.endpoint.method.json         // JSON input type
-client.infer.path.to.endpoint.method.query        // Query parameters type
-client.infer.path.to.endpoint.method.form         // Form data type
-client.infer.path.to.endpoint.method.params       // Path parameters type
-client.infer.path.to.endpoint.method.parseError   // Validation error from safeParseForm
+client.infer.path.to.endpoint.method.response // Response body type
+client.infer.path.to.endpoint.method.json // JSON input type
+client.infer.path.to.endpoint.method.query // Query parameters type
+client.infer.path.to.endpoint.method.form // Form data type
+client.infer.path.to.endpoint.method.params // Path parameters type
+client.infer.path.to.endpoint.method.parseError // Validation error from safeParseForm
 
 // Streaming endpoint types
-client.infer.path.to.stream.$stream.response       // Stream item type
+client.infer.path.to.stream.$stream.response // Stream item type
 
 // SSE endpoint types
-client.infer.path.to.sse.$stream.response.eventName  // Specific event type
+client.infer.path.to.sse.$stream.response.eventName // Specific event type
 
 // WebSocket endpoint types
-client.infer.path.to.ws.$ws.serverToClient         // Server messages union type
-client.infer.path.to.ws.$ws.clientToServer         // Client messages union type
+client.infer.path.to.ws.$ws.serverToClient // Server messages union type
+client.infer.path.to.ws.$ws.clientToServer // Client messages union type
 ```
 
 The `infer` property follows the same path structure as your API calls but provides compile-time type information instead of runtime functionality. This enables:
@@ -632,7 +659,7 @@ apiSchema.createUser.defineMock((ctx) => ({
 // Async mock functions
 apiSchema.getUser.defineMock(async (ctx) => {
   // Simulate database lookup
-  await new Promise(resolve => setTimeout(resolve, 100))
+  await new Promise((resolve) => setTimeout(resolve, 100))
   return {
     id: ctx.inputs.param.id,
     name: 'Async User',
@@ -662,10 +689,10 @@ const app = createMockServer(apiSchema)
 const app = createMockServer(apiSchema, {
   // Base path for all endpoints
   base: '/api/v1',
-  
+
   // Custom fetch function for network requests
   fetch: customFetch,
-  
+
   // Automatic mock generation from Zod schemas
   zodToMock: (schema) => {
     // Custom logic to generate mock data from Zod schema
@@ -673,7 +700,7 @@ const app = createMockServer(apiSchema, {
     if (schema instanceof z.ZodNumber) return 42
     // ... handle other types
   },
-  
+
   // Custom middleware
   addMiddleware: (app) => {
     app.use('*', async (c, next) => {
@@ -736,7 +763,7 @@ apiSchema.getUser.defineMock((ctx) => {
   if (ctx.inputs.param.id === 'not-found') {
     throw new MockError('User not found', 404)
   }
-  
+
   return { id: ctx.inputs.param.id, name: 'Found User' }
 })
 ```
@@ -774,8 +801,12 @@ The generated file will export:
 
 ```typescript
 // Component schemas
-export const userModel = z.object({ /* ... */ })
-export const productModel = z.object({ /* ... */ })
+export const userModel = z.object({
+  /* ... */
+})
+export const productModel = z.object({
+  /* ... */
+})
 
 // Endpoint definitions
 export const getUsersId = defineGet('/users/:id', {

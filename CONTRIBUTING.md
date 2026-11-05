@@ -13,10 +13,12 @@ Thank you for your interest in contributing to MockDash! This guide will help yo
 
 1. Fork and clone the repository
 2. Install dependencies:
+
    ```bash
    pnpm install
    ```
 3. Run tests to ensure everything works:
+
    ```bash
    pnpm test
    ```

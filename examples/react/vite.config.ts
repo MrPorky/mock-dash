@@ -1,11 +1,14 @@
+import babel from '@rolldown/plugin-babel'
 import { tanstackRouter } from '@tanstack/router-plugin/vite'
-import react from '@vitejs/plugin-react'
+import react, { reactCompilerPreset } from '@vitejs/plugin-react'
 import { visualizer } from 'rollup-plugin-visualizer'
 import { defineConfig } from 'vite'
-import tsconfigPaths from 'vite-tsconfig-paths'
 
 // https://vite.dev/config/
 export default defineConfig({
+  resolve: {
+    tsconfigPaths: true,
+  },
   server: {
     proxy: {
       '/api': {
@@ -21,10 +24,14 @@ export default defineConfig({
         moduleSideEffects: false,
       },
       output: {
-        manualChunks: {
-          'react-vendor': ['react', 'react-dom', 'react/jsx-runtime'],
-          'router-vendor': ['@tanstack/react-router'],
-          'validation-vendor': ['zod'],
+        manualChunks(id) {
+          if (id.includes('/node_modules/')) {
+            if (id.includes('/react/') || id.includes('/react-dom/')) {
+              return 'react-vendor'
+            }
+            if (id.includes('/@tanstack/')) return 'router-vendor'
+            if (id.includes('/zod/')) return 'validation-vendor'
+          }
         },
       },
     },
@@ -34,12 +41,8 @@ export default defineConfig({
       target: 'react',
       autoCodeSplitting: true,
     }),
-    react({
-      babel: {
-        plugins: [['babel-plugin-react-compiler']],
-      },
-    }),
+    react(),
+    babel({ presets: [reactCompilerPreset()] }),
     visualizer(),
-    tsconfigPaths(),
   ],
 })

@@ -18,9 +18,10 @@ export type EndpointArgsType<
 export type EndpointArgs<
   I extends EndpointInput,
   AdditionalArgs extends Record<string, unknown> = Record<string, unknown>,
-> = EmptyObjectIsNever<InferInput<I>> extends never
-  ? [args?: EndpointArgsType<I, AdditionalArgs>]
-  : [args: EndpointArgsType<I, AdditionalArgs>]
+> =
+  EmptyObjectIsNever<InferInput<I>> extends never
+    ? [args?: EndpointArgsType<I, AdditionalArgs>]
+    : [args: EndpointArgsType<I, AdditionalArgs>]
 
 export type FetchOptions = Omit<RequestInit, 'body' | 'window' | 'method'>
 export type CreateApiClientArgs<
