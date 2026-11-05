@@ -72,55 +72,54 @@ export type WSResult<
   C extends Array<z.ZodType> = Array<z.ZodType>,
 > = WSSuccessResult<WebSocketResponse<S, C>> | WSErrorResult
 
+export type {
+  AliasOptionFromApiSchema,
+  BinaryStreamResponse,
+  EndpointOptions,
+  HttpErrorResult,
+  // HTTP types
+  HttpSuccessResult,
+  JSONStreamResponse,
+  // Response schema types
+  SSEResponse,
+  StreamChunk,
+  StreamErrorResult,
+  StreamParseError,
+  // Stream types
+  StreamSuccessResult,
+  WebSocketController,
+  WebSocketResponse,
+  WSBinaryMessage,
+  WSChunk,
+  WSErrorResult,
+  WSMessage,
+  WSParseError,
+  WSStatusUpdate,
+  // WebSocket types
+  WSSuccessResult,
+}
 export {
+  ApiError,
   createApiClient,
   createMockServer,
+  defineBinaryStream,
   defineDelete,
   defineGet,
+  defineJSONStream,
   definePatch,
   definePost,
   definePut,
-  defineBinaryStream,
-  defineJSONStream,
   defineSSE,
   defineWebSocket,
-  ApiError,
+  Endpoint,
+  HttpEndpoint,
   isApiError,
   isMockError,
   isNetworkError,
   isValidationError,
   MockError,
   NetworkError,
-  ValidationError,
-  Endpoint,
-  HttpEndpoint,
   StreamEndpoint,
+  ValidationError,
   WebSocketEndpoint,
-}
-
-export type {
-  AliasOptionFromApiSchema,
-  EndpointOptions,
-  WebSocketController,
-  // HTTP types
-  HttpSuccessResult,
-  HttpErrorResult,
-  // Stream types
-  StreamSuccessResult,
-  StreamErrorResult,
-  StreamChunk,
-  StreamParseError,
-  // WebSocket types
-  WSSuccessResult,
-  WSErrorResult,
-  WSChunk,
-  WSMessage,
-  WSBinaryMessage,
-  WSParseError,
-  WSStatusUpdate,
-  // Response schema types
-  SSEResponse,
-  JSONStreamResponse,
-  BinaryStreamResponse,
-  WebSocketResponse,
 }

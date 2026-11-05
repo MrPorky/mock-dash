@@ -17,28 +17,29 @@ type ArrayElementDescriptor<ElementType extends z.ZodType, C> = {
   ) => MockStructure<ElementType, C>
 }
 
-export type MockStructure<T extends z.ZodType, C> = T extends z.ZodArray<
-  // Array Type
-  infer ElementType
->
-  ? ElementType extends z.ZodType
-    ?
-        | MaybeFn<Array<MockStructure<ElementType, C>>, C>
-        | ArrayElementDescriptor<ElementType, C>
-    : ElementType
-  : // Object Type
-    T extends z.ZodObject<infer Shape>
-    ? MaybeFn<
-        | {
-            [Key in keyof Shape]: Shape[Key] extends z.ZodType
-              ? MockStructure<Shape[Key], C>
-              : Shape[Key]
-          }
-        | z.infer<T>,
-        C
-      >
-    : // Other Types
-      MaybeFn<z.infer<T>, C>
+export type MockStructure<T extends z.ZodType, C> =
+  T extends z.ZodArray<
+    // Array Type
+    infer ElementType
+  >
+    ? ElementType extends z.ZodType
+      ?
+          | MaybeFn<Array<MockStructure<ElementType, C>>, C>
+          | ArrayElementDescriptor<ElementType, C>
+      : ElementType
+    : // Object Type
+      T extends z.ZodObject<infer Shape>
+      ? MaybeFn<
+          | {
+              [Key in keyof Shape]: Shape[Key] extends z.ZodType
+                ? MockStructure<Shape[Key], C>
+                : Shape[Key]
+            }
+          | z.infer<T>,
+          C
+        >
+      : // Other Types
+        MaybeFn<z.infer<T>, C>
 
 function getRandomInt(min: number, max: number): number {
   min = Math.ceil(min)

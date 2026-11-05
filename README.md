@@ -12,11 +12,11 @@
 
 ## Packages
 
-| Package | Description | Location |
-|---------|-------------|----------|
-| `mock-dash` | Core library: define endpoints once, get a typed client + Hono mock server generator | `packages/mock-dash` |
-| `examples/react` | React + Vite example using the generated client and dev mock server | `examples/react` |
-| `examples/sveltekit` | SvelteKit example showcasing server hooks + mock API usage | `examples/sveltekit` |
+| Package              | Description                                                                          | Location             |
+| -------------------- | ------------------------------------------------------------------------------------ | -------------------- |
+| `mock-dash`          | Core library: define endpoints once, get a typed client + Hono mock server generator | `packages/mock-dash` |
+| `examples/react`     | React + Vite example using the generated client and dev mock server                  | `examples/react`     |
+| `examples/sveltekit` | SvelteKit example showcasing server hooks + mock API usage                           | `examples/sveltekit` |
 
 ## What is MockDash?
 
